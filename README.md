@@ -14,7 +14,9 @@
 2. 當老鼠將所有食物吃完時，時間暫停並記錄總時間
 3. 紀錄該老鼠的短期記憶錯誤(Short Term)、長期記憶錯誤(Long Term)以及完成總時間(Latency)
 4. 將老鼠編號(RatID)、記憶錯誤(Short Term)、長期記憶錯誤(Long Term)、完成總時間(Latency)以及進臂順序(Route)寫入紀錄檔案
+
 > 短期記憶錯誤(Short Term)：當該臂進入兩次(含)以上，則紀錄錯誤乙次
+
 > 長期記憶錯誤(Long Term)：當第一次進入無食物臂，則紀錄錯誤乙次
 
 ## Designer
