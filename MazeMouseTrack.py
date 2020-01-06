@@ -1,10 +1,15 @@
 import tkinter as tk
 from tkinter import filedialog
+from ThermalCAM import ThermalCAM as TCAM
 
 class MazeMouseTrack(object):
 	def __init__(self):
+		#熱影像相機的類別
+		self.TCAM = TCAM()
+
 		#變數：迷宮系統相關
-		self.ARM_UNIT = 8 #迷宮臂數
+		self.ARM_UNIT = self.TCAM.getArmUnit() #迷宮臂數
+		self.ARMS_POS = self.TCAM.getMazeArmsPos() #迷宮臂座標點
 		self.Food = [] #放食物的臂
 		self.S_Term = [] #各臂短期記憶錯誤
 		self.L_Term = [] #各臂長期記憶錯誤
@@ -12,8 +17,8 @@ class MazeMouseTrack(object):
 		self.FileName = "" #存入的檔案
 
 		#變數：視窗相關
-		self.WinSize = (1152, 600) #UI介面顯示大小
-		self.ViewSize = (480, 480) #虛擬視窗顯示大小
+		self.WinSize = (1152, 560) #UI介面顯示大小
+		self.ViewSize = (480, 385) #虛擬視窗顯示大小
 		self.MAZE_IS_RUN = False #當前系統是否在執行
 		self.CAM_IS_CONN = False #當前鏡頭是否連線
 		self.TK_Food = [] #勾選放食物的臂
@@ -35,6 +40,16 @@ class MazeMouseTrack(object):
 		self.tkWin.resizable(False, False) #禁止變更視窗大小
 		self.setEachVariable() #各項變數初始化
 		self.setupUI() #視窗主程式
+
+	def setArmLine(self): #繪製迷宮框
+		DrawArms = self.ARMS_POS
+		DrawArms.append(DrawArms[0])
+		for i in range(1,len(DrawArms)):
+			p1 = (int(DrawArms[i-1][0]), int(DrawArms[i-1][1]))
+			p2 = (int(DrawArms[i][0]), int(DrawArms[i][1]))
+			# arr = "{0},{1}".format(p1,p2)
+			# print(arr)
+			self.mazeCanvas.create_line(p1[0], p1[1], p2[0], p2[1], fill="yellow",width=2)
 
 	def countStr(self, Str): #算出字串中大小寫字母與數字及其他符號的個數
 		Unit = [0, 0, 0, 0] #大寫字母/小寫字母/數字/其他符號
@@ -155,6 +170,7 @@ class MazeMouseTrack(object):
 		self.mazeCanvas = tk.Canvas(bg="black", width = self.ViewSize[0], height = self.ViewSize[1])
 		pViewX = int((self.WinSize[0]-self.ViewSize[0])*0.45) #虛擬視窗左上定位點X
 		pViewY = int((self.WinSize[1]-self.ViewSize[1])*0.45) #虛擬視窗左上定位點Y
+		self.setArmLine()
 		self.mazeCanvas.place(x=pViewX, y=pViewY,anchor="nw")
 
 		#========右側：按鈕========
@@ -200,12 +216,11 @@ class MazeMouseTrack(object):
 		self.TK_SHOW_Error_Msg = tk.StringVar()
 		self.TK_SHOW_FileDir.set("# FileDir: {}{}".format(self.FilePath, self.FileName))
 		self.TK_SHOW_Error_Msg.set("# ERROR Message: " + str(self.ERROR_MSG))
-		tk.Label(self.tkWin,textvariable=self.TK_SHOW_FileDir, font=('Arial', 10)).place(x=20,y=self.WinSize[1]-20,anchor="sw")
+		tk.Label(self.tkWin,textvariable=self.TK_SHOW_FileDir, font=('Arial', 10)).place(x=20,y=self.WinSize[1]-10,anchor="sw")
 		if(self.ERROR_MSG):
-			tk.Label(self.tkWin,textvariable=self.TK_SHOW_Error_Msg, font=('Arial', 10), fg="red").place(x=int(self.WinSize[0]/2),y=self.WinSize[1]-20,anchor="sw")
+			tk.Label(self.tkWin,textvariable=self.TK_SHOW_Error_Msg, font=('Arial', 10), fg="red").place(x=int(self.WinSize[0]/2),y=self.WinSize[1]-10,anchor="sw")
 		else:
-			tk.Label(self.tkWin,textvariable=self.TK_SHOW_Error_Msg, font=('Arial', 10)).place(x=int(self.WinSize[0]/2),y=self.WinSize[1]-20,anchor="sw")
-
+			tk.Label(self.tkWin,textvariable=self.TK_SHOW_Error_Msg, font=('Arial', 10)).place(x=int(self.WinSize[0]/2),y=self.WinSize[1]-10,anchor="sw")
 
 		self.tkWin.mainloop()
 		
