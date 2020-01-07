@@ -1,26 +1,47 @@
 import tkinter as tk
 from tkinter import filedialog
+import threading
 from ThermalCAM import ThermalCAM as TCAM
+
+def countStr(self, Str): #算出字串中大小寫字母與數字及其他符號的個數
+	Unit = [0, 0, 0, 0] #大寫字母/小寫字母/數字/其他符號
+	for i in range(0,len(Str)):
+		if (ord(Str[i]) >= 65) and (ord(Str[i]) <= 90):
+			Unit[0] = Unit[0] + 1
+		elif (ord(Str[i]) >= 97) and (ord(Str[i]) <= 122):
+			Unit[1] = Unit[1] + 1
+		elif Str[i].isdigit():
+			Unit[2] = Unit[2] + 1
+		else:
+			Unit[3] = Unit[3] + 1
+	
+	return Unit
 
 class MazeMouseTrack(object):
 	def __init__(self):
 		#熱影像相機的類別
 		self.TCAM = TCAM()
+		self.thread = threading.Thread(target = self.TCAM.CameraMain) # 執行該子執行緒
+		self.thread.start()  # 執行該子執行緒
 
 		#變數：迷宮系統相關
 		self.ARM_UNIT = self.TCAM.getArmUnit() #迷宮臂數
 		self.ARMS_POS = self.TCAM.getMazeArmsPos() #迷宮臂座標點
+		self.OPEN_CAMERA_WINDOW = False #影像視窗狀態
 		self.Food = [] #放食物的臂
 		self.S_Term = [] #各臂短期記憶錯誤
 		self.L_Term = [] #各臂長期記憶錯誤
 		self.FilePath = "" #存入的路徑
 		self.FileName = "" #存入的檔案
+		self.TargetPos = self.TCAM.getTargetPos() #影像處理後取得的座標
+		self.nowPos = self.TargetPos
 
 		#變數：視窗相關
 		self.WinSize = (1152, 560) #UI介面顯示大小
-		self.ViewSize = (480, 385) #虛擬視窗顯示大小
+		self.BALL_SIZE = 20
+		self.ViewSize = self.TCAM.getViewHW() #虛擬視窗顯示大小
 		self.MAZE_IS_RUN = False #當前系統是否在執行
-		self.CAM_IS_CONN = False #當前鏡頭是否連線
+		self.CAM_IS_CONN = self.TCAM.getCameraStatus() #當前鏡頭是否連線
 		self.TK_Food = [] #勾選放食物的臂
 		self.TK_S_Term = [] #顯示各臂短期記憶錯誤
 		self.TK_L_Term = [] #顯示各臂長期記憶錯誤
@@ -51,21 +72,6 @@ class MazeMouseTrack(object):
 			# print(arr)
 			self.mazeCanvas.create_line(p1[0], p1[1], p2[0], p2[1], fill="yellow",width=2)
 
-	def countStr(self, Str): #算出字串中大小寫字母與數字及其他符號的個數
-		Unit = [0, 0, 0, 0] #大寫字母/小寫字母/數字/其他符號
-		for i in range(0,len(Str)):
-			if (ord(Str[i]) >= 65) and (ord(Str[i]) <= 90):
-				Unit[0] = Unit[0] + 1
-			elif (ord(Str[i]) >= 97) and (ord(Str[i]) <= 122):
-				Unit[1] = Unit[1] + 1
-			elif Str[i].isdigit():
-				Unit[2] = Unit[2] + 1
-			else:
-				Unit[3] = Unit[3] + 1
-		
-		# print(Unit)
-		return Unit
-
 	def setEachVariable(self): #設定各項變數預設值
 		for i in range(0,self.ARM_UNIT):
 			self.Food.append(0)
@@ -77,7 +83,7 @@ class MazeMouseTrack(object):
 
 	def SetRatID(self): #設定老鼠編號
 		RAT_ID = self.TK_Rat_ID.get()
-		Unit = self.countStr(RAT_ID)
+		Unit = countStr(RAT_ID)
 		str1 = "# RatID: {}".format(RAT_ID)
 		move = 288 - (Unit[0]*11 + (Unit[1] + Unit[2] + Unit[3])*9)
 		self.TK_SHOW_Rat_ID.config(text=str1)
@@ -117,14 +123,11 @@ class MazeMouseTrack(object):
 			self.MAZE_IS_RUN = True
 
 	def CameraCheck(self): #實體影像檢查
-		if self.CAM_IS_CONN:
-			self.Cam_State.config(text="Camera State: Unconnect", fg="gray35")
-			self.Cam_State.place(x=self.WinSize[0]-160,y=110,anchor="ne")
-			self.CAM_IS_CONN = False
+		if self.OPEN_CAMERA_WINDOW:
+			self.OPEN_CAMERA_WINDOW = False
 		else:
-			self.Cam_State.config(text="Camera State: Connecting...", fg="green4")
-			self.Cam_State.place(x=self.WinSize[0]-140,y=110,anchor="ne")
-			self.CAM_IS_CONN = True
+			self.OPEN_CAMERA_WINDOW = True
+		self.TCAM.setCameraWindow(self.OPEN_CAMERA_WINDOW)
 
 	def Choose_Dir(self): #選擇CSV檔要存至哪個位置
 		FileDir = filedialog.asksaveasfilename(
@@ -142,6 +145,30 @@ class MazeMouseTrack(object):
 		self.TK_SHOW_FileDir.set("# FileDir: {}{}".format(self.FilePath, self.FileName))
 		# print(self.FilePath)
 		# print(self.FileName)
+
+	def makeBall(self): #變更目標位置
+		self.TargetPos = self.TCAM.getTargetPos()
+		self.mazeCanvas.move(self.TBall, int(self.TargetPos[0] - self.nowPos[0]), int(self.TargetPos[1] - self.nowPos[1]))
+		self.nowPos = self.TargetPos
+
+	def LoopMain(self): #UI執行後一直跑的迴圈
+		self.makeBall()
+
+		self.CAM_IS_CONN = self.TCAM.getCameraStatus()
+		if self.CAM_IS_CONN:
+			self.Cam_State.config(text="Camera State: Connecting...", fg="green4")
+			self.Cam_State.place(x=self.WinSize[0]-140,y=110,anchor="ne")
+			self.BT_Camera.config(state="normal")
+		else:
+			self.Cam_State.config(text="Camera State: Unconnect", fg="gray35")
+			self.Cam_State.place(x=self.WinSize[0]-160,y=110,anchor="ne")
+			self.BT_Camera.config(state="disabled")
+
+		self.tkWin.after(10,self.LoopMain)
+
+	def windowsClosing(self):
+		self.TCAM.setInterfaceStatus(False) #傳送視窗關閉狀態
+		self.tkWin.destroy()
 
 	def setupUI(self):
 		#========左側：紀錄變數========
@@ -168,6 +195,10 @@ class MazeMouseTrack(object):
 
 		#========中間：虛擬視窗顯示區域========
 		self.mazeCanvas = tk.Canvas(bg="black", width = self.ViewSize[0], height = self.ViewSize[1])
+		p1 = [int(self.TargetPos[0]/2 - self.BALL_SIZE/2), int(self.TargetPos[1]/2 - self.BALL_SIZE/2)]
+		p2 = [int(self.TargetPos[0]/2 + self.BALL_SIZE/2), int(self.TargetPos[1]/2 + self.BALL_SIZE/2)]
+		self.TBall = self.mazeCanvas.create_oval(p1[0], p1[1], p2[0], p2[1], fill='red')  #创建一个圆，填充色为`red`红色
+
 		pViewX = int((self.WinSize[0]-self.ViewSize[0])*0.45) #虛擬視窗左上定位點X
 		pViewY = int((self.WinSize[1]-self.ViewSize[1])*0.45) #虛擬視窗左上定位點Y
 		self.setArmLine()
@@ -222,7 +253,11 @@ class MazeMouseTrack(object):
 		else:
 			tk.Label(self.tkWin,textvariable=self.TK_SHOW_Error_Msg, font=('Arial', 10)).place(x=int(self.WinSize[0]/2),y=self.WinSize[1]-10,anchor="sw")
 
+		
+		self.tkWin.protocol("WM_DELETE_WINDOW", self.windowsClosing)
+		self.tkWin.after(10,self.LoopMain)
 		self.tkWin.mainloop()
+		self.thread.join() # 等待子執行緒結束
 		
 if __name__ == '__main__':
   MazeMouseTrack()
