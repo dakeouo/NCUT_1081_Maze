@@ -1,9 +1,11 @@
+import random
 import tkinter as tk
+import tkinter.messagebox
 from tkinter import filedialog
 import threading
 from ThermalCAM import ThermalCAM as TCAM
 
-def countStr(self, Str): #算出字串中大小寫字母與數字及其他符號的個數
+def countStr(Str): #算出字串中大小寫字母與數字及其他符號的個數
 	Unit = [0, 0, 0, 0] #大寫字母/小寫字母/數字/其他符號
 	for i in range(0,len(Str)):
 		if (ord(Str[i]) >= 65) and (ord(Str[i]) <= 90):
@@ -17,6 +19,9 @@ def countStr(self, Str): #算出字串中大小寫字母與數字及其他符號
 	
 	return Unit
 
+def Second2Datetime(sec): #秒數轉換成時間
+	return int(sec/3600), int((sec%3600)/60), int((sec%3600)%60)
+
 class MazeMouseTrack(object):
 	def __init__(self):
 		#熱影像相機的類別
@@ -28,13 +33,16 @@ class MazeMouseTrack(object):
 		self.ARM_UNIT = self.TCAM.getArmUnit() #迷宮臂數
 		self.ARMS_POS = self.TCAM.getMazeArmsPos() #迷宮臂座標點
 		self.OPEN_CAMERA_WINDOW = False #影像視窗狀態
+		self.TotalFood = 0 #放食物的總數
 		self.Food = [] #放食物的臂
+		self.Route = [] #紀錄進臂順序
 		self.S_Term = [] #各臂短期記憶錯誤
 		self.L_Term = [] #各臂長期記憶錯誤
 		self.FilePath = "" #存入的路徑
 		self.FileName = "" #存入的檔案
 		self.TargetPos = self.TCAM.getTargetPos() #影像處理後取得的座標
 		self.nowPos = self.TargetPos
+		self.Latency = 0 #總時間長度
 
 		#變數：視窗相關
 		self.WinSize = (1152, 560) #UI介面顯示大小
@@ -45,9 +53,12 @@ class MazeMouseTrack(object):
 		self.TK_Food = [] #勾選放食物的臂
 		self.TK_S_Term = [] #顯示各臂短期記憶錯誤
 		self.TK_L_Term = [] #顯示各臂長期記憶錯誤
+		self.TK_Total_S_Term = 0 #顯示短期記憶錯誤總和
+		self.TK_Total_L_Term = 0 #顯示長期記憶錯誤總和
 		self.TK_File_Dir = "" #顯示存入的檔案(含路徑)
 		self.TK_Rat_ID = "" #顯示老鼠編號
 		self.ERROR_MSG = "" #顯示錯誤訊息
+		self.TK_Latency = 0 #顯示總時間長度
 
 		#變數：顯示目前設定狀態
 		self.TK_SHOW_Food = []
@@ -94,10 +105,13 @@ class MazeMouseTrack(object):
 		hadFood = []
 		ct = 0
 		for i in range(0,self.ARM_UNIT):
-			self.Food[i] = self.TK_Food[i].get()
 			if(self.TK_Food[i].get() == 1): 
 				hadFood.append((i+1))
+				self.Food[i] = 1
 				ct = ct + 1
+			else:
+				self.Food[i] = 0
+		self.TotalFood = ct
 		if(ct == 0):
 			str1 = "# Food: "
 			move = 290
@@ -107,25 +121,42 @@ class MazeMouseTrack(object):
 
 		self.TK_SHOW_Food.config(text=str1)
 		self.TK_SHOW_Food.place(x=self.WinSize[0]-move,y=170,anchor="ne")
-		# print("Food: {}".format(hadFood))
-		# print(self.Food)
 
 	def MazeStartCheck(self): #執行前檢查
+		HaveError = False
 		if self.MAZE_IS_RUN:
 			self.Maze_State.config(text="Maze State: Preparing...", fg="gray35")
 			self.Maze_State.place(x=self.WinSize[0]-170,y=140,anchor="ne")
-			self.BT_Start.config(text="Start")
+			self.BT_Start.config(text="Start", bg="DarkOliveGreen2")
 			self.MAZE_IS_RUN = False
 		else:
-			self.Maze_State.config(text="Maze State: Recording...", fg="green4")
-			self.Maze_State.place(x=self.WinSize[0]-167,y=140,anchor="ne")
-			self.BT_Start.config(text="Stop")
-			self.MAZE_IS_RUN = True
+			ErrMsg = ""
+			if self.FilePath == "":
+				ErrMsg = ErrMsg + "File Path not filled!!\n"
+				HaveError = True
+			if self.TK_Rat_ID.get() == "":
+				ErrMsg = ErrMsg + "Rat ID not filled!!\n"
+				HaveError = True
+			if self.TotalFood == 0:
+				ErrMsg = ErrMsg + "You don't have click any food!!\n"
+				HaveError = True
+			
+			if HaveError:
+				tk.messagebox.showwarning(title='Warning!!', message=ErrMsg)
+			else:
+				self.TCAM.setFoodWithArm(self.TotalFood, self.Food)
+				self.Maze_State.config(text="Maze State: Recording...", fg="green4")
+				self.Maze_State.place(x=self.WinSize[0]-167,y=140,anchor="ne")
+				self.BT_Start.config(text="Stop", bg="IndianRed1")
+				self.MAZE_IS_RUN = True
+		self.TCAM.setMazeStatus(self.MAZE_IS_RUN)
 
 	def CameraCheck(self): #實體影像檢查
 		if self.OPEN_CAMERA_WINDOW:
+			self.BT_Camera.config(bg="gray85")
 			self.OPEN_CAMERA_WINDOW = False
 		else:
+			self.BT_Camera.config(bg="lemon chiffon")
 			self.OPEN_CAMERA_WINDOW = True
 		self.TCAM.setCameraWindow(self.OPEN_CAMERA_WINDOW)
 
@@ -153,8 +184,32 @@ class MazeMouseTrack(object):
 
 	def LoopMain(self): #UI執行後一直跑的迴圈
 		self.makeBall()
-
 		self.CAM_IS_CONN = self.TCAM.getCameraStatus()
+
+		if self.MAZE_IS_RUN:
+			newMazeStatus = self.TCAM.getMazeStatus()
+			self.S_Term, self.L_Term = self.TCAM.getTerm()
+			self.Route = self.TCAM.getRoute()
+			self.Latency = self.TCAM.getLatency()
+			TLT = 0 #Total Long Term
+			TST = 0 #Total Short Term
+			for i in range(1, self.ARM_UNIT+1):
+				TLT = TLT + self.L_Term[i-1]
+				TST = TST + self.S_Term[i-1]
+				self.TK_L_Term[i-1].set(str(self.L_Term[i-1]))
+				self.TK_S_Term[i-1].set(str(self.S_Term[i-1]))
+			self.TK_Total_S_Term.set("Total Short Term: %d" %(TST))
+			self.TK_Total_L_Term.set("Total Long Term: %d" %(TLT))
+			nLate = Second2Datetime(self.Latency)
+			self.TK_Latency.set("Latency: %02d:%02d:%02d" %(nLate[0],nLate[1],nLate[2]))
+			self.RouteText.delete('0.0','end')
+			self.RouteText.insert('end',self.Route)
+			if newMazeStatus == False:
+				self.Maze_State.config(text="Maze State: Preparing...", fg="gray35")
+				self.Maze_State.place(x=self.WinSize[0]-170,y=140,anchor="ne")
+				self.BT_Start.config(text="Start", bg="DarkOliveGreen2")
+				self.MAZE_IS_RUN = False
+
 		if self.CAM_IS_CONN:
 			self.Cam_State.config(text="Camera State: Connecting...", fg="green4")
 			self.Cam_State.place(x=self.WinSize[0]-140,y=110,anchor="ne")
@@ -170,12 +225,60 @@ class MazeMouseTrack(object):
 		self.TCAM.setInterfaceStatus(False) #傳送視窗關閉狀態
 		self.tkWin.destroy()
 
+	def PreparingTesting(self):
+		#=======食物位置設置========
+		hadFood = []
+		ct = 0
+		for i in range(0,self.ARM_UNIT):
+			num = random.randint(0,1)
+			if(num == 1): 
+				hadFood.append((i+1))
+				self.Food[i] = 1
+				ct = ct + 1
+			else:
+				self.Food[i] = 0
+			self.TK_Food[i].set(num)
+		self.TotalFood = ct
+		if(ct == 0):
+			str1 = "# Food: "
+			move = 290
+		else:
+			str1 = "# Food: {}".format(hadFood)
+			move = 290 - ct*17
+
+		self.TK_SHOW_Food.config(text=str1)
+		self.TK_SHOW_Food.place(x=self.WinSize[0]-move,y=170,anchor="ne")
+		#========檔案存放位置設置========
+		self.FilePath = "D:/4A813024/Proj/NCUT_1081_Maze/test/"
+		self.FileName = "testing%0d.csv" %(random.randint(1,10))
+		self.TK_File_Dir.set(str(self.FilePath)+str(self.FileName))
+		self.TK_SHOW_FileDir.set("# FileDir: {}{}".format(self.FilePath, self.FileName))
+		#========老鼠編號設置========
+		RAT_ID = "20200101"
+		self.TK_Rat_ID.delete(first=0,last=22)
+		self.TK_Rat_ID.insert('end',RAT_ID)
+		Unit = countStr(RAT_ID)
+		str1 = "# RatID: {}".format(RAT_ID)
+		move = 288 - (Unit[0]*11 + (Unit[1] + Unit[2] + Unit[3])*9)
+		self.TK_SHOW_Rat_ID.config(text=str1)
+		self.TK_SHOW_Rat_ID.place(x=self.WinSize[0]-move,y=200,anchor="ne")
+
 	def setupUI(self):
+		#========測試用========
+		tk.Button(self.tkWin, text='Testing', width=10, font=('Arial', 8), command=self.PreparingTesting).place(x=100,y=10,anchor="nw")
+
 		#========左側：紀錄變數========
+		self.TK_Total_L_Term = tk.StringVar()
+		self.TK_Total_S_Term = tk.StringVar()
+		self.TK_Latency = tk.StringVar()
+		nLate = Second2Datetime(180)
+		self.TK_Latency.set("Latency: %02d:%02d:%02d" %(nLate[0],nLate[1],nLate[2]))
+		self.TK_Total_L_Term.set("Total Long Term: %d" %(0))
+		self.TK_Total_S_Term.set("Total Short Term: %d" %(0))
 		tk.Label(self.tkWin,text="Statistics", font=('Arial', 12), bg="gray75").place(x=20,y=10,anchor="nw")
-		tk.Label(self.tkWin,text="Total Long Term: 0", font=('Arial', 14)).place(x=20,y=40,anchor="nw")
-		tk.Label(self.tkWin,text="Total Short Term: 0", font=('Arial', 14)).place(x=20,y=80,anchor="nw")
-		tk.Label(self.tkWin,text="Latency: 0:00", font=('Arial', 14)).place(x=20,y=120,anchor="nw")
+		tk.Label(self.tkWin,textvariable=self.TK_Total_L_Term, font=('Arial', 14)).place(x=20,y=40,anchor="nw")
+		tk.Label(self.tkWin,textvariable=self.TK_Total_S_Term, font=('Arial', 14)).place(x=20,y=80,anchor="nw")
+		tk.Label(self.tkWin,textvariable=self.TK_Latency, font=('Arial', 14)).place(x=20,y=120,anchor="nw")
 
 		#========左側：紀錄食物位置和詳細記憶錯誤========
 		tk.Label(self.tkWin,text="Food/Term", font=('Arial', 12), bg="gray75").place(x=20,y=170,anchor="nw")
@@ -207,7 +310,7 @@ class MazeMouseTrack(object):
 		#========右側：按鈕========
 		self.BT_Camera = tk.Button(self.tkWin, text='Camera', width=14, font=('Arial', 14), bg="gray85", command=self.CameraCheck)
 		self.BT_Camera.place(x=self.WinSize[0]-20,y=20,anchor="ne")
-		self.BT_Start = tk.Button(self.tkWin, text='Start', width=14, font=('Arial', 14), command=self.MazeStartCheck)
+		self.BT_Start = tk.Button(self.tkWin, text='Start', width=14, font=('Arial', 14), bg="DarkOliveGreen2", command=self.MazeStartCheck)
 		self.BT_Start.place(x=self.WinSize[0]-190,y=20,anchor="ne")
 
 		#========右側：狀態顯示========
