@@ -3,6 +3,8 @@ import numpy as np
 import time
 import datetime
 from PIL import Image
+import os
+import csv
 
 def convert(list): 
 	return tuple(list)
@@ -40,6 +42,39 @@ def line2gate(pA, pB, cm): #設定門檻線
 
 	return [int(rX), int(rY)]
 
+def writeData2CSV(fileName, type_, dataRow): #寫入CSV檔
+	with open(fileName, type_, newline='') as csvfile:
+		# 建立 CSV 檔寫入器
+		writer = csv.writer(csvfile)
+
+		# 寫入一列資料
+		writer.writerow(dataRow) 
+
+def readCSV2List(fileName): #讀取CSV檔
+	AllData = []
+	with open(fileName, newline='') as csvfile:
+	  # 以冒號分隔欄位，讀取檔案內容
+	  rows = csv.reader(csvfile, delimiter=',')
+
+	  for row in rows:
+	    AllData.append(row)
+
+	return AllData
+
+def listAllSame(list1, list2): #檢查兩陣列是否完全一樣
+	print(list1)
+	print(list2)
+	if(len(list1) != len(list2)):
+		return False
+	else:
+		for i in range(0,len(list1)):
+			if list1[i] != list2[i]:
+				return False
+		return True
+
+def Second2Datetime(sec): #秒數轉換成時間
+	return int(sec/3600), int((sec%3600)/60), int((sec%3600)%60)
+
 class ThermalCAM:
 	def __init__(self):
 		#變數：狀態變數
@@ -72,7 +107,11 @@ class ThermalCAM:
 		self.OutLineGate = [] #退出門檻陣列
 		self.ShortTerm = [] #短期記憶陣列
 		self.LongTerm = [] #長期記憶陣列
+		self.TotalShortTerm = 0 #總短期記憶
+		self.TotalLongTerm = 0 #總長期記憶
 		self.Latency = 0 #總時間長度
+		self.filePath = "" #寫入的檔案路徑
+		self.RatID = "" #老鼠編號
 		self.setTime = datetime.datetime.now() #開始前時間
 		self.nowTime = datetime.datetime.now() #現在時間
 
@@ -125,6 +164,12 @@ class ThermalCAM:
 		self.TotalFood = total
 		self.Food = food
 
+	def setFilePath(self, filepath): #設定檔案寫入路徑
+		self.filePath = filepath
+
+	def setRatID(self, ratid): #設定老鼠編號
+		self.RatID = ratid
+
 	def setArmGate(self, cm): #設定臂門檻線
 		result = []
 		for x in range(0,self.ARM_UNIT):
@@ -135,7 +180,7 @@ class ThermalCAM:
 		return result
 
 	def virtualCam(self, pid): #模擬鏡頭運行
-		speed = 45
+		speed = 10
 		image = cv2.imread("./test/0106/0106-%d.png" %(int(pid/speed) + 1))
 		if pid < (60 - 1)*speed:
 			pid = pid + 1
@@ -178,6 +223,8 @@ class ThermalCAM:
 		self.ShortTerm = []
 		self.LongTerm = []
 		self.setTime = datetime.datetime.now()
+		self.TotalShortTerm = 0
+		self.TotalLongTerm = 0
 		for i in range(0,self.ARM_UNIT):
 			self.FirstIn.append(0)
 			self.ShortTerm.append(0)
@@ -189,9 +236,11 @@ class ThermalCAM:
 				self.TotalFood = self.TotalFood - 1
 			else:
 				self.LongTerm[arm] = self.LongTerm[arm] + 1
+				self.TotalLongTerm = self.TotalLongTerm + 1
 			self.FirstIn[arm] = 1
 		else:
 			self.ShortTerm[arm] = self.ShortTerm[arm] + 1
+			self.TotalShortTerm = self.TotalShortTerm + 1
 
 	def checkGate(self, st):
 		newDot = [self.TargetPos[0], self.TargetPos[1]]
@@ -211,6 +260,19 @@ class ThermalCAM:
 				self.Route.append(st)
 				st = 0
 		return st
+
+	def DataRecord(self):
+		csvTitle = ["Rat ID", "Food", "Total LongTerm", "Total ShortTerm", "Route", "Latency"]
+		nLate = Second2Datetime(self.Latency)
+		newLatency = "%02d:%02d:%02d" %(nLate[0],nLate[1],nLate[2])
+		MazeData = [self.RatID, self.Food, self.TotalLongTerm, self.TotalShortTerm, self.Route, newLatency]
+		if os.path.isfile(self.filePath):
+			csvData = readCSV2List(self.filePath)
+			if not (listAllSame(csvData[0],csvTitle)):
+				writeData2CSV(self.filePath, "w", csvTitle)
+		else:
+			writeData2CSV(self.filePath, "w", csvTitle)
+		writeData2CSV(self.filePath, "a", MazeData)
 
 	def CameraMain(self): #這個副程式是"主程式"呦~~~~~
 		pid = 1
@@ -238,6 +300,7 @@ class ThermalCAM:
 						self.Latency = (self.nowTime - self.setTime).seconds
 
 					if self.NOW_STATUS == 0 and self.TotalFood == 0:
+						self.DataRecord()
 						self.MAZE_IS_RUN = False
 						RUN_FIRST_TIME = False
 			else:

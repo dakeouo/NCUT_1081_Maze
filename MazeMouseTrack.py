@@ -145,6 +145,8 @@ class MazeMouseTrack(object):
 				tk.messagebox.showwarning(title='Warning!!', message=ErrMsg)
 			else:
 				self.TCAM.setFoodWithArm(self.TotalFood, self.Food)
+				self.TCAM.setRatID(self.TK_Rat_ID.get())
+				self.TCAM.setFilePath(str(self.FilePath)+str(self.FileName))
 				self.Maze_State.config(text="Maze State: Recording...", fg="green4")
 				self.Maze_State.place(x=self.WinSize[0]-167,y=140,anchor="ne")
 				self.BT_Start.config(text="Stop", bg="IndianRed1")
@@ -182,28 +184,31 @@ class MazeMouseTrack(object):
 		self.mazeCanvas.move(self.TBall, int(self.TargetPos[0] - self.nowPos[0]), int(self.TargetPos[1] - self.nowPos[1]))
 		self.nowPos = self.TargetPos
 
+	def updateData(self): #更新各項顯示資訊
+		self.S_Term, self.L_Term = self.TCAM.getTerm()
+		self.Route = self.TCAM.getRoute()
+		self.Latency = self.TCAM.getLatency()
+		TLT = 0 #Total Long Term
+		TST = 0 #Total Short Term
+		for i in range(1, self.ARM_UNIT+1):
+			TLT = TLT + self.L_Term[i-1]
+			TST = TST + self.S_Term[i-1]
+			self.TK_L_Term[i-1].set(str(self.L_Term[i-1]))
+			self.TK_S_Term[i-1].set(str(self.S_Term[i-1]))
+		self.TK_Total_S_Term.set("Total Short Term: %d" %(TST))
+		self.TK_Total_L_Term.set("Total Long Term: %d" %(TLT))
+		nLate = Second2Datetime(self.Latency)
+		self.TK_Latency.set("Latency: %02d:%02d:%02d" %(nLate[0],nLate[1],nLate[2]))
+		self.RouteText.delete('0.0','end')
+		self.RouteText.insert('end',self.Route)
+
 	def LoopMain(self): #UI執行後一直跑的迴圈
 		self.makeBall()
 		self.CAM_IS_CONN = self.TCAM.getCameraStatus()
 
 		if self.MAZE_IS_RUN:
 			newMazeStatus = self.TCAM.getMazeStatus()
-			self.S_Term, self.L_Term = self.TCAM.getTerm()
-			self.Route = self.TCAM.getRoute()
-			self.Latency = self.TCAM.getLatency()
-			TLT = 0 #Total Long Term
-			TST = 0 #Total Short Term
-			for i in range(1, self.ARM_UNIT+1):
-				TLT = TLT + self.L_Term[i-1]
-				TST = TST + self.S_Term[i-1]
-				self.TK_L_Term[i-1].set(str(self.L_Term[i-1]))
-				self.TK_S_Term[i-1].set(str(self.S_Term[i-1]))
-			self.TK_Total_S_Term.set("Total Short Term: %d" %(TST))
-			self.TK_Total_L_Term.set("Total Long Term: %d" %(TLT))
-			nLate = Second2Datetime(self.Latency)
-			self.TK_Latency.set("Latency: %02d:%02d:%02d" %(nLate[0],nLate[1],nLate[2]))
-			self.RouteText.delete('0.0','end')
-			self.RouteText.insert('end',self.Route)
+			self.updateData()
 			if newMazeStatus == False:
 				self.Maze_State.config(text="Maze State: Preparing...", fg="gray35")
 				self.Maze_State.place(x=self.WinSize[0]-170,y=140,anchor="ne")
@@ -250,11 +255,11 @@ class MazeMouseTrack(object):
 		self.TK_SHOW_Food.place(x=self.WinSize[0]-move,y=170,anchor="ne")
 		#========檔案存放位置設置========
 		self.FilePath = "D:/4A813024/Proj/NCUT_1081_Maze/test/"
-		self.FileName = "testing%0d.csv" %(random.randint(1,10))
+		self.FileName = "testing%0d.csv" %(random.randint(1,3))
 		self.TK_File_Dir.set(str(self.FilePath)+str(self.FileName))
 		self.TK_SHOW_FileDir.set("# FileDir: {}{}".format(self.FilePath, self.FileName))
 		#========老鼠編號設置========
-		RAT_ID = "20200101"
+		RAT_ID = "TEST%0d" %(random.randint(1,20))
 		self.TK_Rat_ID.delete(first=0,last=22)
 		self.TK_Rat_ID.insert('end',RAT_ID)
 		Unit = countStr(RAT_ID)
@@ -271,7 +276,7 @@ class MazeMouseTrack(object):
 		self.TK_Total_L_Term = tk.StringVar()
 		self.TK_Total_S_Term = tk.StringVar()
 		self.TK_Latency = tk.StringVar()
-		nLate = Second2Datetime(180)
+		nLate = Second2Datetime(0)
 		self.TK_Latency.set("Latency: %02d:%02d:%02d" %(nLate[0],nLate[1],nLate[2]))
 		self.TK_Total_L_Term.set("Total Long Term: %d" %(0))
 		self.TK_Total_S_Term.set("Total Short Term: %d" %(0))
