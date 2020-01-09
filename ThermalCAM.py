@@ -62,8 +62,6 @@ def readCSV2List(fileName): #讀取CSV檔
 	return AllData
 
 def listAllSame(list1, list2): #檢查兩陣列是否完全一樣
-	print(list1)
-	print(list2)
 	if(len(list1) != len(list2)):
 		return False
 	else:
