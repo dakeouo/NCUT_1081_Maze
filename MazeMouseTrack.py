@@ -254,7 +254,7 @@ class MazeMouseTrack(object):
 		self.TK_SHOW_Food.config(text=str1)
 		self.TK_SHOW_Food.place(x=self.WinSize[0]-move,y=170,anchor="ne")
 		#========檔案存放位置設置========
-		self.FilePath = "D:/4A813024/Proj/NCUT_1081_Maze/test/"
+		self.FilePath = "D:/4A813024/"
 		self.FileName = "testing%0d.csv" %(random.randint(1,3))
 		self.TK_File_Dir.set(str(self.FilePath)+str(self.FileName))
 		self.TK_SHOW_FileDir.set("# FileDir: {}{}".format(self.FilePath, self.FileName))

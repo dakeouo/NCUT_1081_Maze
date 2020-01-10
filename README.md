@@ -5,6 +5,13 @@
 ![image](https://i.imgur.com/XrAZRnR.png)
 
 ## Steps for System
+### Python Libarary
+Python需安裝下列套件才可成功執行：
+```bash
+pip install opencv-python #OpenCV(import cv2)
+pip install Pillow #PIL(from PIL impory Image)
+```
+
 ### Prepare
 1. 開啟紅外線攝像視窗，確認八臂迷宮是否對齊預設框線
 2. 設定**寫入檔案路徑**以及**老鼠編號(RatID)**
