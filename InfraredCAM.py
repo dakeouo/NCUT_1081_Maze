@@ -228,7 +228,7 @@ class InfraredCAM:
 		ans61 = math.sqrt(pow(self.TargetPos[0] - mask615[0],2) + pow(self.TargetPos[1] - mask615[1],2))
 		ans62 = math.sqrt(pow(self.TargetPos[0] - mask625[0],2) + pow(self.TargetPos[1] - mask625[1],2))
 		ans6 = ans61 + ans62
-		print("ans6: "+str(ans6)) #白色與六臂的距離
+		# print("ans6: "+str(ans6)) #白色與六臂的距離
 		ans71 = math.sqrt(pow(self.TargetPos[0] - mask715[0],2) + pow(self.TargetPos[1] - mask715[1],2))
 		ans72 = math.sqrt(pow(self.TargetPos[0] - mask725[0],2) + pow(self.TargetPos[1] - mask725[1],2))
 		ans7 = ans71 + ans72
@@ -240,27 +240,35 @@ class InfraredCAM:
 		if ans1<30:
 			self.NOW_STATUS =1
 			self.dangchianbi=1
+			self.food1[0] = 0
 		elif ans2<30:
 			self.NOW_STATUS=1
 			self.dangchianbi=2
+			self.food1[1] = 0
 		elif ans3<30:
 			self.NOW_STATUS=1
 			self.dangchianbi=3
+			self.food1[2] = 0
 		elif ans4<30:
 			self.NOW_STATUS=1
 			self.dangchianbi=4
+			self.food1[3] = 0
 		elif ans5<30:
 			self.NOW_STATUS=1
 			self.dangchianbi=5
+			self.food1[4] = 0
 		elif ans6<30:
 			self.NOW_STATUS=1
 			self.dangchianbi=6
+			self.food1[5] = 0
 		elif ans7<30:
 			self.NOW_STATUS=1
 			self.dangchianbi=7
+			self.food1[6] = 0
 		elif ans8<30:
 			self.NOW_STATUS=1
 			self.dangchianbi=8
+			self.food1[7] = 0
 		else:
 			self.NOW_STATUS=0
 			# pass
@@ -378,7 +386,7 @@ class InfraredCAM:
 			ans61 = math.sqrt(pow(self.TargetPos[0] - I61[0],2) + pow(self.TargetPos[1] - I61[1],2))
 			ans62 = math.sqrt(pow(self.TargetPos[0] - I62[0],2) + pow(self.TargetPos[1] - I62[1],2))
 			ans6 = ans61 + ans62	
-			print("ans6"+str(ans6))
+			# print("ans6"+str(ans6))
 			if ans6 < 35:
 				self.NOW_STATUS = 0
 				self.dangchianbi = 0
@@ -497,27 +505,40 @@ class InfraredCAM:
 						self.food1.append(self.Food[i])
 						self.foodtest.append(self.Food[i])
 					self.READ_FOOD = True
-					timestart = datetime.now() #起始時間
+					self.timestart = datetime.now() #起始時間
+					print("起始時間: " +str(self.timestart))
+					
 				else:
 					pass
 				if self.NOW_STATUS == 0: #進臂
 					self.NOW_STATUS, self.dangchianbi = self.examination(self.NOW_STATUS,self.TargetPos)
+					print(self.food1)
+					food1max = np.max(self.food1)
+					if food1max == 0:
+						self.time_end = datetime.now() #結束時間
+						print("結束時間: "+str(self.time_end))
+						print("花費時間:　"+str(self.time_end - self.timestart))
+						self.MAZE_IS_RUN = False
+
+					else:
+						pass
 					# print("進臂順序"+str(self.Route))
-					print("目前狀態"+str(self.NOW_STATUS))
-					print("目前臂"+str(self.dangchianbi))
-					print("進臂次數:"+str(self.frequency))
-					print("短期工作記憶錯誤: "+str(self.ShortTerm))
-					print("長期工作記憶錯誤"+str(self.LongTerm))
-					print("長期工作記憶基準"+str(self.foodtest))
+					# print("目前狀態"+str(self.NOW_STATUS))
+					# print("目前臂"+str(self.dangchianbi))
+					# print("進臂次數:"+str(self.frequency))
+					# print("短期工作記憶錯誤: "+str(self.ShortTerm))
+					# print("長期工作記憶錯誤"+str(self.LongTerm))
+					# print("長期工作記憶基準"+str(self.foodtest))
 				elif self.NOW_STATUS == 1: #出臂
 					self.NOW_STATUS, self.dangchianbi = self.leave(self.NOW_STATUS,self.TargetPos)
+					print(self.food1)
 					# print("進臂順序"+str(self.Route))
-					print("目前狀態"+str(self.NOW_STATUS))
-					print("目前臂"+str(self.dangchianbi))
-					print("進臂次數:"+str(self.frequency))
-					print("短期工作記憶錯誤: "+str(self.ShortTerm))
-					print("長期工作記憶錯誤"+str(self.LongTerm))
-					print("長期工作記憶基準"+str(self.foodtest))
+					# print("目前狀態"+str(self.NOW_STATUS))
+					# print("目前臂"+str(self.dangchianbi))
+					# print("進臂次數:"+str(self.frequency))
+					# print("短期工作記憶錯誤: "+str(self.ShortTerm))
+					# print("長期工作記憶錯誤"+str(self.LongTerm))
+					# print("長期工作記憶基準"+str(self.foodtest))
 				else:
 					pass
 
