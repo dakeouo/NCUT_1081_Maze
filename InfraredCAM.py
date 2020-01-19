@@ -297,13 +297,13 @@ class InfraredCAM:
 				self.dangchianbi = 0
 				self.Route.append(1) #寫入進臂順序
 				self.frequency[0] = self.frequency[0]+1  #短期工作記憶+1
-				# if self.foodtest[0] == 1: #長期工作記憶判斷
-				# 	pass
-				# elif self.foodtest[0] == 0:					
-				# 	self.foodtest[0] = self.foodtest[0] + 1
-				# 	self.TotalLongTerm = self.TotalLongTerm +1
-				# else:
-				# 	pass
+				if self.foodtest[0] == 1: #長期工作記憶判斷
+					pass
+				elif self.foodtest[0] == 0:					
+					self.foodtest[0] = self.foodtest[0] + 1
+					self.LongTerm[0] = self.LongTerm[0] +1
+				else:
+					pass
 		elif self.dangchianbi == 2:
 			ans21 = math.sqrt(pow(self.TargetPos[0] - I21[0],2) + pow(self.TargetPos[1] - I21[1],2))
 			ans22 = math.sqrt(pow(self.TargetPos[0] - I22[0],2) + pow(self.TargetPos[1] - I22[1],2))
@@ -314,11 +314,11 @@ class InfraredCAM:
 				self.dangchianbi = 0
 				self.Route.append(2)
 				self.frequency[1] = self.frequency[1]+1
-				# if self.foodtest[1] == 1:#長期工作記憶判斷
-				# 	pass
-				# elif self.foodtest[1] == 0:
-				# 	self.foodtest[1] = self.foodtest[1]+1
-				# 	self.TotalLongTerm = self.TotalLongTerm + 1
+				if self.foodtest[1] == 1:#長期工作記憶判斷
+					pass
+				elif self.foodtest[1] == 0:
+					self.foodtest[1] = self.foodtest[1]+1
+					self.LongTerm[1] = self.LongTerm[1] + 1
 				# else:
 				# 	pass	
 			else:
@@ -333,13 +333,13 @@ class InfraredCAM:
 				self.dangchianbi = 0
 				self.Route.append(3)
 				self.frequency[2]=self.frequency[2]+1
-				# if self.foodtest[2] == 1:#長期工作記憶
-				# 	pass
-				# elif self.foodtest[2] == 0:
-				# 	self.foodtest[2] = self.foodtest[2] + 1
-				# 	self.TotalLongTerm = self.TotalLongTerm + 1
-				# else:
-				# 	pass
+				if self.foodtest[2] == 1:#長期工作記憶
+					pass
+				elif self.foodtest[2] == 0:
+					self.foodtest[2] = self.foodtest[2] + 1
+					self.LongTerm[2] = self.LongTerm[2] + 1
+				else:
+					pass
 		elif self.dangchianbi == 4:
 			ans41 = math.sqrt(pow(self.TargetPos[0] - I41[0],2) + pow(self.TargetPos[1] - I41[1],2))
 			ans42 = math.sqrt(pow(self.TargetPos[0] - I42[0],2) + pow(self.TargetPos[1] - I42[1],2))
@@ -350,13 +350,13 @@ class InfraredCAM:
 				self.dangchianbi = 0
 				self.Route.append(4)
 				self.frequency[3]=self.frequency[3]+1
-				# if self.foodtest[3] == 1:#長期工作記憶
-				# 	pass
-				# elif self.foodtest[3] == 0:
-				# 	self.foodtest[3] = self.foodtest[3] + 1
-				# 	self.TotalLongTerm = self.TotalLongTerm + 1
-				# else:
-				# 	pass
+				if self.foodtest[3] == 1:#長期工作記憶
+					pass
+				elif self.foodtest[3] == 0:
+					self.foodtest[3] = self.foodtest[3] + 1
+					self.LongTerm[3] = self.LongTerm[3] + 1
+				else:
+					pass
 		elif self.dangchianbi == 5:
 			ans51 = math.sqrt(pow(self.TargetPos[0] - I51[0],2) + pow(self.TargetPos[1] - I51[1],2))
 			ans52 = math.sqrt(pow(self.TargetPos[0] - I52[0],2) + pow(self.TargetPos[1] - I52[1],2))
@@ -367,13 +367,13 @@ class InfraredCAM:
 				self.dangchianbi = 0
 				self.Route.append(5)
 				self.frequency[4]=self.frequency[4]+1
-				# if self.foodtest[4] == 1:#長期工作記憶
-				# 	pass
-				# elif self.foodtest[4] == 0:
-				# 	self.foodtest[4] = self.foodtest[4] + 1
-				# 	self.TotalLongTerm = self.TotalLongTerm + 1
-				# else:
-				# 	pass
+				if self.foodtest[4] == 1:#長期工作記憶
+					pass
+				elif self.foodtest[4] == 0:
+					self.foodtest[4] = self.foodtest[4] + 1
+					self.LongTerm[4] = self.LongTerm[4] + 1
+				else:
+					pass
 		elif self.dangchianbi == 6:
 			ans61 = math.sqrt(pow(self.TargetPos[0] - I61[0],2) + pow(self.TargetPos[1] - I61[1],2))
 			ans62 = math.sqrt(pow(self.TargetPos[0] - I62[0],2) + pow(self.TargetPos[1] - I62[1],2))
@@ -384,13 +384,13 @@ class InfraredCAM:
 				self.dangchianbi = 0
 				self.Route.append(6)
 				self.frequency[5]=self.frequency[5]+1
-				# if self.foodtest[5] == 1:#長期工作記憶
-				# 	pass
-				# elif self.foodtest[5] == 0:
-				# 	self.foodtest[5] = self.foodtest[5] + 1
-				# 	self.TotalLongTerm = self.TotalLongTerm + 1
-				# else:
-				# 	pass
+				if self.foodtest[5] == 1:#長期工作記憶
+					pass
+				elif self.foodtest[5] == 0:
+					self.foodtest[5] = self.foodtest[5] + 1
+					self.LongTerm[5] = self.LongTerm[5] + 1
+				else:
+					pass
 		elif self.dangchianbi == 7:
 			ans71 = math.sqrt(pow(self.TargetPos[0] - I71[0],2) + pow(self.TargetPos[1] - I71[1],2))
 			ans72 = math.sqrt(pow(self.TargetPos[0] - I72[0],2) + pow(self.TargetPos[1] - I72[1],2))
@@ -401,13 +401,13 @@ class InfraredCAM:
 				self.dangchianbi = 0
 				self.Route.append(7)
 				self.frequency[6]=self.frequency[6]+1
-				# if self.foodtest[6] == 1:#長期工作記憶
-				# 	pass
-				# elif self.foodtest[6] == 0:
-				# 	self.foodtest[6] = self.foodtest[6] + 1
-				# 	self.TotalLongTerm = self.TotalLongTerm + 1
-				# else:
-				# 	pass
+				if self.foodtest[6] == 1:#長期工作記憶
+					pass
+				elif self.foodtest[6] == 0:
+					self.foodtest[6] = self.foodtest[6] + 1
+					self.LongTerm[6] = self.LongTerm[6] + 1
+				else:
+					pass
 		elif self.dangchianbi == 8:
 			ans81 = math.sqrt(pow(self.TargetPos[0] - I81[0],2) + pow(self.TargetPos[1] - I81[1],2))
 			ans82 = math.sqrt(pow(self.TargetPos[0] - I82[0],2) + pow(self.TargetPos[1] - I82[1],2))
@@ -418,13 +418,13 @@ class InfraredCAM:
 				self.dangchianbi = 0
 				self.Route.append(8)
 				self.frequency[7]=self.frequency[7]+1
-				# if self.foodtest[7] == 1:#長期工作記憶
-				# 	pass
-				# elif self.foodtest[7] == 0:
-				# 	self.foodtest[7] = self.foodtest[7] + 1
-				# 	self.TotalLongTerm = self.TotalLongTerm + 1
-				# else:
-				# 	pass
+				if self.foodtest[7] == 1:#長期工作記憶
+					pass
+				elif self.foodtest[7] == 0:
+					self.foodtest[7] = self.foodtest[7] + 1
+					self.LongTerm[7] = self.LongTerm[7] + 1
+				else:
+					pass
 		else:
 			pass
 
@@ -507,6 +507,8 @@ class InfraredCAM:
 					print("目前臂"+str(self.dangchianbi))
 					print("進臂次數:"+str(self.frequency))
 					print("短期工作記憶錯誤: "+str(self.ShortTerm))
+					print("長期工作記憶錯誤"+str(self.LongTerm))
+					print("長期工作記憶基準"+str(self.foodtest))
 				elif self.NOW_STATUS == 1: #出臂
 					self.NOW_STATUS, self.dangchianbi = self.leave(self.NOW_STATUS,self.TargetPos)
 					# print("進臂順序"+str(self.Route))
@@ -514,6 +516,8 @@ class InfraredCAM:
 					print("目前臂"+str(self.dangchianbi))
 					print("進臂次數:"+str(self.frequency))
 					print("短期工作記憶錯誤: "+str(self.ShortTerm))
+					print("長期工作記憶錯誤"+str(self.LongTerm))
+					print("長期工作記憶基準"+str(self.foodtest))
 				else:
 					pass
 
