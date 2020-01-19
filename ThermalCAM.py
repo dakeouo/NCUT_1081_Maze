@@ -259,7 +259,7 @@ class ThermalCAM:
 				st = 0
 		return st
 
-	def DataRecord(self):
+	def DataRecord(self):  #寫入csv
 		csvTitle = ["Rat ID", "Food", "Total LongTerm", "Total ShortTerm", "Route", "Latency"]
 		nLate = Second2Datetime(self.Latency)
 		newLatency = "%02d:%02d:%02d" %(nLate[0],nLate[1],nLate[2])

@@ -3,7 +3,8 @@ import tkinter as tk
 import tkinter.messagebox
 from tkinter import filedialog
 import threading
-from ThermalCAM import ThermalCAM as TCAM
+# from ThermalCAM import ThermalCAM as TCAM
+from InfraredCAM import InfraredCAM as TCAM
 
 def countStr(Str): #算出字串中大小寫字母與數字及其他符號的個數
 	Unit = [0, 0, 0, 0] #大寫字母/小寫字母/數字/其他符號
