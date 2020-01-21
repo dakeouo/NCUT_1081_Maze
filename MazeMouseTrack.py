@@ -66,6 +66,8 @@ class MazeMouseTrack(object):
 		self.TK_SHOW_FileDir = ""
 		self.TK_SHOW_Rat_ID = ""
 		self.TK_SHOW_Error_Msg = ""
+		self.TKE_Dir = ""
+		self.TKC_Food = []
 
 		self.tkWin = tk.Tk()
 		self.tkWin.title('%d Arms Maze Tracking' %(self.ARM_UNIT)) #窗口名字
@@ -203,11 +205,24 @@ class MazeMouseTrack(object):
 		self.RouteText.delete('0.0','end')
 		self.RouteText.insert('end',self.Route)
 
+	def LockInput(self, state):
+		if state:
+			self.TKE_Dir.config(state="disabled")
+			self.TK_Rat_ID.config(state="disabled")
+			for i in range(0,self.ARM_UNIT):
+				self.TKC_Food[i].config(state="disabled")
+		else:
+			self.TKE_Dir.config(state="normal")
+			self.TK_Rat_ID.config(state="normal")
+			for i in range(0,self.ARM_UNIT):
+				self.TKC_Food[i].config(state="normal")
+
 	def LoopMain(self): #UI執行後一直跑的迴圈
 		self.makeBall()
 		self.CAM_IS_CONN = self.TCAM.getCameraStatus()
 
 		if self.MAZE_IS_RUN:
+			self.LockInput(True)
 			newMazeStatus = self.TCAM.getMazeStatus()
 			self.updateData()
 			if newMazeStatus == False:
@@ -215,7 +230,9 @@ class MazeMouseTrack(object):
 				self.Maze_State.place(x=self.WinSize[0]-170,y=140,anchor="ne")
 				self.BT_Start.config(text="Start", bg="DarkOliveGreen2")
 				self.MAZE_IS_RUN = False
-
+		else:
+			self.LockInput(False)
+			
 		if self.CAM_IS_CONN:
 			self.Cam_State.config(text="Camera State: Connecting...", fg="green4")
 			self.Cam_State.place(x=self.WinSize[0]-140,y=110,anchor="ne")
@@ -296,9 +313,11 @@ class MazeMouseTrack(object):
 			self.TK_S_Term[i-1] = tk.StringVar()
 			self.TK_L_Term[i-1].set(str(self.L_Term[i-1]))
 			self.TK_S_Term[i-1].set(str(self.S_Term[i-1]))
+			self.TKC_Food.append(0)
 			posY = 215 + 40*(i-1)
 			tk.Label(self.tkWin,text="Arm "+str(i), font=('Arial', 12)).place(x=20,y=posY,anchor="nw")
-			tk.Checkbutton(self.tkWin, variable=self.TK_Food[i-1], onvalue = 1, offvalue = 0, command=self.setFood).place(x=80,y=posY,anchor="nw")
+			self.TKC_Food[i-1] = tk.Checkbutton(self.tkWin, variable=self.TK_Food[i-1], onvalue = 1, offvalue = 0, command=self.setFood)
+			self.TKC_Food[i-1].place(x=80,y=posY,anchor="nw")
 			tk.Label(self.tkWin,textvariable=self.TK_L_Term[i-1], font=('Arial', 12)).place(x=160,y=posY,anchor="n")
 			tk.Label(self.tkWin,textvariable=self.TK_S_Term[i-1], font=('Arial', 12)).place(x=240,y=posY,anchor="n")
 
@@ -334,7 +353,8 @@ class MazeMouseTrack(object):
 		#========右側：選擇檔案存放位置========
 		self.TK_File_Dir = tk.StringVar()
 		tk.Label(self.tkWin,text="Record File Directory", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-197,y=240,anchor="ne")
-		tk.Entry(self.tkWin, textvariable=self.TK_File_Dir, font=('Arial', 11), width=30).place(x=self.WinSize[0]-107,y=270,anchor="ne")
+		self.TKE_Dir = tk.Entry(self.tkWin, textvariable=self.TK_File_Dir, font=('Arial', 11), width=30)
+		self.TKE_Dir.place(x=self.WinSize[0]-107,y=270,anchor="ne")
 		tk.Button(self.tkWin, text='Choose...', width=10,command=self.Choose_Dir).place(x=self.WinSize[0]-20,y=267,anchor="ne")
 
 		#========右側：設定老鼠編號========
