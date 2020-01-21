@@ -120,6 +120,7 @@ class InfraredCAM:
 		self.TotalShortTerm = 0 #總短期記憶
 		self.TotalLongTerm = 0 #總長期記憶
 		#然後其他你有需要的變數就再自己加
+		# self.rtsp = "rtsp://e613-cam:613456789@192.168.1.50:554/stream1" #1920x1080
 		self.rtsp = "rtsp://admin:613456789@192.168.1.24:554/2gpp.sdp"
 		self.cap = cv2.VideoCapture(self.rtsp)
 		self.WIDTH = 1024
@@ -224,7 +225,7 @@ class InfraredCAM:
 		mask8 = np.array([[261,198],[400,78],[282,222],[418,99],np.int32])	 #I81,O81,I82,O82
 
 		mask115 = [int((mask1[0][0]+mask1[1][0])/2),int((mask1[0][1]+mask1[1][1])/2)]
-		mask215 = [int((mask2[0][0]+mask1[1][0])/2),int((mask2[0][1]+mask1[1][1])/2)]
+		mask215 = [int((mask2[0][0]+mask2[1][0])/2),int((mask2[0][1]+mask2[1][1])/2)]
 		mask315 = [int((mask3[0][0]+mask3[1][0])/2),int((mask3[0][1]+mask3[1][1])/2)]
 		mask415 = [int((mask4[0][0]+mask4[1][0])/2),int((mask4[0][1]+mask4[1][1])/2)]
 		mask515 = [int((mask5[0][0]+mask5[1][0])/2),int((mask5[0][1]+mask5[1][1])/2)]
@@ -244,71 +245,71 @@ class InfraredCAM:
 		ans11 = math.sqrt(pow(self.TargetPos[0] - mask115[0],2) + pow(self.TargetPos[1] - mask115[1],2))
 		ans12 = math.sqrt(pow(self.TargetPos[0] - mask125[0],2) + pow(self.TargetPos[1] - mask125[1],2))
 		ans1 = ans11 + ans12    #白色與一臂的距離
-		# print("ans1"+str(ans1))
+		print("ans1"+str(ans1))
 		ans21 = math.sqrt(pow(self.TargetPos[0] - mask215[0],2) + pow(self.TargetPos[1] - mask215[1],2))
 		ans22 = math.sqrt(pow(self.TargetPos[0] - mask225[0],2) + pow(self.TargetPos[1] - mask225[1],2))
 		ans2 = ans21 + ans22
-		# print("ans2"+str(ans2)) #白色與二臂的距離
+		print("ans2"+str(ans2)) #白色與二臂的距離
 		ans31 = math.sqrt(pow(self.TargetPos[0] - mask315[0],2) + pow(self.TargetPos[1] - mask315[1],2))
 		ans32 = math.sqrt(pow(self.TargetPos[0] - mask325[0],2) + pow(self.TargetPos[1] - mask325[1],2))
 		ans3 = ans31 + ans32
-		# print("ans3"+str(ans3)) #白色與三臂的距離
+		print("ans3"+str(ans3)) #白色與三臂的距離
 		ans41 = math.sqrt(pow(self.TargetPos[0] - mask415[0],2) + pow(self.TargetPos[1] - mask415[1],2))
 		ans42 = math.sqrt(pow(self.TargetPos[0] - mask425[0],2) + pow(self.TargetPos[1] - mask425[1],2))
 		ans4 = ans41 + ans42
-		# print("ans4"+str(ans4)) #白色與四臂的距離
+		print("ans4"+str(ans4)) #白色與四臂的距離
 		ans51 = math.sqrt(pow(self.TargetPos[0] - mask515[0],2) + pow(self.TargetPos[1] - mask515[1],2))
 		ans52 = math.sqrt(pow(self.TargetPos[0] - mask525[0],2) + pow(self.TargetPos[1] - mask525[1],2))
 		ans5 = ans51 + ans52
-		# print("ans5"+str(ans5)) #白色與五臂的距離
+		print("ans5"+str(ans5)) #白色與五臂的距離
 		ans61 = math.sqrt(pow(self.TargetPos[0] - mask615[0],2) + pow(self.TargetPos[1] - mask615[1],2))
 		ans62 = math.sqrt(pow(self.TargetPos[0] - mask625[0],2) + pow(self.TargetPos[1] - mask625[1],2))
 		ans6 = ans61 + ans62
-		# print("ans6: "+str(ans6)) #白色與六臂的距離
+		print("ans6: "+str(ans6)) #白色與六臂的距離
 		ans71 = math.sqrt(pow(self.TargetPos[0] - mask715[0],2) + pow(self.TargetPos[1] - mask715[1],2))
 		ans72 = math.sqrt(pow(self.TargetPos[0] - mask725[0],2) + pow(self.TargetPos[1] - mask725[1],2))
 		ans7 = ans71 + ans72
-		# print("ans7"+str(ans7)) #白色與七臂的距離
+		print("ans7"+str(ans7)) #白色與七臂的距離
 		ans81 = math.sqrt(pow(self.TargetPos[0] - mask815[0],2) + pow(self.TargetPos[1] - mask815[1],2))
 		ans82 = math.sqrt(pow(self.TargetPos[0] - mask825[0],2) + pow(self.TargetPos[1] - mask825[1],2))
 		ans8 = ans81 + ans82
-		# print("ans8"+str(ans8)) #白色與八臂的距離
-		if ans1<30:
+		print("ans8"+str(ans8)) #白色與八臂的距離
+		if ans1<40:
 			self.NOW_STATUS =1
 			self.dangchianbi=1
 			self.food1[0] = 0
-		elif ans2<30:
+		elif ans2<40:
 			self.NOW_STATUS=1
 			self.dangchianbi=2
 			self.food1[1] = 0
-		elif ans3<30:
+		elif ans3<40:
 			self.NOW_STATUS=1
 			self.dangchianbi=3
 			self.food1[2] = 0
-		elif ans4<30:
+		elif ans4<40:
 			self.NOW_STATUS=1
 			self.dangchianbi=4
 			self.food1[3] = 0
-		elif ans5<30:
+		elif ans5<40:
 			self.NOW_STATUS=1
 			self.dangchianbi=5
 			self.food1[4] = 0
-		elif ans6<30:
+		elif ans6<40:
 			self.NOW_STATUS=1
 			self.dangchianbi=6
 			self.food1[5] = 0
-		elif ans7<30:
+		elif ans7<40:
 			self.NOW_STATUS=1
 			self.dangchianbi=7
 			self.food1[6] = 0
-		elif ans8<30:
+		elif ans8<40:
 			self.NOW_STATUS=1
 			self.dangchianbi=8
 			self.food1[7] = 0
 		else:
 			self.NOW_STATUS=0
 			# pass
-		# print(self.TargetPos)
+		print(self.TargetPos)
 		return self.NOW_STATUS,self.dangchianbi
 	def leave(self,dangchianbi,TargetPos): #出臂判斷
 
@@ -336,7 +337,7 @@ class InfraredCAM:
 			ans12 = math.sqrt(pow(self.TargetPos[0] - I12[0],2) + pow(self.TargetPos[1] - I12[1],2))
 			ans1 = ans11 + ans12	
 			# print("ans00"+str(ans0))
-			if ans1<35:
+			if ans1<40:
 				self.NOW_STATUS = 0
 				self.dangchianbi = 0
 				self.Route.append(1) #寫入進臂順序
@@ -353,7 +354,7 @@ class InfraredCAM:
 			ans22 = math.sqrt(pow(self.TargetPos[0] - I22[0],2) + pow(self.TargetPos[1] - I22[1],2))
 			ans2 = ans21 + ans22	
 			# print("ans11"+str(ans1))
-			if ans2<35:
+			if ans2<40:
 				self.NOW_STATUS=0
 				self.dangchianbi = 0
 				self.Route.append(2)
@@ -372,7 +373,7 @@ class InfraredCAM:
 			ans32 = math.sqrt(pow(self.TargetPos[0] - I32[0],2) + pow(self.TargetPos[1] - I32[1],2))
 			ans3 = ans31 + ans32	
 			# print("ans22"+str(ans2))
-			if ans3 < 35:
+			if ans3 < 40:
 				self.NOW_STATUS = 0
 				self.dangchianbi = 0
 				self.Route.append(3)
@@ -389,7 +390,7 @@ class InfraredCAM:
 			ans42 = math.sqrt(pow(self.TargetPos[0] - I42[0],2) + pow(self.TargetPos[1] - I42[1],2))
 			ans4 = ans41 + ans42	
 			# print("ans22"+str(ans2))
-			if ans4 < 35:
+			if ans4 < 40:
 				self.NOW_STATUS = 0
 				self.dangchianbi = 0
 				self.Route.append(4)
@@ -406,7 +407,7 @@ class InfraredCAM:
 			ans52 = math.sqrt(pow(self.TargetPos[0] - I52[0],2) + pow(self.TargetPos[1] - I52[1],2))
 			ans5 = ans51 + ans52	
 			# print("ans22"+str(ans2))
-			if ans5 < 35:
+			if ans5 < 40:
 				self.NOW_STATUS = 0
 				self.dangchianbi = 0
 				self.Route.append(5)
@@ -423,7 +424,7 @@ class InfraredCAM:
 			ans62 = math.sqrt(pow(self.TargetPos[0] - I62[0],2) + pow(self.TargetPos[1] - I62[1],2))
 			ans6 = ans61 + ans62	
 			# print("ans6"+str(ans6))
-			if ans6 < 35:
+			if ans6 < 40:
 				self.NOW_STATUS = 0
 				self.dangchianbi = 0
 				self.Route.append(6)
@@ -440,7 +441,7 @@ class InfraredCAM:
 			ans72 = math.sqrt(pow(self.TargetPos[0] - I72[0],2) + pow(self.TargetPos[1] - I72[1],2))
 			ans7 = ans71 + ans72	
 			# print("ans22"+str(ans2))
-			if ans7 < 35:
+			if ans7 < 40:
 				self.NOW_STATUS = 0
 				self.dangchianbi = 0
 				self.Route.append(7)
@@ -457,7 +458,7 @@ class InfraredCAM:
 			ans82 = math.sqrt(pow(self.TargetPos[0] - I82[0],2) + pow(self.TargetPos[1] - I82[1],2))
 			ans8 = ans81 + ans82	
 			# print("ans22"+str(ans2))
-			if ans8 < 35:
+			if ans8 < 40:
 				self.NOW_STATUS = 0
 				self.dangchianbi = 0
 				self.Route.append(8)
@@ -569,7 +570,7 @@ class InfraredCAM:
 ##############################################################進臂###########################################################
 				if self.NOW_STATUS == 0:
 					self.NOW_STATUS, self.dangchianbi = self.examination(self.NOW_STATUS,self.TargetPos)
-					print(self.food1)
+					# print(self.food1)
 					food1max = np.max(self.food1)
 					if food1max == 0:
 						self.Latency = (self.time_now - self.timestart).seconds 
@@ -577,18 +578,18 @@ class InfraredCAM:
 						self.TotalLongTerm = 0
 						for i in range(0,len(self.ShortTerm)):
 							self.TotalShortTerm = self.TotalShortTerm + self.ShortTerm[i]
-						print(self.TotalShortTerm)
+						# print(self.TotalShortTerm)
 						for i in range(1,len(self.LongTerm)):
 							self.TotalLongTerm = self.TotalLongTerm + self.LongTerm[i]
-						print(self.TotalLongTerm)
+						# print(self.TotalLongTerm)
 						self.DataRecord()
 						self.MAZE_IS_RUN = False
 
 					else:
 						pass
-					# print("進臂順序"+str(self.Route))
-					# print("目前狀態"+str(self.NOW_STATUS))
-					# print("目前臂"+str(self.dangchianbi))
+					print("進臂順序"+str(self.Route))
+					print("目前狀態"+str(self.NOW_STATUS))
+					print("目前臂"+str(self.dangchianbi))
 					# print("進臂次數:"+str(self.frequency))
 					# print("短期工作記憶錯誤: "+str(self.ShortTerm))
 					# print("長期工作記憶錯誤"+str(self.LongTerm))
@@ -597,9 +598,9 @@ class InfraredCAM:
 				elif self.NOW_STATUS == 1: #出臂
 					self.NOW_STATUS, self.dangchianbi = self.leave(self.NOW_STATUS,self.TargetPos)
 					# print(self.food1)
-					# print("進臂順序"+str(self.Route))
-					# print("目前狀態"+str(self.NOW_STATUS))
-					# print("目前臂"+str(self.dangchianbi))
+					print("進臂順序"+str(self.Route))
+					print("目前狀態"+str(self.NOW_STATUS))
+					print("目前臂"+str(self.dangchianbi))
 					# print("進臂次數:"+str(self.frequency))
 					# print("短期工作記憶錯誤: "+str(self.ShortTerm))
 					# print("長期工作記憶錯誤"+str(self.LongTerm))
