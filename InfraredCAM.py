@@ -5,8 +5,40 @@ from PIL import Image #<= 這個是贈品需要匯入的東西
 import time
 import math
 from datetime import datetime
+import os
+import csv
 
 #========純副程式區========
+def writeData2CSV(fileName, type_, dataRow): #寫入CSV檔
+	with open(fileName, type_, newline='') as csvfile:
+		# 建立 CSV 檔寫入器
+		writer = csv.writer(csvfile)
+
+		# 寫入一列資料
+		writer.writerow(dataRow) 
+
+def readCSV2List(fileName): #讀取CSV檔
+	AllData = []
+	with open(fileName, newline='') as csvfile:
+	  # 以冒號分隔欄位，讀取檔案內容
+	  rows = csv.reader(csvfile, delimiter=',')
+
+	  for row in rows:
+	    AllData.append(row)
+
+	return AllData
+
+def listAllSame(list1, list2): #檢查兩陣列是否完全一樣
+	if(len(list1) != len(list2)):
+		return False
+	else:
+		for i in range(0,len(list1)):
+			if list1[i] != list2[i]:
+				return False
+		return True
+
+def Second2Datetime(sec): #秒數轉換成時間
+	return int(sec/3600), int((sec%3600)/60), int((sec%3600)%60)
 def convert(list):
     return tuple(list)
 
@@ -59,14 +91,14 @@ class InfraredCAM:
   #   					[191,219],[64,98],[84,77],[213,198], #I61,O61,O62,I62
   #   					[221,196],[224,16],[256,16],[253,195], #I71,O71,O72,I72
   #   					[261,198],[400,78],[418,99],[282,222]] #八臂遮罩
-		self.ARMS_POS = [[285,229],[285,228],[284,262],[284,261], #I11,O11,O12,I12
-    					[281,268],[281,267],[260,290],[260,289], #I21,O21,O22,I22
+		self.ARMS_POS = [[285,229],[468,237],[468,263],[284,261], #I11,O11,O12,I12
+    					[281,268],[409,394],[390,413],[260,289], #I21,O21,O22,I22
     					[250,293],[249,464],[219,463],[221,292], #I31,O31,O32,I32
     					[211,287],[82,401],[65,381],[192,267], #I41,O41,O42,I42
     					[187,258],[22,252],[22,228],[188,228], #I51,O51,O52,I52
     					[191,219],[64,98],[84,77],[213,198], #I61,O61,O62,I62
-    					[221,196],[221,195],[253,194],[253,195], #I71,O71,O72,I72
-    					[261,198],[261,197],[282,221],[282,222]] #八壁遮罩  少四壁		
+    					[221,196],[224,16],[256,16],[253,195], #I71,O71,O72,I72
+    					[261,198],[400,78],[418,99],[282,222]] #八壁遮罩  少四壁		
 		self.MASK_POS = np.array(self.ARMS_POS)
 		self.Route = [] #進臂順序
 		self.ShortTerm = [] #短期記憶陣列
@@ -467,6 +499,20 @@ class InfraredCAM:
 
 		if self.frequency[7]>0:
 			self.ShortTerm[7] = self.frequency[7]-1	
+
+
+	def DataRecord(self):  #寫入csv
+		csvTitle = ["Rat ID", "Food", "Total LongTerm", "Total ShortTerm", "Route", "Latency"]
+		nLate = Second2Datetime(self.Latency)
+		newLatency = "%02d:%02d:%02d" %(nLate[0],nLate[1],nLate[2])
+		MazeData = [self.RatID, self.Food, self.TotalLongTerm, self.TotalShortTerm, self.Route, newLatency]
+		if os.path.isfile(self.filePath):
+			csvData = readCSV2List(self.filePath)
+			if not (listAllSame(csvData[0],csvTitle)):
+				writeData2CSV(self.filePath, "w", csvTitle)
+		else:
+			writeData2CSV(self.filePath, "w", csvTitle)
+		writeData2CSV(self.filePath, "a", MazeData)
 	
 
 	def CameraMain(self): #這個副程式是"主程式"呦~~~~~
@@ -478,7 +524,7 @@ class InfraredCAM:
 
 		copy = cv2.cvtColor(copy, cv2.COLOR_BGR2GRAY)  #灰階
 		B2 , copy = cv2.threshold(copy, 127,255,cv2.THRESH_BINARY) #二值化
-		cv2.imshow ("copy",copy)
+		# cv2.imshow ("copy",copy)
 		self.initDefault()
 		#程式一執行[第一次要跑的東西]放這裡
 
@@ -498,7 +544,7 @@ class InfraredCAM:
 			if len(self.rat_XY):
 				self.TargetPos,x,y = self.coordinate(self.rat_XY)
 			# cv2.line(frame1,(191,219),(213,198),(216,42,83),1) #6出臂線
-			cv2.imshow("frame1",frame1)
+			# cv2.imshow("frame1",frame1)
 			cv2.waitKey(1)
 			
 			# pass
@@ -527,29 +573,38 @@ class InfraredCAM:
 					food1max = np.max(self.food1)
 					if food1max == 0:
 						self.Latency = (self.time_now - self.timestart).seconds 
+						self.TotalShortTerm = 0
+						self.TotalLongTerm = 0
+						for i in range(0,len(self.ShortTerm)):
+							self.TotalShortTerm = self.TotalShortTerm + self.ShortTerm[i]
+						print(self.TotalShortTerm)
+						for i in range(1,len(self.LongTerm)):
+							self.TotalLongTerm = self.TotalLongTerm + self.LongTerm[i]
+						print(self.TotalLongTerm)
+						self.DataRecord()
 						self.MAZE_IS_RUN = False
 
 					else:
 						pass
-					print("進臂順序"+str(self.Route))
-					print("目前狀態"+str(self.NOW_STATUS))
-					print("目前臂"+str(self.dangchianbi))
-					print("進臂次數:"+str(self.frequency))
-					print("短期工作記憶錯誤: "+str(self.ShortTerm))
-					print("長期工作記憶錯誤"+str(self.LongTerm))
-					print("長期工作記憶基準"+str(self.foodtest))
-					print("食物吃完判斷"+str(self.food1))
+					# print("進臂順序"+str(self.Route))
+					# print("目前狀態"+str(self.NOW_STATUS))
+					# print("目前臂"+str(self.dangchianbi))
+					# print("進臂次數:"+str(self.frequency))
+					# print("短期工作記憶錯誤: "+str(self.ShortTerm))
+					# print("長期工作記憶錯誤"+str(self.LongTerm))
+					# print("長期工作記憶基準"+str(self.foodtest))
+					# print("食物吃完判斷"+str(self.food1))
 				elif self.NOW_STATUS == 1: #出臂
 					self.NOW_STATUS, self.dangchianbi = self.leave(self.NOW_STATUS,self.TargetPos)
-					print(self.food1)
-					print("進臂順序"+str(self.Route))
-					print("目前狀態"+str(self.NOW_STATUS))
-					print("目前臂"+str(self.dangchianbi))
-					print("進臂次數:"+str(self.frequency))
-					print("短期工作記憶錯誤: "+str(self.ShortTerm))
-					print("長期工作記憶錯誤"+str(self.LongTerm))
-					print("長期工作記憶基準"+str(self.foodtest))
-					print("食物吃完判斷"+str(self.food1))
+					# print(self.food1)
+					# print("進臂順序"+str(self.Route))
+					# print("目前狀態"+str(self.NOW_STATUS))
+					# print("目前臂"+str(self.dangchianbi))
+					# print("進臂次數:"+str(self.frequency))
+					# print("短期工作記憶錯誤: "+str(self.ShortTerm))
+					# print("長期工作記憶錯誤"+str(self.LongTerm))
+					# print("長期工作記憶基準"+str(self.foodtest))
+					# print("食物吃完判斷"+str(self.food1))
 				else:
 					pass
 
