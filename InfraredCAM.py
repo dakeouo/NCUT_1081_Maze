@@ -83,22 +83,15 @@ class InfraredCAM:
 		self.ARM_UNIT = 8 #迷宮臂數
 		self.ViewSize = (480, 480) #虛擬視窗顯示大小
 		self.TargetPos = [-1, -1] #目標變數
-		# self.ARMS_POS = [[285,229],[468,237],[468,263],[284,261], #I11,O11,O12,I12
-  #   					[281,268],[409,394],[390,413],[260,289], #I21,O21,O22,I22
-  #   					[250,293],[249,464],[219,463],[221,292], #I31,O31,O32,I32
-  #   					[211,287],[82,401],[65,381],[192,267], #I41,O41,O42,I42
-  #   					[187,258],[22,252],[22,228],[188,228], #I51,O51,O52,I52
-  #   					[191,219],[64,98],[84,77],[213,198], #I61,O61,O62,I62
-  #   					[221,196],[224,16],[256,16],[253,195], #I71,O71,O72,I72
-  #   					[261,198],[400,78],[418,99],[282,222]] #八臂遮罩
-		self.ARMS_POS = [[285,229],[468,237],[468,263],[284,261], #I11,O11,O12,I12
-    					[281,268],[409,394],[390,413],[260,289], #I21,O21,O22,I22
-    					[250,293],[249,464],[219,463],[221,292], #I31,O31,O32,I32
-    					[211,287],[82,401],[65,381],[192,267], #I41,O41,O42,I42
-    					[187,258],[22,252],[22,228],[188,228], #I51,O51,O52,I52
-    					[191,219],[64,98],[84,77],[213,198], #I61,O61,O62,I62
-    					[221,196],[224,16],[256,16],[253,195], #I71,O71,O72,I72
-    					[261,198],[400,78],[418,99],[282,222]] #八壁遮罩  少四壁		
+		self.ARMS_POS = [[284,231],[478,233],[478,264],[285,264], #I11,O11,O12,I12
+    					[281,273],[418,410],[393,435],[256,294], #I21,O21,O22,I22
+    					[248,297],[247,480],[215,480],[219,296], #I31,O31,O32,I32
+    					[211,292],[68,433],[46,410],[189,269], #I41,O41,O42,I42
+    					[184,261],[0,259],[0,229],[184,230], #I51,O51,O52,I52
+    					[189,220],[52,82],[74,61],[211,198], #I61,O61,O62,I62
+    					[219,195],[220,0],[252,0],[252,195], #I71,O71,O72,I72
+    					[260,198],[397,67],[418,88],[282,222]] #八壁遮罩	
+
 		self.MASK_POS = np.array(self.ARMS_POS)
 		self.Route = [] #進臂順序
 		self.ShortTerm = [] #短期記憶陣列
@@ -120,15 +113,17 @@ class InfraredCAM:
 		self.TotalShortTerm = 0 #總短期記憶
 		self.TotalLongTerm = 0 #總長期記憶
 		#然後其他你有需要的變數就再自己加
-		# self.rtsp = "rtsp://e613-cam:613456789@192.168.1.50:554/stream1" #1920x1080
-		self.rtsp = "rtsp://admin:613456789@192.168.1.24:554/2gpp.sdp"
+		self.rtsp = "rtsp://E613-1:613456789@192.168.1.7:554/stream1" #1920x1080
+		# self.rtsp = "rtsp://admin:613456789@192.168.1.24:554/2gpp.sdp"
 		self.cap = cv2.VideoCapture(self.rtsp)
 		self.WIDTH = 1024
 		self.HEIGHT = int(self.WIDTH*(9/16))  #576
 		self.MID_POS = (int(self.WIDTH/2),int(self.HEIGHT/2))
 		self.SegRate = (4/11)
-		self.newP1 = (self.MID_POS[0] - int((self.WIDTH*self.SegRate)/2), self.MID_POS[1] - int((self.WIDTH*self.SegRate)/2))
-		self.newP2 = (self.MID_POS[0] + int((self.WIDTH*self.SegRate)/2), self.MID_POS[1] + int((self.WIDTH*self.SegRate)/2))
+		self.newP1 = (int(self.MID_POS[0]-int(self.HEIGHT)/2),0)
+		# self.newP1 = (self.MID_POS[0] - int((self.WIDTH*self.SegRate)/2), self.MID_POS[1] - int((self.WIDTH*self.SegRate)/2))
+		self.newP2 = (int(self.MID_POS[0]+int(self.HEIGHT/2)),int(self.HEIGHT))
+		# self.newP2 = (self.MID_POS[0] + int((self.WIDTH*self.SegRate)/2), self.MID_POS[1] + int((self.WIDTH*self.SegRate)/2))
 		self.O = np.array([[1,1,1,1,1],
 	 			 [1,1,1,1,1],
 				 [1,1,1,1,1],
@@ -215,14 +210,24 @@ class InfraredCAM:
 			self.frequency.append(0)
 	def examination(self,NOW_STATUS,TargetPos): #進臂判斷
 	#八壁32點
-		mask1 = np.array([[285,229],[468,237],[284,261],[468,263],np.int32]) #I11,O11,I12,O12
-		mask2 = np.array([[281,268],[409,394],[260,289],[390,413],np.int32]) #I21,O21,I22,O22
-		mask3 = np.array([[250,293],[249,464],[221,292],[219,463],np.int32]) #I31,O31,I32,O32
-		mask4 = np.array([[211,287],[82,401],[192,267],[67,381],np.int32])   #I41,O41,I42,O42	
-		mask5 = np.array([[187,258],[18,252],[188,228],[17,228],np.int32])	 #I51,O51,I52,O52
-		mask6 = np.array([[191,219],[64,98],[213,198],[84,77],np.int32])	 #I61,O61,I62,O62
-		mask7 = np.array([[221,196],[224,16],[253,195],[256,16],np.int32])	 #I71,O71,I72,O72
-		mask8 = np.array([[261,198],[400,78],[282,222],[418,99],np.int32])	 #I81,O81,I82,O82
+		
+
+		mask1 = np.array([[int(self.ARMS_POS[0][0]),int(self.ARMS_POS[0][1])],[int(self.ARMS_POS[1][0]),int(self.ARMS_POS[1][1])],[int(self.ARMS_POS[3][0]),int(self.ARMS_POS[3][1])],[int(self.ARMS_POS[2][0]),int(self.ARMS_POS[2][1])],np.int32])	
+		mask2 = np.array([[int(self.ARMS_POS[4][0]),int(self.ARMS_POS[4][1])],[int(self.ARMS_POS[5][0]),int(self.ARMS_POS[5][1])],[int(self.ARMS_POS[7][0]),int(self.ARMS_POS[7][1])],[int(self.ARMS_POS[6][0]),int(self.ARMS_POS[6][1])],np.int32])
+		mask3 = np.array([[int(self.ARMS_POS[8][0]),int(self.ARMS_POS[8][1])],[int(self.ARMS_POS[9][0]),int(self.ARMS_POS[9][1])],[int(self.ARMS_POS[11][0]),int(self.ARMS_POS[11][1])],[int(self.ARMS_POS[10][0]),int(self.ARMS_POS[10][1])],np.int32])
+		mask4 = np.array([[int(self.ARMS_POS[12][0]),int(self.ARMS_POS[12][1])],[int(self.ARMS_POS[13][0]),int(self.ARMS_POS[13][1])],[int(self.ARMS_POS[15][0]),int(self.ARMS_POS[15][1])],[int(self.ARMS_POS[14][0]),int(self.ARMS_POS[14][1])],np.int32])
+		mask5 = np.array([[int(self.ARMS_POS[16][0]),int(self.ARMS_POS[16][1])],[int(self.ARMS_POS[17][0]),int(self.ARMS_POS[17][1])],[int(self.ARMS_POS[19][0]),int(self.ARMS_POS[19][1])],[int(self.ARMS_POS[18][0]),int(self.ARMS_POS[18][1])],np.int32])
+		mask6 = np.array([[int(self.ARMS_POS[20][0]),int(self.ARMS_POS[20][1])],[int(self.ARMS_POS[21][0]),int(self.ARMS_POS[21][1])],[int(self.ARMS_POS[23][0]),int(self.ARMS_POS[23][1])],[int(self.ARMS_POS[22][0]),int(self.ARMS_POS[22][1])],np.int32])
+		mask7 = np.array([[int(self.ARMS_POS[24][0]),int(self.ARMS_POS[24][1])],[int(self.ARMS_POS[25][0]),int(self.ARMS_POS[25][1])],[int(self.ARMS_POS[27][0]),int(self.ARMS_POS[27][1])],[int(self.ARMS_POS[26][0]),int(self.ARMS_POS[26][1])],np.int32])
+		mask8 = np.array([[int(self.ARMS_POS[28][0]),int(self.ARMS_POS[28][1])],[int(self.ARMS_POS[29][0]),int(self.ARMS_POS[29][1])],[int(self.ARMS_POS[31][0]),int(self.ARMS_POS[31][1])],[int(self.ARMS_POS[30][0]),int(self.ARMS_POS[30][1])],np.int32])
+		# mask1 = np.array([[285,229],[468,237],[284,261],[468,263],np.int32]) #I11,O11,I12,O12
+		# mask2 = np.array([[281,268],[409,394],[260,289],[390,413],np.int32]) #I21,O21,I22,O22
+		# mask3 = np.array([[250,293],[249,464],[221,292],[219,463],np.int32]) #I31,O31,I32,O32
+		# mask4 = np.array([[211,287],[82,401],[192,267],[67,381],np.int32])   #I41,O41,I42,O42	
+		# mask5 = np.array([[187,258],[18,252],[188,228],[17,228],np.int32])	 #I51,O51,I52,O52
+		# mask6 = np.array([[191,219],[64,98],[213,198],[84,77],np.int32])	 #I61,O61,I62,O62
+		# mask7 = np.array([[221,196],[224,16],[253,195],[256,16],np.int32])	 #I71,O71,I72,O72
+		# mask8 = np.array([[259,200],[395,68],[276,212],[418,99],np.int32])	 #I81,O81,I82,O82
 
 		mask115 = [int((mask1[0][0]+mask1[1][0])/2),int((mask1[0][1]+mask1[1][1])/2)]
 		mask215 = [int((mask2[0][0]+mask2[1][0])/2),int((mask2[0][1]+mask2[1][1])/2)]
@@ -245,35 +250,35 @@ class InfraredCAM:
 		ans11 = math.sqrt(pow(self.TargetPos[0] - mask115[0],2) + pow(self.TargetPos[1] - mask115[1],2))
 		ans12 = math.sqrt(pow(self.TargetPos[0] - mask125[0],2) + pow(self.TargetPos[1] - mask125[1],2))
 		ans1 = ans11 + ans12    #白色與一臂的距離
-		print("ans1"+str(ans1))
+		print("ans1 "+str(ans1))
 		ans21 = math.sqrt(pow(self.TargetPos[0] - mask215[0],2) + pow(self.TargetPos[1] - mask215[1],2))
 		ans22 = math.sqrt(pow(self.TargetPos[0] - mask225[0],2) + pow(self.TargetPos[1] - mask225[1],2))
 		ans2 = ans21 + ans22
-		print("ans2"+str(ans2)) #白色與二臂的距離
+		print("ans2 "+str(ans2)) #白色與二臂的距離
 		ans31 = math.sqrt(pow(self.TargetPos[0] - mask315[0],2) + pow(self.TargetPos[1] - mask315[1],2))
 		ans32 = math.sqrt(pow(self.TargetPos[0] - mask325[0],2) + pow(self.TargetPos[1] - mask325[1],2))
 		ans3 = ans31 + ans32
-		print("ans3"+str(ans3)) #白色與三臂的距離
+		print("ans3 "+str(ans3)) #白色與三臂的距離
 		ans41 = math.sqrt(pow(self.TargetPos[0] - mask415[0],2) + pow(self.TargetPos[1] - mask415[1],2))
 		ans42 = math.sqrt(pow(self.TargetPos[0] - mask425[0],2) + pow(self.TargetPos[1] - mask425[1],2))
 		ans4 = ans41 + ans42
-		print("ans4"+str(ans4)) #白色與四臂的距離
+		print("ans4 "+str(ans4)) #白色與四臂的距離
 		ans51 = math.sqrt(pow(self.TargetPos[0] - mask515[0],2) + pow(self.TargetPos[1] - mask515[1],2))
 		ans52 = math.sqrt(pow(self.TargetPos[0] - mask525[0],2) + pow(self.TargetPos[1] - mask525[1],2))
 		ans5 = ans51 + ans52
-		print("ans5"+str(ans5)) #白色與五臂的距離
+		print("ans5 "+str(ans5)) #白色與五臂的距離
 		ans61 = math.sqrt(pow(self.TargetPos[0] - mask615[0],2) + pow(self.TargetPos[1] - mask615[1],2))
 		ans62 = math.sqrt(pow(self.TargetPos[0] - mask625[0],2) + pow(self.TargetPos[1] - mask625[1],2))
 		ans6 = ans61 + ans62
-		print("ans6: "+str(ans6)) #白色與六臂的距離
+		print("ans6 "+str(ans6)) #白色與六臂的距離
 		ans71 = math.sqrt(pow(self.TargetPos[0] - mask715[0],2) + pow(self.TargetPos[1] - mask715[1],2))
 		ans72 = math.sqrt(pow(self.TargetPos[0] - mask725[0],2) + pow(self.TargetPos[1] - mask725[1],2))
 		ans7 = ans71 + ans72
-		print("ans7"+str(ans7)) #白色與七臂的距離
+		print("ans7 "+str(ans7)) #白色與七臂的距離
 		ans81 = math.sqrt(pow(self.TargetPos[0] - mask815[0],2) + pow(self.TargetPos[1] - mask815[1],2))
 		ans82 = math.sqrt(pow(self.TargetPos[0] - mask825[0],2) + pow(self.TargetPos[1] - mask825[1],2))
 		ans8 = ans81 + ans82
-		print("ans8"+str(ans8)) #白色與八臂的距離
+		print("ans8 "+str(ans8)) #白色與八臂的距離
 		if ans1<40:
 			self.NOW_STATUS =1
 			self.dangchianbi=1
@@ -309,26 +314,26 @@ class InfraredCAM:
 		else:
 			self.NOW_STATUS=0
 			# pass
-		print(self.TargetPos)
+		# print(self.TargetPos)
 		return self.NOW_STATUS,self.dangchianbi
 	def leave(self,dangchianbi,TargetPos): #出臂判斷
 
-		I11 = [285,229]
-		I12 = [284,261]
-		I21 = [281,268]
-		I22 = [260,289]
-		I31 = [250,293]
-		I32 = [221,292]
-		I41 = [211,287]
-		I42 = [192,267]
-		I51 = [187,258]
-		I52 = [188,228]
-		I61 = [191,219]
-		I62 = [213,198]
-		I71 = [221,196]
-		I72 = [253,195]
-		I81 = [261,198]
-		I82 = [282,222]
+		I11 = np.array([[int(self.ARMS_POS[0][0]),int(self.ARMS_POS[0][1])],np.int32])
+		I12 = np.array([[int(self.ARMS_POS[3][0]),int(self.ARMS_POS[3][1])],np.int32])
+		I21 = np.array([[int(self.ARMS_POS[4][0]),int(self.ARMS_POS[4][1])],np.int32])
+		I22 = np.array([[int(self.ARMS_POS[7][0]),int(self.ARMS_POS[7][1])],np.int32])
+		I31 = np.array([[int(self.ARMS_POS[8][0]),int(self.ARMS_POS[8][1])],np.int32])
+		I32 = np.array([[int(self.ARMS_POS[11][0]),int(self.ARMS_POS[11][1])],np.int32])
+		I41 = np.array([[int(self.ARMS_POS[12][0]),int(self.ARMS_POS[12][1])],np.int32])
+		I42 = np.array([[int(self.ARMS_POS[15][0]),int(self.ARMS_POS[15][1])],np.int32])
+		I51 = np.array([[int(self.ARMS_POS[16][0]),int(self.ARMS_POS[16][1])],np.int32])
+		I52 = np.array([[int(self.ARMS_POS[19][0]),int(self.ARMS_POS[19][1])],np.int32])
+		I61 = np.array([[int(self.ARMS_POS[20][0]),int(self.ARMS_POS[20][1])],np.int32])
+		I62 = np.array([[int(self.ARMS_POS[23][0]),int(self.ARMS_POS[23][1])],np.int32])
+		I71 = np.array([[int(self.ARMS_POS[24][0]),int(self.ARMS_POS[24][1])],np.int32])
+		I72 = np.array([[int(self.ARMS_POS[27][0]),int(self.ARMS_POS[27][1])],np.int32])
+		I81 = np.array([[int(self.ARMS_POS[28][0]),int(self.ARMS_POS[28][1])],np.int32])
+		I82 = np.array([[int(self.ARMS_POS[31][0]),int(self.ARMS_POS[31][1])],np.int32])
 
 		# self.NOW_STATUS = 1
 
@@ -535,6 +540,9 @@ class InfraredCAM:
 			self.CAM_IS_CONN = True
 			frame = cv2.resize(frame,(self.WIDTH,self.HEIGHT),interpolation=cv2.INTER_CUBIC) #調整大小1024*576
 			frame = frame[self.newP1[1]:self.newP2[1], self.newP1[0]:self.newP2[0]] #擷取兩個點的範圍
+			cv2.polylines(frame, [self.MASK_POS], True, (0, 255, 255), 2)  #加上3臂輔助線
+			
+			cv2.imshow("frame1",frame)
 			frame = cv2.resize(frame,(480,480),interpolation=cv2.INTER_CUBIC) #放大成480x480
 
 			frame1 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -587,9 +595,9 @@ class InfraredCAM:
 
 					else:
 						pass
-					print("進臂順序"+str(self.Route))
-					print("目前狀態"+str(self.NOW_STATUS))
-					print("目前臂"+str(self.dangchianbi))
+					# print("進臂順序"+str(self.Route))
+					# print("目前狀態"+str(self.NOW_STATUS))
+					# print("目前臂"+str(self.dangchianbi))
 					# print("進臂次數:"+str(self.frequency))
 					# print("短期工作記憶錯誤: "+str(self.ShortTerm))
 					# print("長期工作記憶錯誤"+str(self.LongTerm))
@@ -598,9 +606,9 @@ class InfraredCAM:
 				elif self.NOW_STATUS == 1: #出臂
 					self.NOW_STATUS, self.dangchianbi = self.leave(self.NOW_STATUS,self.TargetPos)
 					# print(self.food1)
-					print("進臂順序"+str(self.Route))
-					print("目前狀態"+str(self.NOW_STATUS))
-					print("目前臂"+str(self.dangchianbi))
+					# print("進臂順序"+str(self.Route))
+					# print("目前狀態"+str(self.NOW_STATUS))
+					# print("目前臂"+str(self.dangchianbi))
 					# print("進臂次數:"+str(self.frequency))
 					# print("短期工作記憶錯誤: "+str(self.ShortTerm))
 					# print("長期工作記憶錯誤"+str(self.LongTerm))
