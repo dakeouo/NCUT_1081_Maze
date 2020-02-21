@@ -30,6 +30,8 @@ class MazeMouseTrack(object):
 		self.thread = threading.Thread(target = self.TCAM.CameraMain) # 執行該子執行緒
 		self.thread.start()  # 執行該子執行緒
 
+		self.thread1 = threading.Thread(target = self.TCAM.getTimePoint) # 執行該子執行緒
+
 		#變數：迷宮系統相關
 		self.ARM_UNIT = self.TCAM.getArmUnit() #迷宮臂數
 		self.ARMS_POS = self.TCAM.getMazeArmsPos() #迷宮臂座標點
@@ -75,6 +77,8 @@ class MazeMouseTrack(object):
 		self.tkWin.resizable(False, False) #禁止變更視窗大小
 		self.setEachVariable() #各項變數初始化
 		self.setupUI() #視窗主程式
+
+		self.firstMazeRun = True
 
 	def setArmLine(self): #繪製迷宮框
 		DrawArms = self.ARMS_POS
@@ -220,8 +224,10 @@ class MazeMouseTrack(object):
 	def LoopMain(self): #UI執行後一直跑的迴圈
 		self.makeBall()
 		self.CAM_IS_CONN = self.TCAM.getCameraStatus()
-
 		if self.MAZE_IS_RUN:
+			if self.firstMazeRun:
+				# self.thread1.start()  # 執行該子執行緒
+				self.firstMazeRun = False
 			self.LockInput(True)
 			newMazeStatus = self.TCAM.getMazeStatus()
 			self.updateData()
@@ -230,8 +236,10 @@ class MazeMouseTrack(object):
 				self.Maze_State.place(x=self.WinSize[0]-170,y=140,anchor="ne")
 				self.BT_Start.config(text="Start", bg="DarkOliveGreen2")
 				self.MAZE_IS_RUN = False
+			# self.thread1.join() # 等待子執行緒結束
 		else:
 			self.LockInput(False)
+			self.firstMazeRun = True
 			
 		if self.CAM_IS_CONN:
 			self.Cam_State.config(text="Camera State: Connecting...", fg="green4")
@@ -272,7 +280,8 @@ class MazeMouseTrack(object):
 		self.TK_SHOW_Food.config(text=str1)
 		self.TK_SHOW_Food.place(x=self.WinSize[0]-move,y=170,anchor="ne")
 		#========檔案存放位置設置========
-		self.FilePath = "D:/4A813024/"
+		# self.FilePath = "D:/4A813024/"
+		self.FilePath = "C:/Users/E5-572G/Desktop/Research/"
 		self.FileName = "testing%0d.csv" %(random.randint(1,3))
 		self.TK_File_Dir.set(str(self.FilePath)+str(self.FileName))
 		self.TK_SHOW_FileDir.set("# FileDir: {}{}".format(self.FilePath, self.FileName))
@@ -288,7 +297,7 @@ class MazeMouseTrack(object):
 
 	def setupUI(self):
 		#========測試用========
-		# tk.Button(self.tkWin, text='Testing', width=10, font=('Arial', 8), command=self.PreparingTesting).place(x=100,y=10,anchor="nw")
+		tk.Button(self.tkWin, text='Testing', width=10, font=('Arial', 8), command=self.PreparingTesting).place(x=100,y=10,anchor="nw")
 
 		#========左側：紀錄變數========
 		self.TK_Total_L_Term = tk.StringVar()
