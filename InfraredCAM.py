@@ -65,6 +65,9 @@ class InfraredCAM:
 		self.myTime = datetime.now()
 		# self.myTimeMsec = int(self.myTime.strftime("%S"))
 		self.myTimeMsec = int(self.myTime.strftime("%f")[:2])
+		self.nowSec = int(self.myTime.strftime("%S"))
+		self.RouteArrFlag = 0
+		self.myRouteArr = []
 
 		#變數：狀態變數(這些變數[由UI端傳來的]狀態變數)
 		self.WINDOWS_IS_ACTIVE = True #UI狀態
@@ -130,7 +133,7 @@ class InfraredCAM:
 		self.TotalShortTerm = 0 #總短期記憶
 		self.TotalLongTerm = 0 #總長期記憶
 		#然後其他你有需要的變數就再自己加
-		self.rtsp = "rtsp://E613-1:613456789@192.168.1.101:554/stream1" #1920x1080
+		self.rtsp = "rtsp://E613-1:613456789@192.168.1.106:554/stream1" #1920x1080
 		# self.rtsp = "rtsp://admin:613456789@192.168.1.24:554/2gpp.sdp"
 		self.cap = cv2.VideoCapture(self.rtsp)
 		self.WIDTH = 1024
@@ -150,6 +153,7 @@ class InfraredCAM:
 		self.frequency = []  #進臂次數
 		self.NOW_STATUS = 0 #進臂or出臂
 		self.dangchianbi = 0
+
 
 	#========GET副程式區========
 	def getArmUnit(self): #取得迷宮臂數
@@ -195,7 +199,7 @@ class InfraredCAM:
 		self.TotalFood = total
 		self.Food = food
 
-	def setFilePath(self, filepath): #設定檔案寫入路徑
+	def setFilePath(self, filepath): #設定檔案寫入路徑ex
 		self.filePath = filepath
 
 	def setRatID(self, ratid): #設定老鼠編號
@@ -205,12 +209,23 @@ class InfraredCAM:
 
 	#========其他的副程式========
 	def getTimePoint(self, nowTime):
-		# print("幹!!!!!!!!!!!!!")
-		# while self.MAZE_IS_RUN:
-		# nowTime = datetime.now()
 		nowMsec = int(nowTime.strftime("%f")[:2])
-		# nowMsec = int(nowTime.strftime("%S"))
-		# print(nowMsec)
+		nowSec = int(nowTime.strftime("%S"))
+		routeCSV = self.timestart.strftime("%m%d%H%M%S")+self.RatID+".csv"
+		if(nowSec != self.nowSec):
+			# print(len(self.Mouse_coordinates))
+			# print(nowSec)
+			self.myRouteArr = []
+			if self.RouteArrFlag >= 0 and len(self.Mouse_coordinates) > 15:
+				# print(len(self.Mouse_coordinates))
+				for i in range((self.RouteArrFlag*15),(self.RouteArrFlag*15)+15):
+					self.myRouteArr.append(self.Mouse_coordinates[i])
+				# self.myRouteArr.append(self.Mouse_coordinates[(self.RouteArrFlag*90):(self.RouteArrFlag*90)+90])
+				# print(self.Mouse_coordinates[0:100])
+				writeData2CSV(routeCSV, "a", self.myRouteArr)
+			if len(self.Mouse_coordinates) > 15:
+				self.RouteArrFlag = self.RouteArrFlag + 1
+			self.nowSec = nowSec
 		if(nowMsec != self.myTimeMsec):
 			self.Mouse_coordinates.append([self.TargetPos[0], self.TargetPos[1]])
 			self.myTimeMsec = nowMsec
@@ -374,6 +389,8 @@ class InfraredCAM:
 		I82 = [int(self.ARMS_POS[31][0]),int(self.ARMS_POS[31][1])]
 
 		# self.NOW_STATUS = 1
+
+
 
 		if self.dangchianbi == 1:
 			ans11 = math.sqrt(pow(self.TargetPos[0] - I11[0],2) + pow(self.TargetPos[1] - I11[1],2))
@@ -569,9 +586,7 @@ class InfraredCAM:
 		copy = cv2.cvtColor(copy, cv2.COLOR_BGR2GRAY)  #灰階
 		B2 , copy = cv2.threshold(copy, 127,255,cv2.THRESH_BINARY) #二值化
 		# cv2.imshow ("copy",copy)
-		mousepath = makeBlackImage()
-		mousepath = cv2.resize(mousepath,(480,480),interpolation=cv2.INTER_CUBIC) #放大成480x480
-		cv2.imshow("mousepath",mousepath)
+
 		self.initDefault()
 		#程式一執行[第一次要跑的東西]放這裡
 
@@ -582,19 +597,14 @@ class InfraredCAM:
 			frame = cv2.resize(frame,(self.WIDTH,self.HEIGHT),interpolation=cv2.INTER_CUBIC) #調整大小1024*576
 			frame = frame[self.newP1[1]:self.newP2[1], self.newP1[0]:self.newP2[0]] #擷取兩個點的範圍
 			# cv2.polylines(frame, [self.MASK_POS], True, (0, 255, 255), 2)  #加上3臂輔助線
-			
-			# cv2.imshow("frame1",frame)
 			frame = cv2.resize(frame,(480,480),interpolation=cv2.INTER_CUBIC) #放大成480x480
-
-			frame1 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+			frame1 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)	
 			B2,frame1 = cv2.threshold(frame1, 127,255,cv2.THRESH_BINARY)
 			pr = cv2.bitwise_and(frame1,frame1, mask=copy ) #遮罩覆蓋到影像上
 			frame1 = cv2.morphologyEx(pr,cv2.MORPH_OPEN,self.O)
 			self.rat_XY,wh = cv2.findContours(frame1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 W=所有座標
 			if len(self.rat_XY):
 				self.TargetPos,x,y = self.coordinate(self.rat_XY)
-			# cv2.line(frame1,(191,219),(213,198),(216,42,83),1) #6出臂線
-			# cv2.imshow("frame1",frame1)
 			cv2.waitKey(1)
 			
 			# pass
@@ -603,7 +613,10 @@ class InfraredCAM:
 
 				self.sterm()
 				if not self.READ_FOOD: #把Food食物狀態寫進判斷狀態
-					
+					mousepath = []  
+					mousepath = makeBlackImage()	#產生畫老鼠路徑用圖
+					mousepath = cv2.resize(mousepath,(480,480),interpolation=cv2.INTER_CUBIC)
+					cv2.imshow("mousepath",mousepath)
 					self.Mouse_coordinates = []
 					self.initDefault()
 					for i in range (0,self.ARM_UNIT):
@@ -611,6 +624,7 @@ class InfraredCAM:
 						self.foodtest.append(self.Food[i])
 					self.READ_FOOD = True
 					self.timestart = datetime.now() #起始時間
+					self.RouteArrFlag = 0
 					print("起始時間: " +str(self.timestart))
 					
 
@@ -638,9 +652,11 @@ class InfraredCAM:
 						winsound.Beep(442,1000)
 						print(self.Mouse_coordinates)
 						self.MAZE_IS_RUN = False
-						for i in range (1,len(self.Mouse_coordinates)):   #畫圖
+						for i in range (1,len(self.Mouse_coordinates)):   #畫路徑圖
 							cv2.line(mousepath,convert(self.Mouse_coordinates[i-1]),convert(self.Mouse_coordinates[i]),(20,65,213),1) #白色物體路徑
+						# cv2.imwrite(self.RatID,mousepath)	#儲存路徑圖
 						cv2.imshow("mousepath",mousepath)
+						cv2.imwrite(self.timestart.strftime("%m%d%H%M%S")+self.RatID+'.jpg',mousepath)
 
 					else:
 						pass

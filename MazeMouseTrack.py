@@ -297,7 +297,7 @@ class MazeMouseTrack(object):
 
 	def setupUI(self):
 		#========測試用========
-		tk.Button(self.tkWin, text='Testing', width=10, font=('Arial', 8), command=self.PreparingTesting).place(x=100,y=10,anchor="nw")
+		# tk.Button(self.tkWin, text='Testing', width=10, font=('Arial', 8), command=self.PreparingTesting).place(x=100,y=10,anchor="nw")
 
 		#========左側：紀錄變數========
 		self.TK_Total_L_Term = tk.StringVar()
