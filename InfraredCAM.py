@@ -90,17 +90,6 @@ class InfraredCAM:
 		self.ARM_UNIT = 8 #迷宮臂數
 		self.ViewSize = (480, 480) #虛擬視窗顯示大小
 		self.TargetPos = [-1, -1] #目標變數
-<<<<<<< HEAD
-		self.ARMS_POS = [[286,229],[478,229],[478,265],[287,262], #I11,O11,O12,I12
-			[283,271],[424,414],[402,438],[259,297], #I21,O21,O22,I22
-			[252,298],[250,479],[220,479],[219,301], #I31,O31,O32,I32
-			[212,298],[68,441],[40,419],[184,270], #I41,O41,O42,I42
-			[182,266],[2,266],[2,229],[183,228], #I51,O51,O52,I52
-			[188,222],[38,71],[59,47],[212,197], #I61,O61,O62,I62
-			[218,195],[218,2],[252,2],[252,194], #I71,O71,O72,I72
-			[258,198],[406,49],[431,73],[284,218]
-			] #八壁遮罩
-=======
 		self.ARMS_POS = [[287,227],[478,227],[478,264],[289,263], #I11,O11,O12,I12
 						[283,271],[426,414],[402,440],[259,297], #I21,O21,O22,I22
 						[252,298],[252,479],[219,479],[219,301], #I31,O31,O32,I32
@@ -110,7 +99,6 @@ class InfraredCAM:
 						[218,195],[217,2],[253,2],[253,194], #I71,O71,O72,I72
 						[257,197],[406,48],[432,73],[284,218]
 						] #八壁遮罩
->>>>>>> origin/master
 		self.ARMS_LINE = [
 			[self.ARMS_POS[0],self.ARMS_POS[1],self.ARMS_POS[3],self.ARMS_POS[2]],
 			[self.ARMS_POS[4],self.ARMS_POS[5],self.ARMS_POS[7],self.ARMS_POS[6]],
@@ -143,13 +131,8 @@ class InfraredCAM:
 		self.TotalShortTerm = 0 #總短期記憶
 		self.TotalLongTerm = 0 #總長期記憶
 		#然後其他你有需要的變數就再自己加
-<<<<<<< HEAD
-		self.rtsp = "rtsp://E613-1:e613456789@192.168.100.187:554/videoMain" #1920x1080
-		# self.rtsp = "rtsp://admin:613456789@192.168.1.24:554/2gpp.sdp"
-=======
 		# self.rtsp = "rtsp://E613-1:613456789@192.168.1.101:554/stream1" #1920x1080
 		self.rtsp = "rtsp://E613-1:e613456789@192.168.100.187:554/videoMain" #1920x1080
->>>>>>> origin/master
 		self.cap = cv2.VideoCapture(self.rtsp)
 		self.WIDTH = 1024
 		self.HEIGHT = int(self.WIDTH*(9/16))  #576
@@ -233,11 +216,6 @@ class InfraredCAM:
 				self.dangchianbi= (i + 1)
 				self.food1[i] = 0
 				break
-
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/master
 		return self.NOW_STATUS,self.dangchianbi
 	def leave(self,dangchianbi,TargetPos): #出臂判斷
 
