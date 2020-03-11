@@ -219,10 +219,11 @@ class InfraredCAM:
 		
 		#mask = [[[x11,y11],[x12,y12]],...]
 		mask = []
+		Ratinline = 65/20
 		self.NOW_STATUS = 0
 		for i in range(0,self.ARM_UNIT):
-			mask1 = [int(ARMS_LINE[i][0][0] -(ARMS_LINE[i][0][0] - ARMS_LINE[i][1][0])/y) , int(ARMS_LINE[i][0][1]-(ARMS_LINE[i][0][1] - ARMS_LINE[i][1][1])/y)]
-			mask2 = [int(ARMS_LINE[i][2][0]-(ARMS_LINE[i][2][0] - ARMS_LINE[i][3][0])/y) , int(ARMS_LINE[i][2][1]-(ARMS_LINE[i][2][1] - ARMS_LINE[i][3][1])/y)]
+			mask1 = [int(ARMS_LINE[i][0][0] -(ARMS_LINE[i][0][0] - ARMS_LINE[i][1][0])/Ratinline) , int(ARMS_LINE[i][0][1]-(ARMS_LINE[i][0][1] - ARMS_LINE[i][1][1])/Ratinline)]
+			mask2 = [int(ARMS_LINE[i][2][0]-(ARMS_LINE[i][2][0] - ARMS_LINE[i][3][0])/Ratinline) , int(ARMS_LINE[i][2][1]-(ARMS_LINE[i][2][1] - ARMS_LINE[i][3][1])/Ratinline)]
 			ans1 = math.sqrt(pow(self.TargetPos[0] - mask1[0],2) + pow(self.TargetPos[1] - mask1[1],2))
 			ans2 = math.sqrt(pow(self.TargetPos[0] - mask2[0],2) + pow(self.TargetPos[1] - mask2[1],2))
 			ans3 = ans1 + ans2    #白色與一臂的距離
