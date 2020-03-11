@@ -9,6 +9,7 @@ import os
 import csv
 import winsound
 import threading
+import IPCAM_Frame as IPCAM
 
 #========純副程式區========
 def writeData2CSV(fileName, type_, dataRow): #寫入CSV檔
@@ -62,44 +63,41 @@ def makeBlackImage(): #製造出全黑圖片(10x10) <= 這個贈品很好用，�
 #類別內所有的[變數/副程式INPUT第一個變數/呼叫副程式的時候]都要加"self"，代表要互叫這個類別內的變數
 class InfraredCAM:
 	def __init__(self):
+		self.IPCAM = IPCAM
+
 		self.myTime = datetime.now()
 		# self.myTimeMsec = int(self.myTime.strftime("%S"))
 		self.myTimeMsec = int(self.myTime.strftime("%f")[:2])
 		self.nowSec = int(self.myTime.strftime("%S"))
 		self.RouteArrFlag = 0
 		self.myRouteArr = []
+		self.IPCAM = IPCAM
 
 		#變數：狀態變數(這些變數[由UI端傳來的]狀態變數)
 		self.WINDOWS_IS_ACTIVE = True #UI狀態
 		self.MAZE_IS_RUN = False #當前系統是否在執行
 		self.OPEN_CAMERA_WINDOW = False #影像視窗狀態
 		self.CAM_IS_CONN = False #當前鏡頭是否連線
-		# WINDOWS_IS_ACTIVE 	=> setInterfaceStatus()
-		# MAZE_IS_RUN 			=> setMazeStatus()/getMazeStatus()  (這個兩邊都有控制權)
-		# OPEN_CAMERA_WINDOW 	=> setCameraWindow()
-		# CAM_IS_CONN			=> getCameraStatus()
+		self.CAM_IS_RUN = False #當前相機程式是否在執行
 
 		#變數：迷宮相關變數(這些變數[由UI端傳來的]迷宮相關變數)
 		self.filePath = "" #寫入的檔案路徑+檔名
 		self.RatID = "" #老鼠編號
 		self.TotalFood = 0 #總食物個數
 		self.Food = [] #存放食物在哪臂
-		# filePath 			=> setFilePath()
-		# RatID 			=> setRatID()
-		# TotalFood, Food	=> setFoodWithArm()
 
 		#變數：迷宮相關變數(這些[都要傳到UI端]讓它知道的)
 		self.ARM_UNIT = 8 #迷宮臂數
 		self.ViewSize = (480, 480) #虛擬視窗顯示大小
 		self.TargetPos = [-1, -1] #目標變數
-		self.ARMS_POS = [[288,231],[478,233],[478,264],[288,265], #I11,O11,O12,I12
-						[284,273],[427,417],[404,442],[258,296], #I21,O21,O22,I22
-						[250,301],[247,479],[215,479],[220,299], #I31,O31,O32,I32
-						[212,295],[64,442],[39,420],[187,273], #I41,O41,O42,I42
-						[184,264],[2,261],[2,229],[182,230], #I51,O51,O52,I52
-						[186,220],[45,72],[64,51],[211,198], #I61,O61,O62,I62
-						[219,195],[220,2],[252,2],[252,195], #I71,O71,O72,I72
-						[264,200],[406,56],[433,79],[286,223]
+		self.ARMS_POS = [[287,227],[478,227],[478,264],[289,263], #I11,O11,O12,I12
+						[283,271],[426,414],[402,440],[259,297], #I21,O21,O22,I22
+						[252,298],[252,479],[219,479],[219,301], #I31,O31,O32,I32
+						[212,298],[68,441],[40,419],[184,270], #I41,O41,O42,I42
+						[182,266],[1,266],[1,228],[183,228], #I51,O51,O52,I52
+						[188,222],[37,71],[60,47],[212,197], #I61,O61,O62,I62
+						[218,195],[217,2],[253,2],[253,194], #I71,O71,O72,I72
+						[257,197],[406,48],[432,73],[284,218]
 						] #八壁遮罩
 		self.ARMS_LINE = [
 			[self.ARMS_POS[0],self.ARMS_POS[1],self.ARMS_POS[3],self.ARMS_POS[2]],
@@ -133,12 +131,12 @@ class InfraredCAM:
 		self.TotalShortTerm = 0 #總短期記憶
 		self.TotalLongTerm = 0 #總長期記憶
 		#然後其他你有需要的變數就再自己加
-		self.rtsp = "rtsp://E613-1:613456789@192.168.1.106:554/stream1" #1920x1080
-		# self.rtsp = "rtsp://admin:613456789@192.168.1.24:554/2gpp.sdp"
+		# self.rtsp = "rtsp://E613-1:613456789@192.168.1.101:554/stream1" #1920x1080
+		self.rtsp = "rtsp://E613-1:e613456789@192.168.100.187:554/videoMain" #1920x1080
 		self.cap = cv2.VideoCapture(self.rtsp)
 		self.WIDTH = 1024
 		self.HEIGHT = int(self.WIDTH*(9/16))  #576
-		self.MID_POS = (int(self.WIDTH/2),int(self.HEIGHT/2))
+		self.MID_POS = [520, 540]
 		self.SegRate = (4/11)
 		self.newP1 = (int(self.MID_POS[0]-int(self.HEIGHT)/2),0)
 		# self.newP1 = (self.MID_POS[0] - int((self.WIDTH*self.SegRate)/2), self.MID_POS[1] - int((self.WIDTH*self.SegRate)/2))
@@ -154,76 +152,23 @@ class InfraredCAM:
 		self.NOW_STATUS = 0 #進臂or出臂
 		self.dangchianbi = 0
 
-
-	#========GET副程式區========
-	def getArmUnit(self): #取得迷宮臂數
-		return self.ARM_UNIT
-
-	def getMazeArmsPos(self): #取得迷宮座標點
-		return self.ARMS_POS
-
-	def getViewHW(self): #取得虛擬視窗顯示大小
-		return self.ViewSize
-
-	def getCameraStatus(self): #取得鏡頭狀態
-		return self.CAM_IS_CONN
-
-	def getTargetPos(self): #取得經過處理後取得的座標
-		return self.TargetPos
-
-	def getMazeStatus(self): #取得系統運行狀態
-		return self.MAZE_IS_RUN
-
-	def getTerm(self): #取得短期/長期記憶
-		return self.ShortTerm, self.LongTerm
-
-	def getRoute(self): #取得進出臂順序
-		return self.Route
-
-	def getLatency(self): #取得目前總時間長度
-		return self.Latency
-
-	#其他如果你有要用GET開頭的你也可以放在這裡
-
-	#========SET副程式區========
-	def setMazeStatus(self, status): #設定系統運行狀態
-		self.MAZE_IS_RUN = status
-
-	def setInterfaceStatus(self, status): #設定UI狀態
-		self.WINDOWS_IS_ACTIVE = status
-
-	def setCameraWindow(self, status): #設定影像視窗狀態
-		self.OPEN_CAMERA_WINDOW = status
-
-	def setFoodWithArm(self, total, food): #設定食物陣列
-		self.TotalFood = total
-		self.Food = food
-
-	def setFilePath(self, filepath): #設定檔案寫入路徑ex
-		self.filePath = filepath
-
-	def setRatID(self, ratid): #設定老鼠編號
-		self.RatID = ratid
-
-	#其他如果你有要用SET開頭的你也可以放在這裡
-
 	#========其他的副程式========
 	def getTimePoint(self, nowTime):
 		nowMsec = int(nowTime.strftime("%f")[:2])
 		nowSec = int(nowTime.strftime("%S"))
 		routeCSV = self.timestart.strftime("%m%d%H%M%S")+self.RatID+".csv"
 		if(nowSec != self.nowSec):
-			# print(len(self.Mouse_coordinates))
-			# print(nowSec)
+			print(len(self.Mouse_coordinates))
 			self.myRouteArr = []
 			if self.RouteArrFlag >= 0 and len(self.Mouse_coordinates) > 15:
+				print((self.RouteArrFlag*15)+15)
 				# print(len(self.Mouse_coordinates))
 				for i in range((self.RouteArrFlag*15),(self.RouteArrFlag*15)+15):
 					self.myRouteArr.append(self.Mouse_coordinates[i])
 				# self.myRouteArr.append(self.Mouse_coordinates[(self.RouteArrFlag*90):(self.RouteArrFlag*90)+90])
 				# print(self.Mouse_coordinates[0:100])
 				writeData2CSV(routeCSV, "a", self.myRouteArr)
-			if len(self.Mouse_coordinates) > 15:
+			if len(self.Mouse_coordinates) > 30:
 				self.RouteArrFlag = self.RouteArrFlag + 1
 			self.nowSec = nowSec
 		if(nowMsec != self.myTimeMsec):
@@ -253,9 +198,8 @@ class InfraredCAM:
 			self.LongTerm.append(0)
 			self.frequency.append(0)
 	def examination(self,NOW_STATUS,TargetPos): #進臂判斷
-	#八壁32點
+		#八壁32點
 		
-
 		#mask = [[[x11,y11],[x12,y12]],...]
 		mask = []
 		self.NOW_STATUS = 0
@@ -272,102 +216,6 @@ class InfraredCAM:
 				self.food1[i] = 0
 				break
 
-
-		# mask1 = self.ARMS_LINE[0]	#I11,O11,I12,O12
-		# mask2 = self.ARMS_LINE[1]	#I21,O21,I22,O22
-		# mask3 = self.ARMS_LINE[2]	#I31,O31,I32,O32
-		# mask4 = self.ARMS_LINE[3]	#I41,O41,I42,O42	
-		# mask5 = self.ARMS_LINE[4]	#I51,O51,I52,O52
-		# mask6 = self.ARMS_LINE[5]	#I61,O61,I62,O62
-		# mask7 = self.ARMS_LINE[6]	#I71,O71,I72,O72
-		# mask8 = self.ARMS_LINE[7]	#I81,O81,I82,O82
-
-		# mask115 = [int((mask1[0][0]+mask1[1][0])/2),int((mask1[0][1]+mask1[1][1])/2)]
-		# mask215 = [int((mask2[0][0]+mask2[1][0])/2),int((mask2[0][1]+mask2[1][1])/2)]
-		# mask315 = [int((mask3[0][0]+mask3[1][0])/2),int((mask3[0][1]+mask3[1][1])/2)]
-		# mask415 = [int((mask4[0][0]+mask4[1][0])/2),int((mask4[0][1]+mask4[1][1])/2)]
-		# mask515 = [int((mask5[0][0]+mask5[1][0])/2),int((mask5[0][1]+mask5[1][1])/2)]
-		# mask615 = [int((mask6[0][0]+mask6[1][0])/2),int((mask6[0][1]+mask6[1][1])/2)]
-		# mask715 = [int((mask7[0][0]+mask7[1][0])/2),int((mask7[0][1]+mask7[1][1])/2)]
-		# mask815 = [int((mask8[0][0]+mask8[1][0])/2),int((mask8[0][1]+mask8[1][1])/2)]
-
-		# mask125 = [int((mask1[2][0]+mask1[3][0])/2),int((mask1[2][1]+mask1[3][1])/2)]
-		# mask225 = [int((mask2[2][0]+mask2[3][0])/2),int((mask2[2][1]+mask2[3][1])/2)]
-		# mask325 = [int((mask3[2][0]+mask3[3][0])/2),int((mask3[2][1]+mask3[3][1])/2)]
-		# mask425 = [int((mask4[2][0]+mask4[3][0])/2),int((mask4[2][1]+mask4[3][1])/2)]
-		# mask525 = [int((mask5[2][0]+mask5[3][0])/2),int((mask5[2][1]+mask5[3][1])/2)]
-		# mask625 = [int((mask6[2][0]+mask6[3][0])/2),int((mask6[2][1]+mask6[3][1])/2)]
-		# mask725 = [int((mask7[2][0]+mask7[3][0])/2),int((mask7[2][1]+mask7[3][1])/2)]
-		# mask825 = [int((mask8[2][0]+mask8[3][0])/2),int((mask8[2][1]+mask8[3][1])/2)]
-
-		# ans11 = math.sqrt(pow(self.TargetPos[0] - mask115[0],2) + pow(self.TargetPos[1] - mask115[1],2))
-		# ans12 = math.sqrt(pow(self.TargetPos[0] - mask125[0],2) + pow(self.TargetPos[1] - mask125[1],2))
-		# ans1 = ans11 + ans12    #白色與一臂的距離
-		# print("ans1 "+str(ans1))
-		# ans21 = math.sqrt(pow(self.TargetPos[0] - mask215[0],2) + pow(self.TargetPos[1] - mask215[1],2))
-		# ans22 = math.sqrt(pow(self.TargetPos[0] - mask225[0],2) + pow(self.TargetPos[1] - mask225[1],2))
-		# ans2 = ans21 + ans22
-		# print("ans2 "+str(ans2)) #白色與二臂的距離
-		# ans31 = math.sqrt(pow(self.TargetPos[0] - mask315[0],2) + pow(self.TargetPos[1] - mask315[1],2))
-		# ans32 = math.sqrt(pow(self.TargetPos[0] - mask325[0],2) + pow(self.TargetPos[1] - mask325[1],2))
-		# ans3 = ans31 + ans32
-		# print("ans3 "+str(ans3)) #白色與三臂的距離
-		# ans41 = math.sqrt(pow(self.TargetPos[0] - mask415[0],2) + pow(self.TargetPos[1] - mask415[1],2))
-		# ans42 = math.sqrt(pow(self.TargetPos[0] - mask425[0],2) + pow(self.TargetPos[1] - mask425[1],2))
-		# ans4 = ans41 + ans42
-		# print("ans4 "+str(ans4)) #白色與四臂的距離
-		# ans51 = math.sqrt(pow(self.TargetPos[0] - mask515[0],2) + pow(self.TargetPos[1] - mask515[1],2))
-		# ans52 = math.sqrt(pow(self.TargetPos[0] - mask525[0],2) + pow(self.TargetPos[1] - mask525[1],2))
-		# ans5 = ans51 + ans52
-		# print("ans5 "+str(ans5)) #白色與五臂的距離
-		# ans61 = math.sqrt(pow(self.TargetPos[0] - mask615[0],2) + pow(self.TargetPos[1] - mask615[1],2))
-		# ans62 = math.sqrt(pow(self.TargetPos[0] - mask625[0],2) + pow(self.TargetPos[1] - mask625[1],2))
-		# ans6 = ans61 + ans62
-		# print("ans6 "+str(ans6)) #白色與六臂的距離
-		# ans71 = math.sqrt(pow(self.TargetPos[0] - mask715[0],2) + pow(self.TargetPos[1] - mask715[1],2))
-		# ans72 = math.sqrt(pow(self.TargetPos[0] - mask725[0],2) + pow(self.TargetPos[1] - mask725[1],2))
-		# ans7 = ans71 + ans72
-		# print("ans7 "+str(ans7)) #白色與七臂的距離
-		# ans81 = math.sqrt(pow(self.TargetPos[0] - mask815[0],2) + pow(self.TargetPos[1] - mask815[1],2))
-		# ans82 = math.sqrt(pow(self.TargetPos[0] - mask825[0],2) + pow(self.TargetPos[1] - mask825[1],2))
-		# ans8 = ans81 + ans82
-		# print("ans8 "+str(ans8)) #白色與八臂的距離
-		# if ans1<40:
-		# 	self.NOW_STATUS =1
-		# 	self.dangchianbi=1
-		# 	self.food1[0] = 0
-		# elif ans2<40:
-		# 	self.NOW_STATUS=1
-		# 	self.dangchianbi=2
-		# 	self.food1[1] = 0
-		# elif ans3<40:
-		# 	self.NOW_STATUS=1
-		# 	self.dangchianbi=3
-		# 	self.food1[2] = 0
-		# elif ans4<40:
-		# 	self.NOW_STATUS=1
-		# 	self.dangchianbi=4
-		# 	self.food1[3] = 0
-		# elif ans5<40:
-		# 	self.NOW_STATUS=1
-		# 	self.dangchianbi=5
-		# 	self.food1[4] = 0
-		# elif ans6<40:
-		# 	self.NOW_STATUS=1
-		# 	self.dangchianbi=6
-		# 	self.food1[5] = 0
-		# elif ans7<40:
-		# 	self.NOW_STATUS=1
-		# 	self.dangchianbi=7
-		# 	self.food1[6] = 0
-		# elif ans8<40:
-		# 	self.NOW_STATUS=1
-		# 	self.dangchianbi=8
-		# 	self.food1[7] = 0
-		# else:
-		# 	self.NOW_STATUS=0
-			# pass
-		# print(self.TargetPos)
 		return self.NOW_STATUS,self.dangchianbi
 	def leave(self,dangchianbi,TargetPos): #出臂判斷
 
@@ -537,30 +385,9 @@ class InfraredCAM:
 
 
 	def sterm(self):  #短期工作記憶錯誤判斷
-		if self.frequency[0]>0:
-			self.ShortTerm[0] = self.frequency[0]-1
-
-		if self.frequency[1]>0:
-			self.ShortTerm[1] = self.frequency[1]-1
-
-		if self.frequency[2]>0:
-			self.ShortTerm[2] = self.frequency[2]-1
-		
-		if self.frequency[3]>0:
-			self.ShortTerm[3] = self.frequency[3]-1
-
-		if self.frequency[4]>0:
-			self.ShortTerm[4] = self.frequency[4]-1
-		
-		if self.frequency[5]>0:
-			self.ShortTerm[5] = self.frequency[5]-1
-
-		if self.frequency[6]>0:
-			self.ShortTerm[6] = self.frequency[6]-1
-
-		if self.frequency[7]>0:
-			self.ShortTerm[7] = self.frequency[7]-1	
-
+		for i in range(0,8):
+			if self.frequency[i]>0:
+				self.ShortTerm[i] = self.frequency[i]-1
 
 	def DataRecord(self):  #寫入csv
 		csvTitle = ["Rat ID", "Food", "Total LongTerm", "Total ShortTerm", "Route", "Latency"]
@@ -591,105 +418,100 @@ class InfraredCAM:
 		#程式一執行[第一次要跑的東西]放這裡
 
 		while self.WINDOWS_IS_ACTIVE:
-			
-			ret,frame = self.cap.read()  #讀ipcam影像
-			self.CAM_IS_CONN = True
-			frame = cv2.resize(frame,(self.WIDTH,self.HEIGHT),interpolation=cv2.INTER_CUBIC) #調整大小1024*576
-			frame = frame[self.newP1[1]:self.newP2[1], self.newP1[0]:self.newP2[0]] #擷取兩個點的範圍
-			# cv2.polylines(frame, [self.MASK_POS], True, (0, 255, 255), 2)  #加上3臂輔助線
-			frame = cv2.resize(frame,(480,480),interpolation=cv2.INTER_CUBIC) #放大成480x480
-			frame1 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)	
-			B2,frame1 = cv2.threshold(frame1, 127,255,cv2.THRESH_BINARY)
-			pr = cv2.bitwise_and(frame1,frame1, mask=copy ) #遮罩覆蓋到影像上
-			frame1 = cv2.morphologyEx(pr,cv2.MORPH_OPEN,self.O)
-			self.rat_XY,wh = cv2.findContours(frame1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 W=所有座標
-			if len(self.rat_XY):
-				self.TargetPos,x,y = self.coordinate(self.rat_XY)
-			cv2.waitKey(1)
-			
-			# pass
-			#把[影像擷取的東西]放這裡
-			if self.MAZE_IS_RUN: #UI start 後動作
-
-				self.sterm()
-				if not self.READ_FOOD: #把Food食物狀態寫進判斷狀態
-					mousepath = []  
-					mousepath = makeBlackImage()	#產生畫老鼠路徑用圖
-					mousepath = cv2.resize(mousepath,(480,480),interpolation=cv2.INTER_CUBIC)
-					cv2.imshow("mousepath",mousepath)
-					self.Mouse_coordinates = []
-					self.initDefault()
-					for i in range (0,self.ARM_UNIT):
-						self.food1.append(self.Food[i])
-						self.foodtest.append(self.Food[i])
-					self.READ_FOOD = True
-					self.timestart = datetime.now() #起始時間
-					self.RouteArrFlag = 0
-					print("起始時間: " +str(self.timestart))
-					
-
+			#確定要連線時才會跑這個
+			if self.CAM_IS_RUN:
+				frame = self.IPCAM.IPCAM_Image
+				if len(frame) == 0:
+					frame = cv2.resize(makeBlackImage(),(1280,720),interpolation=cv2.INTER_CUBIC)
+					self.CAM_IS_CONN = False
 				else:
-					pass 
-				self.time_now = datetime.now()  #當下時間
-				self.getTimePoint(self.time_now)
-				self.Latency = (self.time_now - self.timestart).seconds  
-##############################################################進臂###########################################################
-				if self.NOW_STATUS == 0:
-					self.NOW_STATUS, self.dangchianbi = self.examination(self.NOW_STATUS,self.TargetPos)
-					# print(self.food1)
-					food1max = np.max(self.food1)
-					if food1max == 0:
-						self.Latency = (self.time_now - self.timestart).seconds 
-						self.TotalShortTerm = 0
-						self.TotalLongTerm = 0
-						for i in range(0,len(self.ShortTerm)):
-							self.TotalShortTerm = self.TotalShortTerm + self.ShortTerm[i]
-						# print(self.TotalShortTerm)
-						for i in range(1,len(self.LongTerm)):
-							self.TotalLongTerm = self.TotalLongTerm + self.LongTerm[i]
-						# print(self.TotalLongTerm)
-						self.DataRecord()
-						winsound.Beep(442,1000)
-						print(self.Mouse_coordinates)
-						self.MAZE_IS_RUN = False
-						for i in range (1,len(self.Mouse_coordinates)):   #畫路徑圖
-							cv2.line(mousepath,convert(self.Mouse_coordinates[i-1]),convert(self.Mouse_coordinates[i]),(20,65,213),1) #白色物體路徑
-						# cv2.imwrite(self.RatID,mousepath)	#儲存路徑圖
+					frame = cv2.resize(frame,(self.WIDTH,self.HEIGHT),interpolation=cv2.INTER_CUBIC) #調整大小1024*576
+					self.CAM_IS_CONN = True
+				
+				# cv2.rectangle(frame, convert(self.newP1), convert(self.newP2), (0,255,0), 1) #繪製矩形
+				# cv2.imshow("frame",frame)
+				frame = frame[self.newP1[1]:self.newP2[1], self.newP1[0]:self.newP2[0]] #擷取兩個點的範圍
+				# cv2.polylines(frame, [self.MASK_POS], True, (0, 255, 255), 2)  #加上3臂輔助線
+				frame = cv2.resize(frame,(480,480),interpolation=cv2.INTER_CUBIC) #放大成480x480
+				frame1 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)	
+				B2,frame1 = cv2.threshold(frame1, 127,255,cv2.THRESH_BINARY)
+				pr = cv2.bitwise_and(frame1,frame1, mask=copy ) #遮罩覆蓋到影像上
+				frame1 = cv2.morphologyEx(pr,cv2.MORPH_OPEN,self.O)
+				# cv2.imshow("frame1",frame1)
+				self.rat_XY,wh = cv2.findContours(frame1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 W=所有座標
+				if len(self.rat_XY):
+					self.TargetPos,x,y = self.coordinate(self.rat_XY)
+				cv2.waitKey(1)
+			
+				# pass
+				#把[影像擷取的東西]放這裡
+				if self.MAZE_IS_RUN: #UI start 後動作
+
+					self.sterm()
+					if not self.READ_FOOD: #把Food食物狀態寫進判斷狀態
+						mousepath = []  
+						mousepath = makeBlackImage()	#產生畫老鼠路徑用圖
+						mousepath = cv2.resize(mousepath,(480,480),interpolation=cv2.INTER_CUBIC)
 						cv2.imshow("mousepath",mousepath)
-						cv2.imwrite(self.timestart.strftime("%m%d%H%M%S")+self.RatID+'.jpg',mousepath)
+						self.Mouse_coordinates = []
+						self.initDefault()
+						for i in range (0,self.ARM_UNIT):
+							self.food1.append(self.Food[i])
+							self.foodtest.append(self.Food[i])
+						self.READ_FOOD = True
+						self.timestart = datetime.now() #起始時間
+						self.RouteArrFlag = 0
+						print("起始時間: " +str(self.timestart))
+						
 
 					else:
+						pass 
+					self.time_now = datetime.now()  #當下時間
+					# self.getTimePoint(self.time_now)
+					self.Latency = (self.time_now - self.timestart).seconds  
+					##############################################進臂##############################################
+					if self.NOW_STATUS == 0:
+						self.NOW_STATUS, self.dangchianbi = self.examination(self.NOW_STATUS,self.TargetPos)
+						# print(self.food1)
+						food1max = np.max(self.food1)
+						if food1max == 0:
+							self.Latency = (self.time_now - self.timestart).seconds 
+							self.TotalShortTerm = 0
+							self.TotalLongTerm = 0
+							for i in range(0,len(self.ShortTerm)):
+								self.TotalShortTerm = self.TotalShortTerm + self.ShortTerm[i]
+							# print(self.TotalShortTerm)
+							for i in range(1,len(self.LongTerm)):
+								self.TotalLongTerm = self.TotalLongTerm + self.LongTerm[i]
+							# print(self.TotalLongTerm)
+							self.DataRecord()
+							winsound.Beep(442,1000)
+							print(self.Mouse_coordinates)
+							self.MAZE_IS_RUN = False
+							for i in range (1,len(self.Mouse_coordinates)):   #畫路徑圖
+								# cv2.line(mousepath,convert(self.Mouse_coordinates[i-1]),convert(self.Mouse_coordinates[i]),(20,65,213),1) #白色物體路徑
+								cv2.circle(mousepath, convert(self.Mouse_coordinates[i]), 0.5, -1)
+							# cv2.imwrite(self.RatID,mousepath)	#儲存路徑圖
+							
+							cv2.imwrite(self.timestart.strftime("%m%d%H%M%S")+self.RatID+'.jpg',mousepath)
+							cv2.imshow("mouse path",mousepath)
+						else:
+							pass
+					elif self.NOW_STATUS == 1: #出臂
+						self.NOW_STATUS, self.dangchianbi = self.leave(self.NOW_STATUS,self.TargetPos)
+					else:
 						pass
-					# print("進臂順序"+str(self.Route))
-					# print("目前狀態"+str(self.NOW_STATUS))
-					# print("目前臂"+str(self.dangchianbi))
-					# print("進臂次數:"+str(self.frequency))
-					# print("短期工作記憶錯誤: "+str(self.ShortTerm))
-					# print("長期工作記憶錯誤"+str(self.LongTerm))
-					# print("長期工作記憶基準"+str(self.foodtest))
-					# print("食物吃完判斷"+str(self.food1))
-				elif self.NOW_STATUS == 1: #出臂
-					self.NOW_STATUS, self.dangchianbi = self.leave(self.NOW_STATUS,self.TargetPos)
-					# print(self.food1)
-					# print("進臂順序"+str(self.Route))
-					# print("目前狀態"+str(self.NOW_STATUS))
-					# print("目前臂"+str(self.dangchianbi))
-					# print("進臂次數:"+str(self.frequency))
-					# print("短期工作記憶錯誤: "+str(self.ShortTerm))
-					# print("長期工作記憶錯誤"+str(self.LongTerm))
-					# print("長期工作記憶基準"+str(self.foodtest))
-					# print("食物吃完判斷"+str(self.food1))
-				else:
-					pass
 
-				#把[影像擷取過後，開始辨識的東西]放這裡
-				# print("thread")
+					#把[影像擷取過後，開始辨識的東西]放這裡
+				else:
+					self.READ_FOOD = False
+					# pass
 			else:
-				self.READ_FOOD = False
-				# pass
+				self.CAM_IS_CONN = False
+				self.TargetPos = (-1, -1)
 
 			#開視窗查看影像
-			if self.OPEN_CAMERA_WINDOW:
+			if self.OPEN_CAMERA_WINDOW and self.CAM_IS_RUN:
 				#這個我就先留下來
 				#frame => 從相機擷取出來的圖片
 				#其他的不會影響到你的程式
@@ -710,10 +532,4 @@ class InfraredCAM:
 			else:
 				cv2.destroyWindow("Camera Image")
 
-
-# if __name__ == '__main__':
-#   ICAM = InfraredCAM()
-#   ICAM.OPEN_CAMERA_WINDOW = True
-#   MAZE_IS_RUN = True
-#   while True:
-#   	ICAM.CameraMain()
+			# self.CAMThread.join()
