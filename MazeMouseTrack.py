@@ -348,6 +348,27 @@ class MazeMouseTrack(object):
 		self.TK_SHOW_Rat_ID.config(text=str1)
 		self.TK_SHOW_Rat_ID.place(x=self.WinSize[0]-move,y=200,anchor="ne")
 
+	def setArmNumber(self):
+		mov = 15
+		for i in range(0, self.ARM_UNIT):
+			textA = self.ARMS_POS[((i+1)*4)-3]
+			textB = self.ARMS_POS[((i+1)*4)-2]
+			textXY = [int((textA[0] - textB[0])/2) + textB[0], int((textA[1] - textB[1])/2) + textB[1]]
+			if textA[0] < int(self.ViewSize[0]*(1/3)):
+				textXY[0] = textXY[0] + mov
+			elif textA[0] > int(self.ViewSize[0]*(2/3)):
+				textXY[0] = textXY[0] - mov
+			if textA[1] < int(self.ViewSize[1]*(1/3)):
+				textXY[1] = textXY[1] + mov
+			elif textA[1] > int(self.ViewSize[1]*(2/3)):
+				textXY[1] = textXY[1] - mov
+			self.mazeCanvas.create_text(textXY[0], textXY[1], fill="gold", font="Arial 14", text=str(i+1))
+
+	def setArmInLine(self):
+		ARMS_IN_LINE = self.TCAM.ARMS_IN_LINE
+		for i in range(0, self.ARM_UNIT):
+			self.mazeCanvas.create_line(ARMS_IN_LINE[i][0][0], ARMS_IN_LINE[i][0][1], ARMS_IN_LINE[i][1][0], ARMS_IN_LINE[i][1][1], fill="DarkGoldenrod4", width=3)
+
 	def setupUI(self):
 		#========測試用========
 		# tk.Button(self.tkWin, text='Testing', width=10, font=('Arial', 8), command=self.PreparingTesting).place(x=100,y=10,anchor="nw")
@@ -388,6 +409,8 @@ class MazeMouseTrack(object):
 		p1 = [int(self.TargetPos[0]/2 - self.BALL_SIZE/2), int(self.TargetPos[1]/2 - self.BALL_SIZE/2)]
 		p2 = [int(self.TargetPos[0]/2 + self.BALL_SIZE/2), int(self.TargetPos[1]/2 + self.BALL_SIZE/2)]
 		self.TBall = self.mazeCanvas.create_oval(p1[0], p1[1], p2[0], p2[1], fill='red')  #创建一个圆，填充色为`red`红色
+		self.setArmNumber()
+		self.setArmInLine()
 
 		pViewX = int((self.WinSize[0]-self.ViewSize[0])*0.45) #虛擬視窗左上定位點X
 		pViewY = int((self.WinSize[1]-self.ViewSize[1])*0.45) #虛擬視窗左上定位點Y
