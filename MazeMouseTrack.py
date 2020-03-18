@@ -65,14 +65,14 @@ class MazeMouseTrack(object):
 		self.TK_File_Dir = "" #顯示存入的檔案(含路徑)
 		self.TK_Rat_ID = "" #顯示老鼠編號
 		self.Rat_ID = "" #顯示老鼠編號
-		self.ERROR_MSG = "" #顯示錯誤訊息
+		self.SYS_MSG = "" #顯示錯誤訊息
 		self.TK_Latency = 0 #顯示總時間長度
 
 		#變數：顯示目前設定狀態
 		self.TK_SHOW_Food = []
 		self.TK_SHOW_FileDir = ""
 		self.TK_SHOW_Rat_ID = ""
-		self.TK_SHOW_Error_Msg = ""
+		self.TK_SHOW_SYS_Msg = ""
 		self.TKE_Dir = ""
 		self.TKC_Food = []
 
@@ -113,7 +113,7 @@ class MazeMouseTrack(object):
 		str1 = "# RatID: {}".format(RAT_ID)
 		move = 288 - (Unit[0]*11 + (Unit[1] + Unit[2] + Unit[3])*9)
 		self.TK_SHOW_Rat_ID.config(text=str1)
-		self.TK_SHOW_Rat_ID.place(x=self.WinSize[0]-move,y=200,anchor="ne")
+		self.TK_SHOW_Rat_ID.place(x=self.WinSize[0]-move,y=230,anchor="ne")
 		self.Rat_ID = RAT_ID
 		# print(len(RAT_ID))
 
@@ -136,7 +136,7 @@ class MazeMouseTrack(object):
 			move = 290 - ct*17
 
 		self.TK_SHOW_Food.config(text=str1)
-		self.TK_SHOW_Food.place(x=self.WinSize[0]-move,y=170,anchor="ne")
+		self.TK_SHOW_Food.place(x=self.WinSize[0]-move,y=200,anchor="ne")
 
 	def ConnectClick(self):
 		if self.CAM_IS_RUN:
@@ -289,6 +289,19 @@ class MazeMouseTrack(object):
 			self.Cam_State.place(x=self.WinSize[0]-160,y=140,anchor="ne")
 			self.BT_Camera.config(state="disabled")
 
+		IPCAM_MsgColor = self.IPCAM.IPCAM_MsgColor
+		IPCAM_Messenage = self.IPCAM.IPCAM_Messenage
+
+		self.TK_SHOW_SYS_Msg.set("Messenage: {}".format(IPCAM_Messenage))
+		
+		if(IPCAM_MsgColor == 0):
+			self.TK_SHOW_SYS_Msg_Text.config(fg="green4")
+		elif(IPCAM_MsgColor == 1):
+			self.TK_SHOW_SYS_Msg_Text.config(fg="blue2")
+		elif(IPCAM_MsgColor == 2):
+			self.TK_SHOW_SYS_Msg_Text.config(fg="red2")
+			
+
 		self.tkWin.after(10,self.LoopMain)
 
 	def windowsClosing(self):
@@ -426,15 +439,12 @@ class MazeMouseTrack(object):
 
 		#========下方：顯示各項資訊========
 		self.TK_SHOW_FileDir = tk.StringVar()
-		self.TK_SHOW_Error_Msg = tk.StringVar()
+		self.TK_SHOW_SYS_Msg = tk.StringVar()
 		self.TK_SHOW_FileDir.set("# FileDir: {}{}".format(self.FilePath, self.FileName))
-		self.TK_SHOW_Error_Msg.set("# ERROR Message: " + str(self.ERROR_MSG))
+		self.TK_SHOW_SYS_Msg.set("Messenage: " + str(self.SYS_MSG))
 		tk.Label(self.tkWin,textvariable=self.TK_SHOW_FileDir, font=('Arial', 10)).place(x=20,y=self.WinSize[1]-10,anchor="sw")
-		if(self.ERROR_MSG):
-			tk.Label(self.tkWin,textvariable=self.TK_SHOW_Error_Msg, font=('Arial', 10), fg="red").place(x=int(self.WinSize[0]/2),y=self.WinSize[1]-10,anchor="sw")
-		else:
-			tk.Label(self.tkWin,textvariable=self.TK_SHOW_Error_Msg, font=('Arial', 10)).place(x=int(self.WinSize[0]/2),y=self.WinSize[1]-10,anchor="sw")
-
+		self.TK_SHOW_SYS_Msg_Text = tk.Label(self.tkWin,textvariable=self.TK_SHOW_SYS_Msg, font=('Arial', 10))
+		self.TK_SHOW_SYS_Msg_Text.place(x=int(self.WinSize[0]/2),y=self.WinSize[1]-10,anchor="sw")
 		
 		self.tkWin.protocol("WM_DELETE_WINDOW", self.windowsClosing)
 		self.tkWin.after(10,self.LoopMain)

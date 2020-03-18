@@ -116,13 +116,7 @@ class InfraredCAM:
 		self.ShortTerm = [] #短期記憶陣列
 		self.LongTerm = [] #長期記憶陣列
 		self.Latency = 0 #總時間長度
-		# ARM_UNIT 				=> getArmUnit()
-		# ViewSize 				=> getViewHW()
-		# TargetPos				=> getTargetPos()
-		# ARMS_POS 				=> getMazeArmsPos()
-		# self.Route 				=> getself.Route()
-		# ShortTerm,LongTerm	=> getTerm()
-		# Latency				=> getLatency()
+
 		self.food1 = []  #有食物的臂判斷結束用
 		self.foodtest = [] #長期工作記憶基準
 		#變數：迷宮相關變數(這些[不用傳給UI端]但這個程式應該用的上)
@@ -132,9 +126,6 @@ class InfraredCAM:
 		self.TotalShortTerm = 0 #總短期記憶
 		self.TotalLongTerm = 0 #總長期記憶
 		#然後其他你有需要的變數就再自己加
-		# self.rtsp = "rtsp://E613-1:613456789@192.168.1.101:554/stream1" #1920x1080
-		self.rtsp = "rtsp://E613-1:e613456789@192.168.100.187:554/videoMain" #1920x1080
-		self.cap = cv2.VideoCapture(self.rtsp)
 		self.WIDTH = 1024
 		self.HEIGHT = int(self.WIDTH*(9/16))  #576
 		self.MID_POS = [520, 540]
@@ -154,29 +145,6 @@ class InfraredCAM:
 		self.dangchianbi = 0
 
 	#========其他的副程式========
-	def getTimePoint(self, nowTime):
-		nowMsec = int(nowTime.strftime("%f")[:2])
-		nowSec = int(nowTime.strftime("%S"))
-		routeCSV = self.timestart.strftime("%m%d%H%M%S")+self.RatID+".csv"
-		if(nowSec != self.nowSec):
-			print(len(self.Mouse_coordinates))
-			self.myRouteArr = []
-			if self.RouteArrFlag >= 0 and len(self.Mouse_coordinates) > 15:
-				print((self.RouteArrFlag*15)+15)
-				# print(len(self.Mouse_coordinates))
-				for i in range((self.RouteArrFlag*15),(self.RouteArrFlag*15)+15):
-					self.myRouteArr.append(self.Mouse_coordinates[i])
-				# self.myRouteArr.append(self.Mouse_coordinates[(self.RouteArrFlag*90):(self.RouteArrFlag*90)+90])
-				# print(self.Mouse_coordinates[0:100])
-				writeData2CSV(routeCSV, "a", self.myRouteArr)
-			if len(self.Mouse_coordinates) > 30:
-				self.RouteArrFlag = self.RouteArrFlag + 1
-			self.nowSec = nowSec
-		if(nowMsec != self.myTimeMsec):
-			self.Mouse_coordinates.append([self.TargetPos[0], self.TargetPos[1]])
-			self.myTimeMsec = nowMsec
-			# print(self.Mouse_coordinates)
-
 
 	def coordinate(self,rat_XY):  #白色物體座標
 		X = rat_XY[0]
@@ -424,11 +392,20 @@ class InfraredCAM:
 			#確定要連線時才會跑這個
 			if self.CAM_IS_RUN:
 				frame = self.IPCAM.IPCAM_Image
+				IPCAM_LoadTime = (datetime.now() - self.IPCAM.IPCAM_NowTime).seconds
+				
 				if len(frame) == 0:
 					frame = cv2.resize(makeBlackImage(),(1280,720),interpolation=cv2.INTER_CUBIC)
+					self.IPCAM.setMessenage(2, "[ERROR] CAMERA isn't CONNECT!")
+					# print("CAMERA isn't CONNECT! At {}".format(datetime.now()))
 					self.CAM_IS_CONN = False
 				else:
 					frame = cv2.resize(frame,(self.WIDTH,self.HEIGHT),interpolation=cv2.INTER_CUBIC) #調整大小1024*576
+					if IPCAM_LoadTime > 3:
+						self.IPCAM.setMessenage(1, "[WAIT] CAMERA is TIMEOUT!")
+						# print("CAMERA is TIMEOUT! At {}".format(datetime.now()))
+					else:
+						self.IPCAM.setMessenage(0, "[GOOD] CAMERA is connecting!")
 					self.CAM_IS_CONN = True
 				
 				# cv2.rectangle(frame, convert(self.newP1), convert(self.newP2), (0,255,0), 1) #繪製矩形

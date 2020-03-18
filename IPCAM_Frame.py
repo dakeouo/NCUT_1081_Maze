@@ -16,9 +16,13 @@ IPCAM_Frame = 0
 IPCAM_Name = ""
 IPCAM_Bar = ""
 IPCAM_Image = []
-IPCAM_Messenage = ""
 IPCAM_ConfigStatus = 0
 IPCAM_NowTime = datetime.datetime.now()
+
+IPCAM_Messenage = ""
+IPCAM_MsgColor = 0
+
+VideoDir = './video_{}/'.format(datetime.datetime.now().strftime("%Y%m%d"))
 
 WINDOWS_IS_ACTIVE = True
 CAM_IS_RUN = False
@@ -44,66 +48,34 @@ def TwoImageisSame(img1, img2):
 	else:
 		return False
 
-def getCamName():
-	global IPCAM_Name
-	return IPCAM_Name
+def checkVideoDir():
+	global VideoDir
+	VideoDir = './video_{}/'.format(datetime.datetime.now().strftime("%Y%m%d"))
+	if not os.path.exists(VideoDir):
+		os.mkdir(VideoDir)
 
-def getCamFrame():
-	global IPCAM_Frame, IPCAM_FrameCount
-	return (IPCAM_Frame, IPCAM_FrameCount)
-
-def getCamIP():
-	global IPCAM_IP
-	return IPCAM_IP
-
-def getCamImage():
-	global IPCAM_Image
-	return IPCAM_Image
-	# return []
-
-def getMsgPrint():
-	global MSG_Print
-	return MSG_Print
-
-def getNowTime():
-	global IPCAM_NowTime
-	return IPCAM_NowTime
-
-def getMessenage():
-	global IPCAM_Messenage
-	Messenger = IPCAM_Messenage
-	IPCAM_Messenage = ""
-	return Messenger
-
-def getConfigStatus():
-	global IPCAM_ConfigStatus
-	return IPCAM_ConfigStatus
-
-def setWindowsStatus(status):
-	global WINDOWS_CLOSED
-	WINDOWS_CLOSED = status
-
-def sendMsg(msg):
-	global IPCAM_Messenage, MSG_Print
+def setMessenage(color, messenge):
+	global IPCAM_MsgColor, IPCAM_Messenage
 	time.sleep(0.2)
-	IPCAM_Messenage = msg
-	MSG_Print = True
-	# print(msg)
+	IPCAM_MsgColor = color
+	IPCAM_Messenage = messenge
 
 def Main():
-	global count, IPCAM_Image,  MSG_Print, IPCAM_Messenage, IPCAM_FrameCount, IPCAM_NowTime, IPCAM_ConfigStatus
+	global count, IPCAM_Image,  MSG_Print, IPCAM_Messenage, IPCAM_FrameCount, IPCAM_NowTime, IPCAM_ConfigStatus, VideoDir
 	global IPCAM_Username, IPCAM_Password, IPCAM_Name, IPCAM_IP, IPCAM_Frame
 
-	# IPCAM_Image = cv2.resize(makeBlackImage(),(1280,720),interpolation=cv2.INTER_CUBIC)
 	IPCAM_Image = []
 	newTime = datetime.datetime.now()
+	videoTime = datetime.datetime.now()
 	
 	CAM_INIT_SUCCESS = False
 	FIRST_RUN = True
 	InitFile = "./config.txt"
+	# print(VideoDir)
 	# sendMsg("Please create 'config.txt' file at EXECUTION FILE FOLDER and fill in camera information:")
 	# sendMsg("[Username],[Password],[Camera Name],[Camera IP],[Camera FPS]")
 	while WINDOWS_IS_ACTIVE:
+		# print(IPCAM_Messenage)
 		if not CAM_INIT_SUCCESS:
 			if os.path.isfile(InitFile):
 				fp = open(InitFile, "r")
@@ -111,12 +83,12 @@ def Main():
 				fp.close()
 				if lines == []:
 					IPCAM_ConfigStatus = 1
-					# print("CONFIG EMPTY!")
+					setMessenage(2, "[ERROR] Config File content Empty!")
 				else:
 					data = lines[0].split(",")
 					if len(data) != 6:
 						IPCAM_ConfigStatus = 2
-						# print("CONFIG ERROR!")
+						setMessenage(2, "[ERROR] Config File Data format error!")
 					else:
 						IPCAM_Username = data[0]
 						IPCAM_Password = data[1]
@@ -126,15 +98,14 @@ def Main():
 						IPCAM_Bar = data[5]
 						# str1 = "{},{},{},{},{}".format(IPCAM_Username, IPCAM_Password, IPCAM_Name, IPCAM_IP, IPCAM_Frame)
 						# print(str1)
+						setMessenage(0, "[GOOD] Config Import Success!")
 						IPCAM_ConfigStatus = 3
-						# print("CONFIG SUCCESS!")
 						CAM_INIT_SUCCESS = True
 			else:
 				IPCAM_ConfigStatus = 0
-				# print("NO CONFIG FILE!")
+				setMessenage(2, "[ERROR] No Config File (config.txt)!")
 		else:
 			if CAM_IS_RUN:
-				# print("IPCAM RUN!")
 				if FIRST_RUN:
 					rtsp = "rtsp://{0}:{1}@{2}:554/{3}".format(IPCAM_Username, IPCAM_Password, IPCAM_IP, IPCAM_Bar) #1920x1080
 					cap = cv2.VideoCapture(rtsp)
@@ -142,17 +113,27 @@ def Main():
 					FrameCount = 0
 					FIRST_RUN = False
 
+					checkVideoDir() #影片資料夾檢查
+					VideoOut = cv2.VideoWriter("{}{}_{}.avi".format(VideoDir,IPCAM_Name,datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")),cv2.VideoWriter_fourcc(*'DIVX'), IPCAM_Frame, (frame.shape[1], frame.shape[0]))
+
 				nowTime = datetime.datetime.now()
 				IPCAM_NowTime = datetime.datetime.now()
 				if cap.isOpened():
-					# print("IPCAM OPEN!")
 					ret,frame = cap.read()
-					# print("IPCAM GET!")
-					# IPCAM_ConfigStatus = 6
 				else:
-					print("IPCAM NOT OPEN!")
-					# sendMsg("Camera Not Open!!")
+					setMessenage(2, "[ERROR] Camera Not Open!!")
 				
+				if (nowTime - videoTime).seconds > 1200:
+					VideoOut.release()
+					checkVideoDir() #影片資料夾檢查
+					VideoOut = cv2.VideoWriter("{}{}_{}.avi".format(VideoDir,IPCAM_Name,datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")),cv2.VideoWriter_fourcc(*'DIVX'), IPCAM_Frame, (frame.shape[1], frame.shape[0]))
+					videoTime = nowTime
+				else:
+					if len(IPCAM_Image) == 0:
+						VideoOut.write(cv2.resize(makeBlackImage(),(frame.shape[1], frame.shape[0]),interpolation=cv2.INTER_CUBIC))
+					else:
+						VideoOut.write(IPCAM_Image)
+
 				if frame is not None:
 					IPCAM_Image = frame
 					FrameCount = FrameCount + 1
@@ -162,12 +143,12 @@ def Main():
 						newTime = datetime.datetime.now()
 
 				else:
-					# IPCAM_Image = cv2.resize(makeBlackImage(),(1280,720),interpolation=cv2.INTER_CUBIC)
 					IPCAM_Image = []
-					# sendMsg("Frame is NULL! Reconnecting...")
+					setMessenage(2, "[ERROR] Frame is NULL! Reconnecting...")
 					cap = cv2.VideoCapture(rtsp)
-					# sendMsg("Setup the IP Camera")
+					setMessenage(1, "[WAIT] Setup the IP Camera")
+
 			else:
-				# print("NO LINKED!!")
-				# IPCAM_Image = cv2.resize(makeBlackImage(),(1280,720),interpolation=cv2.INTER_CUBIC)
+				CAM_INIT_SUCCESS = False
+				FIRST_RUN = True
 				IPCAM_Image = []

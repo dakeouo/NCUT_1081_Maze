@@ -2,3 +2,4 @@ test/*
 __pycache__/*
 config.txt
 *.diff
+video_*/
