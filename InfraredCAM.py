@@ -89,6 +89,7 @@ class InfraredCAM:
 		#變數：迷宮相關變數(這些[都要傳到UI端]讓它知道的)
 		self.ARM_UNIT = 8 #迷宮臂數
 		self.ARM_LINE_DISTANCE = 65/20  #老鼠進臂線距離
+		self.ARMS_IN_LINE = []
 		self.ViewSize = (480, 480) #虛擬視窗顯示大小
 		self.TargetPos = [-1, -1] #目標變數
 		self.ARMS_POS = [[287,227],[478,227],[478,264],[289,263], #I11,O11,O12,I12
@@ -176,8 +177,8 @@ class InfraredCAM:
 		for i in range(0,self.ARM_UNIT):
 			# mask1 = [int(ARMS_LINE[i][0][0] -(ARMS_LINE[i][0][0] - ARMS_LINE[i][1][0])/Ratinline) , int(ARMS_LINE[i][0][1]-(ARMS_LINE[i][0][1] - ARMS_LINE[i][1][1])/Ratinline)]
 			# mask2 = [int(ARMS_LINE[i][2][0]-(ARMS_LINE[i][2][0] - ARMS_LINE[i][3][0])/Ratinline) , int(ARMS_LINE[i][2][1]-(ARMS_LINE[i][2][1] - ARMS_LINE[i][3][1])/Ratinline)]
-			mask1 = [int(ARMS_LINE[i][0][0] -(ARMS_LINE[i][0][0] - ARMS_LINE[i][1][0])/self.ARM_LINE_DISTANCE) , int(ARMS_LINE[i][0][1]-(ARMS_LINE[i][0][1] - ARMS_LINE[i][1][1])/self.ARM_LINE_DISTANCE)]
-			mask2 = [int(ARMS_LINE[i][2][0]-(ARMS_LINE[i][2][0] - ARMS_LINE[i][3][0])/self.ARM_LINE_DISTANCE) , int(ARMS_LINE[i][2][1]-(ARMS_LINE[i][2][1] - ARMS_LINE[i][3][1])/self.ARM_LINE_DISTANCE)]
+			mask1 = [int(self.ARMS_LINE[i][0][0] -(self.ARMS_LINE[i][0][0] - self.ARMS_LINE[i][1][0])/self.ARM_LINE_DISTANCE) , int(self.ARMS_LINE[i][0][1]-(self.ARMS_LINE[i][0][1] - self.ARMS_LINE[i][1][1])/self.ARM_LINE_DISTANCE)]
+			mask2 = [int(self.ARMS_LINE[i][2][0]-(self.ARMS_LINE[i][2][0] - self.ARMS_LINE[i][3][0])/self.ARM_LINE_DISTANCE) , int(self.ARMS_LINE[i][2][1]-(self.ARMS_LINE[i][2][1] - self.ARMS_LINE[i][3][1])/self.ARM_LINE_DISTANCE)]
 			ans1 = math.sqrt(pow(self.TargetPos[0] - mask1[0],2) + pow(self.TargetPos[1] - mask1[1],2))
 			ans2 = math.sqrt(pow(self.TargetPos[0] - mask2[0],2) + pow(self.TargetPos[1] - mask2[1],2))
 			ans3 = ans1 + ans2    #白色與一臂的距離
@@ -387,7 +388,12 @@ class InfraredCAM:
 
 		self.initDefault()
 		#程式一執行[第一次要跑的東西]放這裡
-
+		for i in range(0,self.ARM_UNIT):
+			mask1 = [int(self.ARMS_LINE[i][0][0] -(self.ARMS_LINE[i][0][0] - self.ARMS_LINE[i][1][0])/self.ARM_LINE_DISTANCE) , int(self.ARMS_LINE[i][0][1]-(self.ARMS_LINE[i][0][1] - self.ARMS_LINE[i][1][1])/self.ARM_LINE_DISTANCE)]
+			mask2 = [int(self.ARMS_LINE[i][2][0]-(self.ARMS_LINE[i][2][0] - self.ARMS_LINE[i][3][0])/self.ARM_LINE_DISTANCE) , int(self.ARMS_LINE[i][2][1]-(self.ARMS_LINE[i][2][1] - self.ARMS_LINE[i][3][1])/self.ARM_LINE_DISTANCE)]
+			# ARMS_IN_LINE1 = [mask1,mask2]
+			self.ARMS_IN_LINE.append([mask1,mask2])
+		# print(self.ARMS_IN_LINE)
 		while self.WINDOWS_IS_ACTIVE:
 			#確定要連線時才會跑這個
 			if self.CAM_IS_RUN:
@@ -422,7 +428,6 @@ class InfraredCAM:
 				if len(self.rat_XY):
 					self.TargetPos,x,y = self.coordinate(self.rat_XY)
 				cv2.waitKey(1)
-			
 				# pass
 				#把[影像擷取的東西]放這裡
 				if self.MAZE_IS_RUN: #UI start 後動作
