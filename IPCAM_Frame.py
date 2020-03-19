@@ -90,6 +90,7 @@ def Main():
 						IPCAM_ConfigStatus = 2
 						setMessenage(2, "[ERROR] Config File Data format error!")
 					else:
+						FIRST_RUN = True
 						IPCAM_Username = data[0]
 						IPCAM_Password = data[1]
 						IPCAM_Name = data[2]
@@ -150,5 +151,4 @@ def Main():
 
 			else:
 				CAM_INIT_SUCCESS = False
-				FIRST_RUN = True
 				IPCAM_Image = []

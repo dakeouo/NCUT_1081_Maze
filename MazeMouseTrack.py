@@ -166,7 +166,7 @@ class MazeMouseTrack(object):
 		HaveError = False
 		if self.MAZE_IS_RUN:
 			self.Maze_State.config(text="Maze State: Preparing...", fg="gray35")
-			self.Maze_State.place(x=self.WinSize[0]-170,y=140,anchor="ne")
+			self.Maze_State.place(x=self.WinSize[0]-170,y=170,anchor="ne")
 			self.BT_Start.config(text="Start", bg="DarkOliveGreen2")
 			self.MAZE_IS_RUN = False
 		else:
@@ -189,7 +189,7 @@ class MazeMouseTrack(object):
 				self.TCAM.RatID = self.Rat_ID
 				self.TCAM.filePath = (str(self.FilePath)+str(self.FileName))
 				self.Maze_State.config(text="Maze State: Recording...", fg="green4")
-				self.Maze_State.place(x=self.WinSize[0]-167,y=140,anchor="ne")
+				self.Maze_State.place(x=self.WinSize[0]-167,y=170,anchor="ne")
 				self.BT_Start.config(text="Stop", bg="IndianRed1")
 				self.MAZE_IS_RUN = True
 		self.TCAM.MAZE_IS_RUN = self.MAZE_IS_RUN
