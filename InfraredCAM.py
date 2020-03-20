@@ -138,14 +138,16 @@ class InfraredCAM:
 		self.TotalShortTerm = 0 #總短期記憶
 		self.TotalLongTerm = 0 #總長期記憶
 		#然後其他你有需要的變數就再自己加
-		self.WIDTH = 1024
+		self.WIDTH = 1280
 		self.HEIGHT = int(self.WIDTH*(9/16))  #576
 		self.MID_POS = [520, 540]
 		self.SegRate = (4/11)
 		# self.newP1 = (int(self.MID_POS[0]-int(self.HEIGHT)/2),0)
-		self.newP1 = (250,0)
+		# self.newP1 = (250,0)
+		self.newP1 = [275,0]
 		# self.newP2 = (int(self.MID_POS[0]+int(self.HEIGHT/2)),int(self.HEIGHT))
-		self.newP2 = (970,720)
+		# self.newP2 = (970,720)
+		self.newP2 = [self.newP1[0] + self.HEIGHT, self.newP1[1] + self.HEIGHT]
 		self.O = np.array([[1,1,1,1,1],
 	 			 [1,1,1,1,1],
 				 [1,1,1,1,1],
@@ -427,6 +429,9 @@ class InfraredCAM:
 				
 				# cv2.rectangle(frame, convert(self.newP1), convert(self.newP2), (0,255,0), 1) #繪製矩形
 				# cv2.imshow("frame",frame)
+				self.newP1 = [IPCAM.IPCAM_NewP1[0], IPCAM.IPCAM_NewP1[1]]
+				self.newP2 = [self.newP1[0] + self.HEIGHT, self.newP1[1] + self.HEIGHT]
+
 				frame = frame[self.newP1[1]:self.newP2[1], self.newP1[0]:self.newP2[0]] #擷取兩個點的範圍
 				# cv2.polylines(frame, [self.MASK_POS], True, (0, 255, 255), 2)  #加上3臂輔助線
 				frame = cv2.resize(frame,(480,480),interpolation=cv2.INTER_CUBIC) #放大成480x480

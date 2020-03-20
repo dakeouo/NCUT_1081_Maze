@@ -17,6 +17,7 @@ IPCAM_Name = ""
 IPCAM_Bar = ""
 IPCAM_Image = []
 IPCAM_ConfigStatus = 0
+IPCAM_NewP1 = [0, 0]
 IPCAM_NowTime = datetime.datetime.now()
 
 IPCAM_Messenage = ""
@@ -62,7 +63,7 @@ def setMessenage(color, messenge):
 
 def Main():
 	global count, IPCAM_Image,  MSG_Print, IPCAM_Messenage, IPCAM_FrameCount, IPCAM_NowTime, IPCAM_ConfigStatus, VideoDir
-	global IPCAM_Username, IPCAM_Password, IPCAM_Name, IPCAM_IP, IPCAM_Frame
+	global IPCAM_Username, IPCAM_Password, IPCAM_Name, IPCAM_IP, IPCAM_Frame, IPCAM_NewP1
 
 	IPCAM_Image = []
 	newTime = datetime.datetime.now()
@@ -86,7 +87,7 @@ def Main():
 					setMessenage(2, "[ERROR] Config File content Empty!")
 				else:
 					data = lines[0].split(",")
-					if len(data) != 6:
+					if len(data) != 7:
 						IPCAM_ConfigStatus = 2
 						setMessenage(2, "[ERROR] Config File Data format error!")
 					else:
@@ -97,6 +98,10 @@ def Main():
 						IPCAM_IP = data[3]
 						IPCAM_Frame = int(data[4])
 						IPCAM_Bar = data[5]
+						nowNewP1 = data[6].split("_") #座標形式 => "xxx,yyy"
+						IPCAM_NewP1 = [int(nowNewP1[0]), int(nowNewP1[1])]
+						# print(IPCAM_NewP1)
+
 						# str1 = "{},{},{},{},{}".format(IPCAM_Username, IPCAM_Password, IPCAM_Name, IPCAM_IP, IPCAM_Frame)
 						# print(str1)
 						setMessenage(0, "[GOOD] Config Import Success!")
