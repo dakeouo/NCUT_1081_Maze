@@ -92,16 +92,24 @@ class InfraredCAM:
 		self.ARMS_IN_LINE = []
 		self.ViewSize = (480, 480) #虛擬視窗顯示大小
 		self.TargetPos = [-1, -1] #目標變數
-		self.ARMS_POS = [
-						[248,286],[234,474],[204,473],[218,281], #I31,O31,O32,I32
-						[211,277],[ 66,402],[ 47,375],[189,258], #I41,O41,O42,I42
-						[188,250],[  2,231],[  4,200],[191,217], #I51,O51,O52,I52
-						[193,211],[ 75, 65],[ 100, 46],[219,189], #I61,O61,O62,I62
-						[225,188],[246,  2],[273,  3],[255,190], #I71,O71,O72,I72
-						[265,195],[407, 73],[426, 95],[282,218], #I81,O81,O82,I82
-						[284,226],[473,241],[472,268],[283,257], #I11,O11,O12,I12
-						[282,266],[401,410],[381,428],[255,285]  #I21,O21,O22,I22
-						] #八壁遮罩
+		# self.ARMS_POS = [
+		# 				[248,286],[234,474],[204,473],[218,281], #I31,O31,O32,I32
+		# 				[211,277],[ 66,402],[ 47,375],[189,258], #I41,O41,O42,I42
+		# 				[188,250],[  2,231],[  4,200],[191,217], #I51,O51,O52,I52
+		# 				[193,211],[ 75, 65],[ 100, 46],[219,189], #I61,O61,O62,I62
+		# 				[225,188],[246,  2],[273,  3],[255,190], #I71,O71,O72,I72
+		# 				[265,195],[407, 73],[426, 95],[282,218], #I81,O81,O82,I82
+		# 				[284,226],[473,241],[472,268],[283,257], #I11,O11,O12,I12
+		# 				[282,266],[401,410],[381,428],[255,285]  #I21,O21,O22,I22
+		# 				] #八壁遮罩
+		self.ARMS_POS = [[285,229],[468,237],[468,263],[284,261], #I11,O11,O12,I12
+    					[281,268],[409,394],[390,413],[260,289], #I21,O21,O22,I22
+    					[250,293],[249,464],[219,463],[221,292], #I31,O31,O32,I32
+    					[211,287],[82,401],[65,381],[192,267], #I41,O41,O42,I42
+    					[187,258],[22,252],[22,228],[188,228], #I51,O51,O52,I52
+    					[191,219],[64,98],[84,77],[213,198], #I61,O61,O62,I62
+    					[221,196],[224,16],[256,16],[253,195], #I71,O71,O72,I72
+    					[261,198],[400,78],[418,99],[282,222]] #八壁遮罩  少四壁	
 		# self.ARMS_POS = [
 		# 				[253,296],[258,479],[227,479],[223,294], #I31,O31,O32,I32
 		# 				[215,292],[ 88,424],[ 66,403],[191,271], #I41,O41,O42,I42
@@ -157,8 +165,29 @@ class InfraredCAM:
 		self.frequency = []  #進臂次數
 		self.NOW_STATUS = 0 #進臂or出臂
 		self.dangchianbi = 0
+		self.timestart = datetime.now() #起始時間
+
+		self.RR2C = []
+		self.RR2C_Time = datetime.now()
+		self.RR2C_FirstTime = True
 
 	#========其他的副程式========
+	def recordRoute2CSV(self):
+		TimeDiff = (datetime.now() - self.RR2C_Time).seconds
+		CSV_Name = self.timestart.strftime("%m%d%H%M%S")+self.RatID+".csv"
+		CSV_Dir = './CSV_{}/'.format(datetime.now().strftime("%Y%m%d"))
+		self.RR2C.append([int(self.TargetPos[0]), int(self.TargetPos[1])])
+		if not os.path.exists(CSV_Dir):
+			os.mkdir(CSV_Dir)
+		if TimeDiff >= 1:
+			if self.RR2C_FirstTime:
+				self.RR2C_FirstTime = False
+			else:
+				print(self.RR2C)
+				writeData2CSV(CSV_Dir + CSV_Name, "a", self.RR2C)
+				self.RR2C = []
+				self.RR2C_Time = datetime.now()
+
 
 	def coordinate(self,rat_XY):  #白色物體座標
 		X = rat_XY[0]
@@ -447,7 +476,7 @@ class InfraredCAM:
 				# pass
 				#把[影像擷取的東西]放這裡
 				if self.MAZE_IS_RUN: #UI start 後動作
-					self.NOW_STATUS = 0 #進臂or出臂
+					
 					self.sterm()
 					if not self.READ_FOOD: #把Food食物狀態寫進判斷狀態
 						mousepath = []  
@@ -464,18 +493,21 @@ class InfraredCAM:
 						self.RouteArrFlag = 0
 						print("起始時間: " +str(self.timestart))
 						
-
+						self.RR2C_FirstTime = True #這個是我寫的(測試中，不用管沒關係)
 					else:
 						pass 
 					self.time_now = datetime.now()  #當下時間
 					# self.getTimePoint(self.time_now)
-					self.Latency = (self.time_now - self.timestart).seconds  
+					self.Latency = (self.time_now - self.timestart).seconds
+					self.recordRoute2CSV() #這個是我寫的(測試中，不用管沒關係)
 					##############################################進臂##############################################
 					if self.NOW_STATUS == 0:
 						self.NOW_STATUS, self.dangchianbi = self.examination(self.NOW_STATUS,self.TargetPos)
 						# print(self.food1)
 						food1max = np.max(self.food1)
 						if food1max == 0:
+							self.NOW_STATUS = 0 #進臂or出臂
+							self.Route.append(self.dangchianbi)
 							self.Latency = (self.time_now - self.timestart).seconds 
 							self.TotalShortTerm = 0
 							self.TotalLongTerm = 0

@@ -3,4 +3,5 @@ __pycache__/*
 config.txt
 *.diff
 video_*/
+CSV_*/
 old_*.py
