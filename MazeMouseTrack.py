@@ -267,7 +267,8 @@ class MazeMouseTrack(object):
 		try:
 			self.makeBall()
 			self.CAM_IS_CONN = self.TCAM.CAM_IS_CONN
-			if self.CAM_IS_RUN:
+			if self.CAM_IS_RUN and self.CAM_IS_CONN:
+				# self.BT_Start.config(bg="DarkOliveGreen2")
 				self.BT_Start.config(state="normal")
 			else:
 				self.BT_Start.config(bg="gray85")
@@ -396,110 +397,128 @@ class MazeMouseTrack(object):
 			self.mazeCanvas.create_line(ARMS_IN_LINE[i][0][0], ARMS_IN_LINE[i][0][1], ARMS_IN_LINE[i][1][0], ARMS_IN_LINE[i][1][1], fill="DarkGoldenrod4", width=3)
 
 	def setupUI(self):
-		#========測試用========
-		# tk.Button(self.tkWin, text='Testing', width=10, font=('Arial', 8), command=self.PreparingTesting).place(x=100,y=10,anchor="nw")
+		try:
+			#========測試用========
+			# tk.Button(self.tkWin, text='Testing', width=10, font=('Arial', 8), command=self.PreparingTesting).place(x=100,y=10,anchor="nw")
 
-		#========左側：紀錄變數========
-		self.TK_Total_L_Term = tk.StringVar()
-		self.TK_Total_S_Term = tk.StringVar()
-		self.TK_Latency = tk.StringVar()
-		nLate = Second2Datetime(0)
-		self.TK_Latency.set("Latency: %02d:%02d:%02d" %(nLate[0],nLate[1],nLate[2]))
-		self.TK_Total_L_Term.set("Total Long Term: %d" %(0))
-		self.TK_Total_S_Term.set("Total Short Term: %d" %(0))
-		tk.Label(self.tkWin,text="Statistics", font=('Arial', 12), bg="gray75").place(x=20,y=10,anchor="nw")
-		tk.Label(self.tkWin,textvariable=self.TK_Total_L_Term, font=('Arial', 14)).place(x=20,y=40,anchor="nw")
-		tk.Label(self.tkWin,textvariable=self.TK_Total_S_Term, font=('Arial', 14)).place(x=20,y=80,anchor="nw")
-		tk.Label(self.tkWin,textvariable=self.TK_Latency, font=('Arial', 14)).place(x=20,y=120,anchor="nw")
+			#========左側：紀錄變數========
+			self.TK_Total_L_Term = tk.StringVar()
+			self.TK_Total_S_Term = tk.StringVar()
+			self.TK_Latency = tk.StringVar()
+			nLate = Second2Datetime(0)
+			self.TK_Latency.set("Latency: %02d:%02d:%02d" %(nLate[0],nLate[1],nLate[2]))
+			self.TK_Total_L_Term.set("Total Long Term: %d" %(0))
+			self.TK_Total_S_Term.set("Total Short Term: %d" %(0))
+			tk.Label(self.tkWin,text="Statistics", font=('Arial', 12), bg="gray75").place(x=20,y=10,anchor="nw")
+			tk.Label(self.tkWin,textvariable=self.TK_Total_L_Term, font=('Arial', 14)).place(x=20,y=40,anchor="nw")
+			tk.Label(self.tkWin,textvariable=self.TK_Total_S_Term, font=('Arial', 14)).place(x=20,y=80,anchor="nw")
+			tk.Label(self.tkWin,textvariable=self.TK_Latency, font=('Arial', 14)).place(x=20,y=120,anchor="nw")
 
-		#========左側：紀錄食物位置和詳細記憶錯誤========
-		tk.Label(self.tkWin,text="Food/Term", font=('Arial', 12), bg="gray75").place(x=20,y=170,anchor="nw")
-		tk.Label(self.tkWin,text="Long Term", font=('Arial', 10)).place(x=160,y=175,anchor="n")
-		tk.Label(self.tkWin,text="Short Term", font=('Arial', 10)).place(x=240,y=175,anchor="n")
-		for i in range(1, self.ARM_UNIT+1):
-			self.TK_Food[i-1] = tk.IntVar()
-			self.TK_L_Term[i-1] = tk.StringVar()
-			self.TK_S_Term[i-1] = tk.StringVar()
-			self.TK_L_Term[i-1].set(str(self.L_Term[i-1]))
-			self.TK_S_Term[i-1].set(str(self.S_Term[i-1]))
-			self.TKC_Food.append(0)
-			posY = 215 + 40*(i-1)
-			tk.Label(self.tkWin,text="Arm "+str(i), font=('Arial', 12)).place(x=20,y=posY,anchor="nw")
-			self.TKC_Food[i-1] = tk.Checkbutton(self.tkWin, variable=self.TK_Food[i-1], onvalue = 1, offvalue = 0, command=self.setFood)
-			self.TKC_Food[i-1].place(x=80,y=posY,anchor="nw")
-			tk.Label(self.tkWin,textvariable=self.TK_L_Term[i-1], font=('Arial', 12)).place(x=160,y=posY,anchor="n")
-			tk.Label(self.tkWin,textvariable=self.TK_S_Term[i-1], font=('Arial', 12)).place(x=240,y=posY,anchor="n")
+			#========左側：紀錄食物位置和詳細記憶錯誤========
+			tk.Label(self.tkWin,text="Food/Term", font=('Arial', 12), bg="gray75").place(x=20,y=170,anchor="nw")
+			tk.Label(self.tkWin,text="Long Term", font=('Arial', 10)).place(x=160,y=175,anchor="n")
+			tk.Label(self.tkWin,text="Short Term", font=('Arial', 10)).place(x=240,y=175,anchor="n")
+			for i in range(1, self.ARM_UNIT+1):
+				self.TK_Food[i-1] = tk.IntVar()
+				self.TK_L_Term[i-1] = tk.StringVar()
+				self.TK_S_Term[i-1] = tk.StringVar()
+				self.TK_L_Term[i-1].set(str(self.L_Term[i-1]))
+				self.TK_S_Term[i-1].set(str(self.S_Term[i-1]))
+				self.TKC_Food.append(0)
+				posY = 215 + 40*(i-1)
+				tk.Label(self.tkWin,text="Arm "+str(i), font=('Arial', 12)).place(x=20,y=posY,anchor="nw")
+				self.TKC_Food[i-1] = tk.Checkbutton(self.tkWin, variable=self.TK_Food[i-1], onvalue = 1, offvalue = 0, command=self.setFood)
+				self.TKC_Food[i-1].place(x=80,y=posY,anchor="nw")
+				tk.Label(self.tkWin,textvariable=self.TK_L_Term[i-1], font=('Arial', 12)).place(x=160,y=posY,anchor="n")
+				tk.Label(self.tkWin,textvariable=self.TK_S_Term[i-1], font=('Arial', 12)).place(x=240,y=posY,anchor="n")
 
-		#========中間：虛擬視窗顯示區域========
-		self.mazeCanvas = tk.Canvas(bg="black", width = self.ViewSize[0], height = self.ViewSize[1])
-		p1 = [int(self.TargetPos[0]/2 - self.BALL_SIZE/2), int(self.TargetPos[1]/2 - self.BALL_SIZE/2)]
-		p2 = [int(self.TargetPos[0]/2 + self.BALL_SIZE/2), int(self.TargetPos[1]/2 + self.BALL_SIZE/2)]
-		self.TBall = self.mazeCanvas.create_oval(p1[0], p1[1], p2[0], p2[1], fill='red')  #创建一个圆，填充色为`red`红色
-		self.setArmNumber()
-		self.setArmInLine()
+			#========中間：虛擬視窗顯示區域========
+			self.mazeCanvas = tk.Canvas(bg="black", width = self.ViewSize[0], height = self.ViewSize[1])
+			p1 = [int(self.TargetPos[0]/2 - self.BALL_SIZE/2), int(self.TargetPos[1]/2 - self.BALL_SIZE/2)]
+			p2 = [int(self.TargetPos[0]/2 + self.BALL_SIZE/2), int(self.TargetPos[1]/2 + self.BALL_SIZE/2)]
+			self.TBall = self.mazeCanvas.create_oval(p1[0], p1[1], p2[0], p2[1], fill='red')  #创建一个圆，填充色为`red`红色
+			self.setArmNumber()
+			self.setArmInLine()
 
-		pViewX = int((self.WinSize[0]-self.ViewSize[0])*0.45) #虛擬視窗左上定位點X
-		pViewY = int((self.WinSize[1]-self.ViewSize[1])*0.45) #虛擬視窗左上定位點Y
-		self.setArmLine()
-		self.mazeCanvas.place(x=pViewX, y=pViewY,anchor="nw")
+			pViewX = int((self.WinSize[0]-self.ViewSize[0])*0.45) #虛擬視窗左上定位點X
+			pViewY = int((self.WinSize[1]-self.ViewSize[1])*0.45) #虛擬視窗左上定位點Y
+			self.setArmLine()
+			self.mazeCanvas.place(x=pViewX, y=pViewY,anchor="nw")
 
-		#========右側：按鈕========
-		self.BT_Camera = tk.Button(self.tkWin, text='Camera', width=9, font=('Arial', 14), bg="gray85", command=self.CameraCheck)
-		self.BT_Camera.place(x=self.WinSize[0]-20,y=20,anchor="ne")
-		self.BT_Start = tk.Button(self.tkWin, text='Start', width=9, font=('Arial', 14), bg="DarkOliveGreen2", command=self.MazeStartCheck)
-		self.BT_Start.place(x=self.WinSize[0]-133,y=20,anchor="ne")
-		self.BT_Connect = tk.Button(self.tkWin, text='Link', width=9, font=('Arial', 14), bg="DarkOliveGreen2", fg="dark green", command=self.ConnectClick)
-		self.BT_Connect.place(x=self.WinSize[0]-246,y=20,anchor="ne")
+			#========右側：按鈕========
+			self.BT_Camera = tk.Button(self.tkWin, text='Camera', width=9, font=('Arial', 14), bg="gray85", command=self.CameraCheck)
+			self.BT_Camera.place(x=self.WinSize[0]-20,y=20,anchor="ne")
+			self.BT_Start = tk.Button(self.tkWin, text='Start', width=9, font=('Arial', 14), bg="DarkOliveGreen2", command=self.MazeStartCheck)
+			self.BT_Start.place(x=self.WinSize[0]-133,y=20,anchor="ne")
+			self.BT_Connect = tk.Button(self.tkWin, text='Link', width=9, font=('Arial', 14), bg="DarkOliveGreen2", fg="dark green", command=self.ConnectClick)
+			self.BT_Connect.place(x=self.WinSize[0]-246,y=20,anchor="ne")
 
-		#========右側：狀態顯示========
-		tk.Label(self.tkWin,text="Status", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-300,y=80,anchor="ne")
-		self.Link_State = tk.Label(self.tkWin,text="IPCAM Link: Unlinked", font=('Arial', 13), fg="gray35")
-		self.Link_State.place(x=self.WinSize[0]-189,y=110,anchor="ne")
-		self.Cam_State = tk.Label(self.tkWin,text="Camera State: Unconnect", font=('Arial', 13), fg="gray35")
-		self.Cam_State.place(x=self.WinSize[0]-160,y=140,anchor="ne")
-		self.Maze_State = tk.Label(self.tkWin,text="Maze State: Preparing...", font=('Arial', 13), fg="gray35")
-		self.Maze_State.place(x=self.WinSize[0]-170,y=170,anchor="ne")
+			#========右側：狀態顯示========
+			tk.Label(self.tkWin,text="Status", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-300,y=80,anchor="ne")
+			self.Link_State = tk.Label(self.tkWin,text="IPCAM Link: Unlinked", font=('Arial', 13), fg="gray35")
+			self.Link_State.place(x=self.WinSize[0]-189,y=110,anchor="ne")
+			self.Cam_State = tk.Label(self.tkWin,text="Camera State: Unconnect", font=('Arial', 13), fg="gray35")
+			self.Cam_State.place(x=self.WinSize[0]-160,y=140,anchor="ne")
+			self.Maze_State = tk.Label(self.tkWin,text="Maze State: Preparing...", font=('Arial', 13), fg="gray35")
+			self.Maze_State.place(x=self.WinSize[0]-170,y=170,anchor="ne")
 
-		self.TK_SHOW_Food = tk.Label(self.tkWin,text="# Food: ", font=('Arial', 12))
-		self.TK_SHOW_Food.place(x=self.WinSize[0]-290,y=200,anchor="ne")
-		self.TK_SHOW_Rat_ID = tk.Label(self.tkWin,text="# RatID: ", font=('Arial', 12))
-		self.TK_SHOW_Rat_ID.place(x=self.WinSize[0]-288,y=230,anchor="ne")
+			self.TK_SHOW_Food = tk.Label(self.tkWin,text="# Food: ", font=('Arial', 12))
+			self.TK_SHOW_Food.place(x=self.WinSize[0]-290,y=200,anchor="ne")
+			self.TK_SHOW_Rat_ID = tk.Label(self.tkWin,text="# RatID: ", font=('Arial', 12))
+			self.TK_SHOW_Rat_ID.place(x=self.WinSize[0]-288,y=230,anchor="ne")
 
-		#========右側：選擇檔案存放位置========
-		self.TK_File_Dir = tk.StringVar()
-		tk.Label(self.tkWin,text="Record File Directory", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-197,y=260,anchor="ne")
-		self.TKE_Dir = tk.Entry(self.tkWin, textvariable=self.TK_File_Dir, font=('Arial', 11), width=30)
-		self.TKE_Dir.place(x=self.WinSize[0]-107,y=290,anchor="ne")
-		tk.Button(self.tkWin, text='Choose...', width=10,command=self.Choose_Dir).place(x=self.WinSize[0]-20,y=287,anchor="ne")
+			#========右側：選擇檔案存放位置========
+			self.TK_File_Dir = tk.StringVar()
+			tk.Label(self.tkWin,text="Record File Directory", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-197,y=260,anchor="ne")
+			self.TKE_Dir = tk.Entry(self.tkWin, textvariable=self.TK_File_Dir, font=('Arial', 11), width=30)
+			self.TKE_Dir.place(x=self.WinSize[0]-107,y=290,anchor="ne")
+			tk.Button(self.tkWin, text='Choose...', width=10,command=self.Choose_Dir).place(x=self.WinSize[0]-20,y=287,anchor="ne")
 
-		#========右側：設定老鼠編號========
-		tk.Label(self.tkWin,text="Rat ID", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-302,y=325,anchor="ne")
-		self.TK_Rat_ID = tk.Entry(self.tkWin, font=('Arial', 12), width=20)
-		self.TK_Rat_ID.place(x=self.WinSize[0]-107,y=327,anchor="ne")
-		tk.Button(self.tkWin, text='Set ID', width=10,command=self.SetRatID).place(x=self.WinSize[0]-20,y=325,anchor="ne")
+			#========右側：設定老鼠編號========
+			tk.Label(self.tkWin,text="Rat ID", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-302,y=325,anchor="ne")
+			self.TK_Rat_ID = tk.Entry(self.tkWin, font=('Arial', 12), width=20)
+			self.TK_Rat_ID.place(x=self.WinSize[0]-107,y=327,anchor="ne")
+			tk.Button(self.tkWin, text='Set ID', width=10,command=self.SetRatID).place(x=self.WinSize[0]-20,y=325,anchor="ne")
 
-		#========右側：顯示進出臂路徑========
-		tk.Label(self.tkWin,text="Rat Route", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-277,y=360,anchor="ne")
-		self.RouteScroll = tk.Scrollbar(self.tkWin)
-		self.RouteScroll.place(x=self.WinSize[0]-20,y=390,anchor="ne", height=125)
-		self.RouteText = tk.Text(self.tkWin, font=('Arial', 11), width=39, height=7, yscrollcommand=self.RouteScroll.set)
-		self.RouteText.place(x=self.WinSize[0]-37,y=390,anchor="ne")
-		self.RouteScroll.config(command=self.RouteText.yview)
+			#========右側：顯示進出臂路徑========
+			tk.Label(self.tkWin,text="Rat Route", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-277,y=360,anchor="ne")
+			self.RouteScroll = tk.Scrollbar(self.tkWin)
+			self.RouteScroll.place(x=self.WinSize[0]-20,y=390,anchor="ne", height=125)
+			self.RouteText = tk.Text(self.tkWin, font=('Arial', 11), width=39, height=7, yscrollcommand=self.RouteScroll.set)
+			self.RouteText.place(x=self.WinSize[0]-37,y=390,anchor="ne")
+			self.RouteScroll.config(command=self.RouteText.yview)
 
-		#========下方：顯示各項資訊========
-		self.TK_SHOW_FileDir = tk.StringVar()
-		self.TK_SHOW_SYS_Msg = tk.StringVar()
-		self.TK_SHOW_FileDir.set("# FileDir: {}{}".format(self.FilePath, self.FileName))
-		self.TK_SHOW_SYS_Msg.set("Messenage: " + str(self.SYS_MSG))
-		tk.Label(self.tkWin,textvariable=self.TK_SHOW_FileDir, font=('Arial', 10)).place(x=20,y=self.WinSize[1]-10,anchor="sw")
-		self.TK_SHOW_SYS_Msg_Text = tk.Label(self.tkWin,textvariable=self.TK_SHOW_SYS_Msg, font=('Arial', 10))
-		self.TK_SHOW_SYS_Msg_Text.place(x=int(self.WinSize[0]/2),y=self.WinSize[1]-10,anchor="sw")
-		
-		self.tkWin.protocol("WM_DELETE_WINDOW", self.windowsClosing)
-		self.tkWin.after(10,self.LoopMain)
-		self.tkWin.mainloop()
-		self.thread.join() # 等待子執行緒結束
-		self.CAMThread.join()
+			#========下方：顯示各項資訊========
+			self.TK_SHOW_FileDir = tk.StringVar()
+			self.TK_SHOW_SYS_Msg = tk.StringVar()
+			self.TK_SHOW_FileDir.set("# FileDir: {}{}".format(self.FilePath, self.FileName))
+			self.TK_SHOW_SYS_Msg.set("Messenage: " + str(self.SYS_MSG))
+			tk.Label(self.tkWin,textvariable=self.TK_SHOW_FileDir, font=('Arial', 10)).place(x=20,y=self.WinSize[1]-10,anchor="sw")
+			self.TK_SHOW_SYS_Msg_Text = tk.Label(self.tkWin,textvariable=self.TK_SHOW_SYS_Msg, font=('Arial', 10))
+			self.TK_SHOW_SYS_Msg_Text.place(x=int(self.WinSize[0]/2),y=self.WinSize[1]-10,anchor="sw")
+			
+			self.tkWin.protocol("WM_DELETE_WINDOW", self.windowsClosing)
+			self.tkWin.after(10,self.LoopMain)
+			self.tkWin.mainloop()
+			self.thread.join() # 等待子執行緒結束
+			self.CAMThread.join()
+		except Warning as e:
+			detail = e.args[0] #取得詳細內容
+			cl, exc, tb = sys.exc_info() #取得Call Stack
+			lastCallStack = traceback.extract_tb(tb)[-1] #取得Call Stack的最後一筆資料
+			# fileName = lastCallStack[0] #取得發生的檔案名稱
+			lineNum = lastCallStack[1] #取得發生的行號
+			funcName = lastCallStack[2] #取得發生的函數名稱
+			logging.warning("{} line {}, in '{}': {}".format(cl, lineNum, funcName, detail))
+
+		except Exception as e:
+			detail = e.args[0] #取得詳細內容
+			cl, exc, tb = sys.exc_info() #取得Call Stack
+			lastCallStack = traceback.extract_tb(tb)[-1] #取得Call Stack的最後一筆資料
+			# fileName = lastCallStack[0] #取得發生的檔案名稱
+			lineNum = lastCallStack[1] #取得發生的行號
+			funcName = lastCallStack[2] #取得發生的函數名稱
+			logging.error("{} line {}, in '{}': {}".format(cl, lineNum, funcName, detail))
 		
 if __name__ == '__main__':
   MazeMouseTrack()
