@@ -5,3 +5,4 @@ config.txt
 video_*/
 CSV_*/
 old_*.py
+MazeLog(*).log

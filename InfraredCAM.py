@@ -10,6 +10,12 @@ import csv
 import winsound
 import threading
 import IPCAM_Frame as IPCAM
+import logging
+import sys
+import traceback
+
+FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
+logging.basicConfig(level=logging.WARNING, filename='MazeLog(%s).log' %(datetime.now().strftime("%Y-%m-%d")), filemode='w', format=FORMAT)
 
 #========純副程式區========
 def writeData2CSV(fileName, type_, dataRow): #寫入CSV檔
@@ -410,154 +416,171 @@ class InfraredCAM:
 	
 
 	def CameraMain(self): #這個副程式是"主程式"呦~~~~~
-		
+		try:
 
-		#遮罩形成
-		copy = makeBlackImage() #產生黑色的圖
-		copy = cv2.resize(copy,(480,480),interpolation=cv2.INTER_CUBIC) #放大成480x480
-		cv2.fillPoly(copy, [self.MASK_POS],  (255, 255, 255))  #加上八臂輔助線
-		copy = cv2.cvtColor(copy, cv2.COLOR_BGR2GRAY)  #灰階
-		B2 , copy = cv2.threshold(copy, 127,255,cv2.THRESH_BINARY) #二值化
-		# cv2.imshow ("copy",copy)
+			#遮罩形成
+			copy = makeBlackImage() #產生黑色的圖
+			copy = cv2.resize(copy,(480,480),interpolation=cv2.INTER_CUBIC) #放大成480x480
+			cv2.fillPoly(copy, [self.MASK_POS],  (255, 255, 255))  #加上八臂輔助線
+			copy = cv2.cvtColor(copy, cv2.COLOR_BGR2GRAY)  #灰階
+			B2 , copy = cv2.threshold(copy, 127,255,cv2.THRESH_BINARY) #二值化
+			# cv2.imshow ("copy",copy)
 
-		self.initDefault()
-		#程式一執行[第一次要跑的東西]放這裡
-		for i in range(0,self.ARM_UNIT):
-			mask1 = [int(self.ARMS_LINE[i][0][0] -(self.ARMS_LINE[i][0][0] - self.ARMS_LINE[i][1][0])/self.ARM_LINE_DISTANCE) , int(self.ARMS_LINE[i][0][1]-(self.ARMS_LINE[i][0][1] - self.ARMS_LINE[i][1][1])/self.ARM_LINE_DISTANCE)]
-			mask2 = [int(self.ARMS_LINE[i][2][0]-(self.ARMS_LINE[i][2][0] - self.ARMS_LINE[i][3][0])/self.ARM_LINE_DISTANCE) , int(self.ARMS_LINE[i][2][1]-(self.ARMS_LINE[i][2][1] - self.ARMS_LINE[i][3][1])/self.ARM_LINE_DISTANCE)]
-			# ARMS_IN_LINE1 = [mask1,mask2]
-			self.ARMS_IN_LINE.append([mask1,mask2])
-		# print(self.ARMS_IN_LINE)
-		while self.WINDOWS_IS_ACTIVE:
-			#確定要連線時才會跑這個
-			if self.CAM_IS_RUN:
-				frame = self.IPCAM.IPCAM_Image
-				IPCAM_LoadTime = (datetime.now() - self.IPCAM.IPCAM_NowTime).seconds
-				
-				if len(frame) == 0:
-					frame = cv2.resize(makeBlackImage(),(1280,720),interpolation=cv2.INTER_CUBIC)
-					self.IPCAM.setMessenage(2, "[ERROR] CAMERA isn't CONNECT!")
-					# print("CAMERA isn't CONNECT! At {}".format(datetime.now()))
-					self.CAM_IS_CONN = False
-				else:
-					frame = cv2.resize(frame,(self.WIDTH,self.HEIGHT),interpolation=cv2.INTER_CUBIC) #調整大小1024*576
-					if IPCAM_LoadTime > 3:
-						self.IPCAM.setMessenage(1, "[WAIT] CAMERA is TIMEOUT!")
-						# print("CAMERA is TIMEOUT! At {}".format(datetime.now()))
-					else:
-						self.IPCAM.setMessenage(0, "[GOOD] CAMERA is connecting!")
-					self.CAM_IS_CONN = True
-				
-				# cv2.rectangle(frame, convert(self.newP1), convert(self.newP2), (0,255,0), 1) #繪製矩形
-				# cv2.imshow("frame",frame)
-				self.newP1 = [IPCAM.IPCAM_NewP1[0], IPCAM.IPCAM_NewP1[1]]
-				self.newP2 = [self.newP1[0] + self.HEIGHT, self.newP1[1] + self.HEIGHT]
-
-				frame = frame[self.newP1[1]:self.newP2[1], self.newP1[0]:self.newP2[0]] #擷取兩個點的範圍
-				# cv2.polylines(frame, [self.MASK_POS], True, (0, 255, 255), 2)  #加上3臂輔助線
-				frame = cv2.resize(frame,(480,480),interpolation=cv2.INTER_CUBIC) #放大成480x480
-				frame1 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)	
-				B2,frame1 = cv2.threshold(frame1, 127,255,cv2.THRESH_BINARY)
-				pr = cv2.bitwise_and(frame1,frame1, mask=copy ) #遮罩覆蓋到影像上
-				frame1 = cv2.morphologyEx(pr,cv2.MORPH_OPEN,self.O)
-				# cv2.imshow("frame1",frame1)
-				self.rat_XY,wh = cv2.findContours(frame1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 W=所有座標
-				if len(self.rat_XY):
-					self.TargetPos,x,y = self.coordinate(self.rat_XY)
-					self.Mouse_coordinates.append(self.TargetPos)
-				cv2.waitKey(1)
-				# pass
-				#把[影像擷取的東西]放這裡
-				if self.MAZE_IS_RUN: #UI start 後動作
+			self.initDefault()
+			#程式一執行[第一次要跑的東西]放這裡
+			for i in range(0,self.ARM_UNIT):
+				mask1 = [int(self.ARMS_LINE[i][0][0] -(self.ARMS_LINE[i][0][0] - self.ARMS_LINE[i][1][0])/self.ARM_LINE_DISTANCE) , int(self.ARMS_LINE[i][0][1]-(self.ARMS_LINE[i][0][1] - self.ARMS_LINE[i][1][1])/self.ARM_LINE_DISTANCE)]
+				mask2 = [int(self.ARMS_LINE[i][2][0]-(self.ARMS_LINE[i][2][0] - self.ARMS_LINE[i][3][0])/self.ARM_LINE_DISTANCE) , int(self.ARMS_LINE[i][2][1]-(self.ARMS_LINE[i][2][1] - self.ARMS_LINE[i][3][1])/self.ARM_LINE_DISTANCE)]
+				# ARMS_IN_LINE1 = [mask1,mask2]
+				self.ARMS_IN_LINE.append([mask1,mask2])
+			# print(self.ARMS_IN_LINE)
+			while self.WINDOWS_IS_ACTIVE:
+				#確定要連線時才會跑這個
+				if self.CAM_IS_RUN:
+					frame = self.IPCAM.IPCAM_Image
+					IPCAM_LoadTime = (datetime.now() - self.IPCAM.IPCAM_NowTime).seconds
 					
-					self.sterm()
-					if not self.READ_FOOD: #把Food食物狀態寫進判斷狀態
-						mousepath = []  
-						mousepath = makeBlackImage()	#產生畫老鼠路徑用圖
-						mousepath = cv2.resize(mousepath,(480,480),interpolation=cv2.INTER_CUBIC)
-						# cv2.imshow("mousepath",mousepath)
-						self.Mouse_coordinates = []
-						self.initDefault()
-						for i in range (0,self.ARM_UNIT):
-							self.food1.append(self.Food[i])
-							self.foodtest.append(self.Food[i])
-						self.READ_FOOD = True
-						self.timestart = datetime.now() #起始時間
-						self.RouteArrFlag = 0
-						print("起始時間: " +str(self.timestart))
-						
-						self.RR2C_FirstTime = True #這個是我寫的(測試中，不用管沒關係)
+					if len(frame) == 0:
+						frame = cv2.resize(makeBlackImage(),(1280,720),interpolation=cv2.INTER_CUBIC)
+						self.IPCAM.setMessenage(2, "[ERROR] CAMERA isn't CONNECT!")
+						# print("CAMERA isn't CONNECT! At {}".format(datetime.now()))
+						self.CAM_IS_CONN = False
 					else:
-						pass 
-					self.time_now = datetime.now()  #當下時間
-					# self.getTimePoint(self.time_now)
-					self.Latency = (self.time_now - self.timestart).seconds
-					self.recordRoute2CSV() #這個是我寫的(測試中，不用管沒關係)
-					##############################################進臂##############################################
-					if self.NOW_STATUS == 0:
-						self.NOW_STATUS, self.dangchianbi = self.examination(self.NOW_STATUS,self.TargetPos)
-						# print(self.food1)
-						food1max = np.max(self.food1)
-						if food1max == 0:
-							self.NOW_STATUS = 0 #進臂or出臂
-							self.Route.append(self.dangchianbi)
-							self.Latency = (self.time_now - self.timestart).seconds 
-							self.TotalShortTerm = 0
-							self.TotalLongTerm = 0
-							for i in range(0,len(self.ShortTerm)):
-								self.TotalShortTerm = self.TotalShortTerm + self.ShortTerm[i]
-							# print(self.TotalShortTerm)
-							for i in range(1,len(self.LongTerm)):
-								self.TotalLongTerm = self.TotalLongTerm + self.LongTerm[i]
-							# print(self.TotalLongTerm)
-							self.DataRecord()
-							winsound.Beep(442,1000)
-							# print(self.Mouse_coordinates)
-							self.MAZE_IS_RUN = False
-							for i in range (1,len(self.Mouse_coordinates)):   #畫路徑圖
-								# cv2.line(mousepath,convert(self.Mouse_coordinates[i-1]),convert(self.Mouse_coordinates[i]),(20,65,213),1) #白色物體路徑
-								cv2.circle(mousepath, convert(self.Mouse_coordinates[i]), 1, (0,255,0), -1)
-								# print(self.Mouse_coordinates[i])
-							# cv2.imwrite(self.RatID,mousepath)	#儲存路徑圖
-							
-							cv2.imwrite(self.timestart.strftime("%m%d%H%M%S")+self.RatID+'.jpg',mousepath)
-							# cv2.imshow("mouse path",mousepath)
+						frame = cv2.resize(frame,(self.WIDTH,self.HEIGHT),interpolation=cv2.INTER_CUBIC) #調整大小1024*576
+						if IPCAM_LoadTime > 3:
+							self.IPCAM.setMessenage(1, "[WAIT] CAMERA is TIMEOUT!")
+							# print("CAMERA is TIMEOUT! At {}".format(datetime.now()))
+						else:
+							self.IPCAM.setMessenage(0, "[GOOD] CAMERA is connecting!")
+						self.CAM_IS_CONN = True
+					
+					# cv2.rectangle(frame, convert(self.newP1), convert(self.newP2), (0,255,0), 1) #繪製矩形
+					# cv2.imshow("frame",frame)
+					self.newP1 = [IPCAM.IPCAM_NewP1[0], IPCAM.IPCAM_NewP1[1]]
+					self.newP2 = [self.newP1[0] + self.HEIGHT, self.newP1[1] + self.HEIGHT]
 
+					frame = frame[self.newP1[1]:self.newP2[1], self.newP1[0]:self.newP2[0]] #擷取兩個點的範圍
+					# cv2.polylines(frame, [self.MASK_POS], True, (0, 255, 255), 2)  #加上3臂輔助線
+					frame = cv2.resize(frame,(480,480),interpolation=cv2.INTER_CUBIC) #放大成480x480
+					frame1 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)	
+					B2,frame1 = cv2.threshold(frame1, 127,255,cv2.THRESH_BINARY)
+					pr = cv2.bitwise_and(frame1,frame1, mask=copy ) #遮罩覆蓋到影像上
+					frame1 = cv2.morphologyEx(pr,cv2.MORPH_OPEN,self.O)
+					# cv2.imshow("frame1",frame1)
+					self.rat_XY,wh = cv2.findContours(frame1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 W=所有座標
+					if len(self.rat_XY):
+						self.TargetPos,x,y = self.coordinate(self.rat_XY)
+						self.Mouse_coordinates.append(self.TargetPos)
+					cv2.waitKey(1)
+					# pass
+					#把[影像擷取的東西]放這裡
+					if self.MAZE_IS_RUN: #UI start 後動作
+						
+						self.sterm()
+						if not self.READ_FOOD: #把Food食物狀態寫進判斷狀態
+							mousepath = []  
+							mousepath = makeBlackImage()	#產生畫老鼠路徑用圖
+							mousepath = cv2.resize(mousepath,(480,480),interpolation=cv2.INTER_CUBIC)
+							# cv2.imshow("mousepath",mousepath)
+							self.Mouse_coordinates = []
+							self.initDefault()
+							for i in range (0,self.ARM_UNIT):
+								self.food1.append(self.Food[i])
+								self.foodtest.append(self.Food[i])
+							self.READ_FOOD = True
+							self.timestart = datetime.now() #起始時間
+							self.RouteArrFlag = 0
+							print("起始時間: " +str(self.timestart))
+							
+							self.RR2C_FirstTime = True #這個是我寫的(測試中，不用管沒關係)
+						else:
+							pass 
+						self.time_now = datetime.now()  #當下時間
+						# self.getTimePoint(self.time_now)
+						self.Latency = (self.time_now - self.timestart).seconds
+						self.recordRoute2CSV() #這個是我寫的(測試中，不用管沒關係)
+						##############################################進臂##############################################
+						if self.NOW_STATUS == 0:
+							self.NOW_STATUS, self.dangchianbi = self.examination(self.NOW_STATUS,self.TargetPos)
+							# print(self.food1)
+							food1max = np.max(self.food1)
+							if food1max == 0:
+								self.NOW_STATUS = 0 #進臂or出臂
+								self.Route.append(self.dangchianbi)
+								self.Latency = (self.time_now - self.timestart).seconds 
+								self.TotalShortTerm = 0
+								self.TotalLongTerm = 0
+								for i in range(0,len(self.ShortTerm)):
+									self.TotalShortTerm = self.TotalShortTerm + self.ShortTerm[i]
+								# print(self.TotalShortTerm)
+								for i in range(1,len(self.LongTerm)):
+									self.TotalLongTerm = self.TotalLongTerm + self.LongTerm[i]
+								# print(self.TotalLongTerm)
+								self.DataRecord()
+								winsound.Beep(442,1000)
+								# print(self.Mouse_coordinates)
+								self.MAZE_IS_RUN = False
+								for i in range (1,len(self.Mouse_coordinates)):   #畫路徑圖
+									# cv2.line(mousepath,convert(self.Mouse_coordinates[i-1]),convert(self.Mouse_coordinates[i]),(20,65,213),1) #白色物體路徑
+									cv2.circle(mousepath, convert(self.Mouse_coordinates[i]), 1, (0,255,0), -1)
+									# print(self.Mouse_coordinates[i])
+								# cv2.imwrite(self.RatID,mousepath)	#儲存路徑圖
+								
+								cv2.imwrite(self.timestart.strftime("%m%d%H%M%S")+self.RatID+'.jpg',mousepath)
+								# cv2.imshow("mouse path",mousepath)
+
+							else:
+								pass
+						elif self.NOW_STATUS == 1: #出臂
+							self.NOW_STATUS, self.dangchianbi = self.leave(self.NOW_STATUS,self.TargetPos)
 						else:
 							pass
-					elif self.NOW_STATUS == 1: #出臂
-						self.NOW_STATUS, self.dangchianbi = self.leave(self.NOW_STATUS,self.TargetPos)
+
+						#把[影像擷取過後，開始辨識的東西]放這裡
 					else:
-						pass
-
-					#把[影像擷取過後，開始辨識的東西]放這裡
+						self.READ_FOOD = False
+						# pass
 				else:
-					self.READ_FOOD = False
-					# pass
-			else:
-				self.CAM_IS_CONN = False
-				self.TargetPos = (-1, -1)
+					self.CAM_IS_CONN = False
+					self.TargetPos = (-1, -1)
 
-			#開視窗查看影像
-			if self.OPEN_CAMERA_WINDOW and self.CAM_IS_RUN:
-				#這個我就先留下來
-				#frame => 從相機擷取出來的圖片
-				#其他的不會影響到你的程式
-				
-				showFrame = cv2.resize(frame, (self.ViewSize[0],self.ViewSize[1]), interpolation=cv2.INTER_CUBIC)
-				cv2.polylines(showFrame, [self.MASK_POS], True, (0, 255, 255), 2)  #加上3臂輔助線
+				#開視窗查看影像
+				if self.OPEN_CAMERA_WINDOW and self.CAM_IS_RUN:
+					#這個我就先留下來
+					#frame => 從相機擷取出來的圖片
+					#其他的不會影響到你的程式
+					
+					showFrame = cv2.resize(frame, (self.ViewSize[0],self.ViewSize[1]), interpolation=cv2.INTER_CUBIC)
+					cv2.polylines(showFrame, [self.MASK_POS], True, (0, 255, 255), 2)  #加上3臂輔助線
 
-				msgBoard = makeBlackImage()
-				msgBoard = cv2.resize(msgBoard, (self.ViewSize[0],30), interpolation=cv2.INTER_CUBIC)
-				msgText = "If you want to exit, press 'Camera' Button again to exit."
-				cv2.putText(msgBoard, msgText, (10,20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255))
+					msgBoard = makeBlackImage()
+					msgBoard = cv2.resize(msgBoard, (self.ViewSize[0],30), interpolation=cv2.INTER_CUBIC)
+					msgText = "If you want to exit, press 'Camera' Button again to exit."
+					cv2.putText(msgBoard, msgText, (10,20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255))
 
-				CamBoard = np.vstack([showFrame, msgBoard])
-				cv2.imshow('Camera Image', CamBoard)
-				
-				if cv2.waitKey(1) and (not self.OPEN_CAMERA_WINDOW):
+					CamBoard = np.vstack([showFrame, msgBoard])
+					cv2.imshow('Camera Image', CamBoard)
+					
+					if cv2.waitKey(1) and (not self.OPEN_CAMERA_WINDOW):
+						cv2.destroyWindow("Camera Image")
+				else:
 					cv2.destroyWindow("Camera Image")
-			else:
-				cv2.destroyWindow("Camera Image")
 
-			# self.CAMThread.join()
+				# self.CAMThread.join()
+		except Warning as e:
+			detail = e.args[0] #取得詳細內容
+			cl, exc, tb = sys.exc_info() #取得Call Stack
+			lastCallStack = traceback.extract_tb(tb)[-1] #取得Call Stack的最後一筆資料
+			# fileName = lastCallStack[0] #取得發生的檔案名稱
+			lineNum = lastCallStack[1] #取得發生的行號
+			funcName = lastCallStack[2] #取得發生的函數名稱
+			logging.warning("{} line {}, in '{}': {}".format(cl, lineNum, funcName, detail))
+
+		except Exception as e:
+			detail = e.args[0] #取得詳細內容
+			cl, exc, tb = sys.exc_info() #取得Call Stack
+			lastCallStack = traceback.extract_tb(tb)[-1] #取得Call Stack的最後一筆資料
+			# fileName = lastCallStack[0] #取得發生的檔案名稱
+			lineNum = lastCallStack[1] #取得發生的行號
+			funcName = lastCallStack[2] #取得發生的函數名稱
+			logging.error("{} line {}, in '{}': {}".format(cl, lineNum, funcName, detail))

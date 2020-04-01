@@ -1,4 +1,5 @@
 import random
+import datetime
 import tkinter as tk
 import tkinter.messagebox
 from tkinter import filedialog
@@ -6,6 +7,12 @@ import threading
 # from ThermalCAM import ThermalCAM as TCAM
 from InfraredCAM import InfraredCAM as TCAM
 import IPCAM_Frame as IPCAM
+import logging
+import sys
+import traceback
+
+FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
+logging.basicConfig(level=logging.WARNING, filename='MazeLog(%s).log' %(datetime.datetime.now().strftime("%Y-%m-%d")), filemode='w', format=FORMAT)
 
 def countStr(Str): #算出字串中大小寫字母與數字及其他符號的個數
 	Unit = [0, 0, 0, 0] #大寫字母/小寫字母/數字/其他符號
@@ -257,52 +264,71 @@ class MazeMouseTrack(object):
 				self.TKC_Food[i].config(state="normal")
 
 	def LoopMain(self): #UI執行後一直跑的迴圈
-		self.makeBall()
-		self.CAM_IS_CONN = self.TCAM.CAM_IS_CONN
-		if self.CAM_IS_RUN:
-			self.BT_Start.config(state="normal")
-		else:
-			self.BT_Start.config(bg="gray85")
-			self.BT_Start.config(state="disabled")
+		try:
+			self.makeBall()
+			self.CAM_IS_CONN = self.TCAM.CAM_IS_CONN
+			if self.CAM_IS_RUN:
+				self.BT_Start.config(state="normal")
+			else:
+				self.BT_Start.config(bg="gray85")
+				self.BT_Start.config(state="disabled")
 
-		if self.MAZE_IS_RUN:
-			if self.firstMazeRun:
-				self.firstMazeRun = False
-			self.LockInput(True)
-			newMazeStatus = self.TCAM.MAZE_IS_RUN
-			self.updateData()
-			if newMazeStatus == False:
-				self.Maze_State.config(text="Maze State: Preparing...", fg="gray35")
-				self.Maze_State.place(x=self.WinSize[0]-170,y=140,anchor="ne")
-				self.BT_Start.config(text="Start", bg="DarkOliveGreen2")
-				self.MAZE_IS_RUN = False
-		else:
-			self.LockInput(False)
-			self.firstMazeRun = True
+			if self.MAZE_IS_RUN:
+				if self.firstMazeRun:
+					self.firstMazeRun = False
+				self.LockInput(True)
+				newMazeStatus = self.TCAM.MAZE_IS_RUN
+				self.updateData()
+				if newMazeStatus == False:
+					self.Maze_State.config(text="Maze State: Preparing...", fg="gray35")
+					self.Maze_State.place(x=self.WinSize[0]-170,y=170,anchor="ne")
+					self.BT_Start.config(text="Start", bg="DarkOliveGreen2")
+					self.MAZE_IS_RUN = False
+			else:
+				self.LockInput(False)
+				self.firstMazeRun = True
+				
+			if self.CAM_IS_CONN:
+				self.Cam_State.config(text="Camera State: Connecting...", fg="green4")
+				self.Cam_State.place(x=self.WinSize[0]-140,y=140,anchor="ne")
+				self.BT_Camera.config(state="normal")
+			else:
+				self.Cam_State.config(text="Camera State: Unconnect", fg="gray35")
+				self.Cam_State.place(x=self.WinSize[0]-160,y=140,anchor="ne")
+				self.BT_Camera.config(state="disabled")
+
+			IPCAM_MsgColor = self.IPCAM.IPCAM_MsgColor
+			IPCAM_Messenage = self.IPCAM.IPCAM_Messenage
+
+			self.TK_SHOW_SYS_Msg.set("Messenage: {}".format(IPCAM_Messenage))
 			
-		if self.CAM_IS_CONN:
-			self.Cam_State.config(text="Camera State: Connecting...", fg="green4")
-			self.Cam_State.place(x=self.WinSize[0]-140,y=140,anchor="ne")
-			self.BT_Camera.config(state="normal")
-		else:
-			self.Cam_State.config(text="Camera State: Unconnect", fg="gray35")
-			self.Cam_State.place(x=self.WinSize[0]-160,y=140,anchor="ne")
-			self.BT_Camera.config(state="disabled")
+			if(IPCAM_MsgColor == 0):
+				self.TK_SHOW_SYS_Msg_Text.config(fg="green4")
+			elif(IPCAM_MsgColor == 1):
+				self.TK_SHOW_SYS_Msg_Text.config(fg="blue2")
+			elif(IPCAM_MsgColor == 2):
+				self.TK_SHOW_SYS_Msg_Text.config(fg="red2")
+				
 
-		IPCAM_MsgColor = self.IPCAM.IPCAM_MsgColor
-		IPCAM_Messenage = self.IPCAM.IPCAM_Messenage
+			self.tkWin.after(10,self.LoopMain)
 
-		self.TK_SHOW_SYS_Msg.set("Messenage: {}".format(IPCAM_Messenage))
-		
-		if(IPCAM_MsgColor == 0):
-			self.TK_SHOW_SYS_Msg_Text.config(fg="green4")
-		elif(IPCAM_MsgColor == 1):
-			self.TK_SHOW_SYS_Msg_Text.config(fg="blue2")
-		elif(IPCAM_MsgColor == 2):
-			self.TK_SHOW_SYS_Msg_Text.config(fg="red2")
-			
+		except Warning as e:
+			detail = e.args[0] #取得詳細內容
+			cl, exc, tb = sys.exc_info() #取得Call Stack
+			lastCallStack = traceback.extract_tb(tb)[-1] #取得Call Stack的最後一筆資料
+			# fileName = lastCallStack[0] #取得發生的檔案名稱
+			lineNum = lastCallStack[1] #取得發生的行號
+			funcName = lastCallStack[2] #取得發生的函數名稱
+			logging.warning("{} line {}, in '{}': {}".format(cl, lineNum, funcName, detail))
 
-		self.tkWin.after(10,self.LoopMain)
+		except Exception as e:
+			detail = e.args[0] #取得詳細內容
+			cl, exc, tb = sys.exc_info() #取得Call Stack
+			lastCallStack = traceback.extract_tb(tb)[-1] #取得Call Stack的最後一筆資料
+			# fileName = lastCallStack[0] #取得發生的檔案名稱
+			lineNum = lastCallStack[1] #取得發生的行號
+			funcName = lastCallStack[2] #取得發生的函數名稱
+			logging.error("{} line {}, in '{}': {}".format(cl, lineNum, funcName, detail))
 
 	def windowsClosing(self):
 		self.TCAM.WINDOWS_IS_ACTIVE = False #傳送視窗關閉狀態
