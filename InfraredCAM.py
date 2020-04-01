@@ -175,7 +175,7 @@ class InfraredCAM:
 			if self.RR2C_FirstTime:
 				self.RR2C_FirstTime = False
 			else:
-				print(self.RR2C)
+				# print(self.RR2C)
 				writeData2CSV(CSV_Dir + CSV_Name, "a", self.RR2C)
 				self.RR2C = []
 				self.RR2C_Time = datetime.now()
@@ -464,6 +464,7 @@ class InfraredCAM:
 				self.rat_XY,wh = cv2.findContours(frame1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 W=所有座標
 				if len(self.rat_XY):
 					self.TargetPos,x,y = self.coordinate(self.rat_XY)
+					self.Mouse_coordinates.append(self.TargetPos)
 				cv2.waitKey(1)
 				# pass
 				#把[影像擷取的東西]放這裡
@@ -474,7 +475,7 @@ class InfraredCAM:
 						mousepath = []  
 						mousepath = makeBlackImage()	#產生畫老鼠路徑用圖
 						mousepath = cv2.resize(mousepath,(480,480),interpolation=cv2.INTER_CUBIC)
-						cv2.imshow("mousepath",mousepath)
+						# cv2.imshow("mousepath",mousepath)
 						self.Mouse_coordinates = []
 						self.initDefault()
 						for i in range (0,self.ARM_UNIT):
@@ -511,15 +512,17 @@ class InfraredCAM:
 							# print(self.TotalLongTerm)
 							self.DataRecord()
 							winsound.Beep(442,1000)
-							print(self.Mouse_coordinates)
+							# print(self.Mouse_coordinates)
 							self.MAZE_IS_RUN = False
 							for i in range (1,len(self.Mouse_coordinates)):   #畫路徑圖
 								# cv2.line(mousepath,convert(self.Mouse_coordinates[i-1]),convert(self.Mouse_coordinates[i]),(20,65,213),1) #白色物體路徑
-								cv2.circle(mousepath, convert(self.Mouse_coordinates[i]), 0.5, -1)
+								cv2.circle(mousepath, convert(self.Mouse_coordinates[i]), 1, (0,255,0), -1)
+								# print(self.Mouse_coordinates[i])
 							# cv2.imwrite(self.RatID,mousepath)	#儲存路徑圖
 							
 							cv2.imwrite(self.timestart.strftime("%m%d%H%M%S")+self.RatID+'.jpg',mousepath)
-							cv2.imshow("mouse path",mousepath)
+							# cv2.imshow("mouse path",mousepath)
+
 						else:
 							pass
 					elif self.NOW_STATUS == 1: #出臂
