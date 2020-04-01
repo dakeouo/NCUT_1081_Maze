@@ -15,7 +15,7 @@ import sys
 import traceback
 
 FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
-logging.basicConfig(level=logging.WARNING, filename='MazeLog(%s).log' %(datetime.now().strftime("%Y-%m-%d")), filemode='w', format=FORMAT)
+logging.basicConfig(level=logging.WARNING, filename='MazeLog(%s).log' %(datetime.now().strftime("%Y-%m-%d")), filemode='a', format=FORMAT)
 
 #========純副程式區========
 def writeData2CSV(fileName, type_, dataRow): #寫入CSV檔

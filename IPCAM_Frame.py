@@ -10,7 +10,7 @@ import sys
 import traceback
 
 FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
-logging.basicConfig(level=logging.WARNING, filename='MazeLog(%s).log' %(datetime.datetime.now().strftime("%Y-%m-%d")), filemode='w', format=FORMAT)
+logging.basicConfig(level=logging.WARNING, filename='MazeLog(%s).log' %(datetime.datetime.now().strftime("%Y-%m-%d")), filemode='a', format=FORMAT)
 
 WINDOWS_CLOSED = False #視窗是否關閉
 MSG_Print = False #是否傳送訊息
