@@ -25,6 +25,15 @@ def writeData2CSV(fileName, type_, dataRow): #寫入CSV檔
 
 		# 寫入一列資料
 		writer.writerow(dataRow) 
+def readCSV2ARME(filename): #讀取八壁32點座標
+	w = []
+	with open('ARMS_LINE.csv',newline='') as csvfile:
+		rows = csv.reader(csvfile,  delimiter=',')
+		for row in rows: # for x in range(0,len(rows)):
+			for x in range(int(len(row)/2)):
+				w.append([int(row[x*2]), int(row[x*2 + 1])])
+	print(w)
+	return(w)
 
 def readCSV2List(fileName): #讀取CSV檔
 	AllData = []
@@ -98,26 +107,18 @@ class InfraredCAM:
 		self.ARMS_IN_LINE = []
 		self.ViewSize = (480, 480) #虛擬視窗顯示大小
 		self.TargetPos = [-1, -1] #目標變數
-		self.ARMS_POS = [
-						[272,302],[266,478],[238,478],[240,299], #I31,O31,O32,I32
-						[233,295],[ 83,435],[ 60,410],[209,273], #I41,O41,O42,I42
-						[206,261],[  2,252],[  2,224],[206,230], #I51,O51,O52,I52
-						[210,218],[ 69, 71],[ 94, 48],[233,199], #I61,O61,O62,I62
-						[244,198],[252,  1],[284,  1],[275,199], #I71,O71,O72,I72
-						[286,206],[437, 65],[456, 87],[305,225], #I81,O81,O82,I82
-						[309,236],[478,243],[476,274],[307,266], #I11,O11,O12,I12
-						[305,280],[445,424],[419,445],[282,296]  #I21,O21,O22,I22
-						]
 		# self.ARMS_POS = [
-		# 				[253,296],[258,479],[227,479],[223,294], #I31,O31,O32,I32
-		# 				[215,292],[ 88,424],[ 66,403],[191,271], #I41,O41,O42,I42
-		# 				[188,264],[  3,267],[  3,235],[186,230], #I51,O51,O52,I52
-		# 				[188,222],[ 57, 94],[ 77, 72],[210,198], #I61,O61,O62,I62
-		# 				[219,195],[217,  10],[250,  10],[251,195], #I71,O71,O72,I72
-		# 				[260,198],[390, 64],[413, 84],[282,219], #I81,O81,O82,I82
-		# 				[287,228],[471,221],[472,253],[288,258], #I11,O11,O12,I12
-		# 				[284,270],[420,395],[398,420],[263,291]  #I21,O21,O22,I22
-		# ]	#八壁遮罩
+		# 				[272,302],[266,478],[238,478],[240,299], #I31,O31,O32,I32
+		# 				[233,295],[ 83,435],[ 60,410],[209,273], #I41,O41,O42,I42
+		# 				[206,261],[  2,252],[  2,224],[206,230], #I51,O51,O52,I52
+		# 				[210,218],[ 69, 71],[ 94, 48],[233,199], #I61,O61,O62,I62
+		# 				[244,198],[252,  1],[284,  1],[275,199], #I71,O71,O72,I72
+		# 				[286,206],[437, 65],[456, 87],[305,225], #I81,O81,O82,I82
+		# 				[309,236],[478,243],[476,274],[307,266], #I11,O11,O12,I12
+		# 				[305,280],[445,424],[419,445],[282,296]  #I21,O21,O22,I22
+		# 				]
+		# self.ARMS_POS = []#八壁遮罩
+		self.ARMS_POS = readCSV2ARME("ARMS_LINE.csv")
 		self.ARMS_LINE = [
 			[self.ARMS_POS[0],self.ARMS_POS[1],self.ARMS_POS[3],self.ARMS_POS[2]],
 			[self.ARMS_POS[4],self.ARMS_POS[5],self.ARMS_POS[7],self.ARMS_POS[6]],
@@ -194,6 +195,7 @@ class InfraredCAM:
 		coo = (((Xa - Ya)/2) + Ya)
 		doo = [int(coo[0][0]), int(coo[0][1])]
 		return doo,Xa[0],Ya[0]
+
 
 	def initDefault(self): #初始化
 		self.foodtest = []
@@ -427,6 +429,7 @@ class InfraredCAM:
 			# cv2.imshow ("copy",copy)
 
 			self.initDefault()
+				
 			#程式一執行[第一次要跑的東西]放這裡
 			for i in range(0,self.ARM_UNIT):
 				mask1 = [int(self.ARMS_LINE[i][0][0] -(self.ARMS_LINE[i][0][0] - self.ARMS_LINE[i][1][0])/self.ARM_LINE_DISTANCE) , int(self.ARMS_LINE[i][0][1]-(self.ARMS_LINE[i][0][1] - self.ARMS_LINE[i][1][1])/self.ARM_LINE_DISTANCE)]
