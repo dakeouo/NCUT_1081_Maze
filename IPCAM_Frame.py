@@ -10,7 +10,7 @@ import sys
 import traceback
 
 FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
-logging.basicConfig(level=logging.WARNING, filename='MazeLog(%s).log' %(datetime.datetime.now().strftime("%Y-%m-%d")), filemode='a', format=FORMAT)
+logging.basicConfig(level=logging.WARNING, filename='MazeLog.log' %(datetime.datetime.now().strftime("%Y-%m-%d")), filemode='a', format=FORMAT)
 
 WINDOWS_CLOSED = False #視窗是否關閉
 MSG_Print = False #是否傳送訊息
@@ -136,7 +136,7 @@ def Main():
 					else:
 						setMessenage(2, "[ERROR] Camera Not Open!!")
 					
-					if (nowTime - videoTime).seconds > 1200:
+					if (nowTime - videoTime).seconds > 6000:
 						VideoOut.release()
 						checkVideoDir() #影片資料夾檢查
 						VideoOut = cv2.VideoWriter("{}{}_{}.avi".format(VideoDir,IPCAM_Name,datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")),cv2.VideoWriter_fourcc(*'DIVX'), IPCAM_Frame, (frame.shape[1], frame.shape[0]))

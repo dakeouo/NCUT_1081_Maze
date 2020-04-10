@@ -12,7 +12,7 @@ import sys
 import traceback
 
 FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
-logging.basicConfig(level=logging.WARNING, filename='MazeLog(%s).log' %(datetime.datetime.now().strftime("%Y-%m-%d")), filemode='a', format=FORMAT)
+logging.basicConfig(level=logging.WARNING, filename='MazeLog.log' %(datetime.datetime.now().strftime("%Y-%m-%d")), filemode='a', format=FORMAT)
 
 def countStr(Str): #算出字串中大小寫字母與數字及其他符號的個數
 	Unit = [0, 0, 0, 0] #大寫字母/小寫字母/數字/其他符號
@@ -87,11 +87,30 @@ class MazeMouseTrack(object):
 		self.tkWin.title('%d Arms Maze Tracking' %(self.ARM_UNIT)) #窗口名字
 		self.tkWin.geometry('%dx%d+20+20' %(self.WinSize[0],self.WinSize[1])) #窗口大小(寬X高+X偏移量+Y偏移量)
 		self.tkWin.resizable(False, False) #禁止變更視窗大小
-		self.setEachVariable() #各項變數初始化
-		self.setupUI() #視窗主程式
-
+		
 		self.thread = threading.Thread(target = self.TCAM.CameraMain) # 執行該子執行緒
 		self.thread.start()  # 執行該子執行緒
+
+		try:
+			self.setEachVariable() #各項變數初始化
+			self.setupUI() #視窗主程式
+		except Warning as e:
+			detail = e.args[0] #取得詳細內容
+			cl, exc, tb = sys.exc_info() #取得Call Stack
+			lastCallStack = traceback.extract_tb(tb)[-1] #取得Call Stack的最後一筆資料
+			# fileName = lastCallStack[0] #取得發生的檔案名稱
+			lineNum = lastCallStack[1] #取得發生的行號
+			funcName = lastCallStack[2] #取得發生的函數名稱
+			logging.warning("{} line {}, in '{}': {}".format(cl, lineNum, funcName, detail))
+
+		except Exception as e:
+			detail = e.args[0] #取得詳細內容
+			cl, exc, tb = sys.exc_info() #取得Call Stack
+			lastCallStack = traceback.extract_tb(tb)[-1] #取得Call Stack的最後一筆資料
+			# fileName = lastCallStack[0] #取得發生的檔案名稱
+			lineNum = lastCallStack[1] #取得發生的行號
+			funcName = lastCallStack[2] #取得發生的函數名稱
+			logging.error("{} line {}, in '{}': {}".format(cl, lineNum, funcName, detail))
 
 		self.firstMazeRun = True
 
@@ -393,6 +412,10 @@ class MazeMouseTrack(object):
 
 	def setArmInLine(self):
 		ARMS_IN_LINE = self.TCAM.ARMS_IN_LINE
+		while len(ARMS_IN_LINE) == 0:
+			ARMS_IN_LINE = self.TCAM.ARMS_IN_LINE
+			print("ARMS_IN_LINE is null!!")
+
 		for i in range(0, self.ARM_UNIT):
 			self.mazeCanvas.create_line(ARMS_IN_LINE[i][0][0], ARMS_IN_LINE[i][0][1], ARMS_IN_LINE[i][1][0], ARMS_IN_LINE[i][1][1], fill="DarkGoldenrod4", width=3)
 

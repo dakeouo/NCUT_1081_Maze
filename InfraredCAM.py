@@ -15,7 +15,7 @@ import sys
 import traceback
 
 FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
-logging.basicConfig(level=logging.WARNING, filename='MazeLog(%s).log' %(datetime.now().strftime("%Y-%m-%d")), filemode='a', format=FORMAT)
+logging.basicConfig(level=logging.WARNING, filename='MazeLog.log' %(datetime.now().strftime("%Y-%m-%d")), filemode='a', format=FORMAT)
 
 #========純副程式區========
 def writeData2CSV(fileName, type_, dataRow): #寫入CSV檔
@@ -98,26 +98,26 @@ class InfraredCAM:
 		self.ARMS_IN_LINE = []
 		self.ViewSize = (480, 480) #虛擬視窗顯示大小
 		self.TargetPos = [-1, -1] #目標變數
-		self.ARMS_POS = [
-						[272,302],[266,478],[238,478],[240,299], #I31,O31,O32,I32
-						[233,295],[ 83,435],[ 60,410],[209,273], #I41,O41,O42,I42
-						[206,261],[  2,252],[  2,224],[206,230], #I51,O51,O52,I52
-						[210,218],[ 69, 71],[ 94, 48],[233,199], #I61,O61,O62,I62
-						[244,198],[252,  1],[284,  1],[275,199], #I71,O71,O72,I72
-						[286,206],[437, 65],[456, 87],[305,225], #I81,O81,O82,I82
-						[309,236],[478,243],[476,274],[307,266], #I11,O11,O12,I12
-						[305,280],[445,424],[419,445],[282,296]  #I21,O21,O22,I22
-						]
 		# self.ARMS_POS = [
-		# 				[253,296],[258,479],[227,479],[223,294], #I31,O31,O32,I32
-		# 				[215,292],[ 88,424],[ 66,403],[191,271], #I41,O41,O42,I42
-		# 				[188,264],[  3,267],[  3,235],[186,230], #I51,O51,O52,I52
-		# 				[188,222],[ 57, 94],[ 77, 72],[210,198], #I61,O61,O62,I62
-		# 				[219,195],[217,  10],[250,  10],[251,195], #I71,O71,O72,I72
-		# 				[260,198],[390, 64],[413, 84],[282,219], #I81,O81,O82,I82
-		# 				[287,228],[471,221],[472,253],[288,258], #I11,O11,O12,I12
-		# 				[284,270],[420,395],[398,420],[263,291]  #I21,O21,O22,I22
-		# ]	#八壁遮罩
+		# 				[272,302],[266,478],[238,478],[240,299], #I31,O31,O32,I32
+		# 				[233,295],[ 83,435],[ 60,410],[209,273], #I41,O41,O42,I42
+		# 				[206,261],[  2,252],[  2,224],[206,230], #I51,O51,O52,I52
+		# 				[210,218],[ 69, 71],[ 94, 48],[233,199], #I61,O61,O62,I62
+		# 				[244,198],[252,  1],[284,  1],[275,199], #I71,O71,O72,I72
+		# 				[286,206],[437, 65],[456, 87],[305,225], #I81,O81,O82,I82
+		# 				[309,236],[478,243],[476,274],[307,266], #I11,O11,O12,I12
+		# 				[305,280],[445,424],[419,445],[282,296]  #I21,O21,O22,I22
+		# 				]
+		self.ARMS_POS = [
+						[248,286],[234,474],[204,473],[218,281], #I31,O31,O32,I32
+					    [211,277],[ 66,402],[ 47,375],[189,258], #I41,O41,O42,I42
+					    [188,250],[  2,231],[  4,200],[191,217], #I51,O51,O52,I52
+					    [193,211],[ 75, 65],[ 100, 46],[219,189], #I61,O61,O62,I62
+					    [225,188],[246,  2],[273,  3],[255,190], #I71,O71,O72,I72
+					    [265,195],[407, 73],[426, 95],[282,218], #I81,O81,O82,I82
+					    [284,226],[473,241],[472,268],[283,257], #I11,O11,O12,I12
+					    [282,266],[401,410],[381,428],[255,285]  #I21,O21,O22,I22
+		]	#八壁遮罩
 		self.ARMS_LINE = [
 			[self.ARMS_POS[0],self.ARMS_POS[1],self.ARMS_POS[3],self.ARMS_POS[2]],
 			[self.ARMS_POS[4],self.ARMS_POS[5],self.ARMS_POS[7],self.ARMS_POS[6]],
@@ -438,6 +438,8 @@ class InfraredCAM:
 				#確定要連線時才會跑這個
 				if self.CAM_IS_RUN:
 					frame = self.IPCAM.IPCAM_Image
+					# frame = cv2.imread("./Hos_0401.png")
+					# self.WIDTH, self.HEIGHT = (1280, 720)
 					IPCAM_LoadTime = (datetime.now() - self.IPCAM.IPCAM_NowTime).seconds
 					
 					if len(frame) == 0:
@@ -454,6 +456,7 @@ class InfraredCAM:
 							self.IPCAM.setMessenage(0, "[GOOD] CAMERA is connecting!")
 						self.CAM_IS_CONN = True
 					
+
 					# cv2.rectangle(frame, convert(self.newP1), convert(self.newP2), (0,255,0), 1) #繪製矩形
 					# cv2.imshow("frame",frame)
 					self.newP1 = [IPCAM.IPCAM_NewP1[0], IPCAM.IPCAM_NewP1[1]]
@@ -575,6 +578,7 @@ class InfraredCAM:
 			lineNum = lastCallStack[1] #取得發生的行號
 			funcName = lastCallStack[2] #取得發生的函數名稱
 			logging.warning("{} line {}, in '{}': {}".format(cl, lineNum, funcName, detail))
+			# print(traceback.print_exc())
 
 		except Exception as e:
 			detail = e.args[0] #取得詳細內容
@@ -583,4 +587,6 @@ class InfraredCAM:
 			# fileName = lastCallStack[0] #取得發生的檔案名稱
 			lineNum = lastCallStack[1] #取得發生的行號
 			funcName = lastCallStack[2] #取得發生的函數名稱
+			logging.info(traceback.print_exc())
 			logging.error("{} line {}, in '{}': {}".format(cl, lineNum, funcName, detail))
+			# print(traceback.print_exc())
