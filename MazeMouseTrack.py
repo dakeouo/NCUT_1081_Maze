@@ -10,9 +10,43 @@ import IPCAM_Frame as IPCAM
 import logging
 import sys
 import traceback
+import csv
+from PIL import Image, ImageTk
+import tkinter.ttk as ttk
+
+IPCAM_Info_FileName = "./IPCAM_INFO.csv"
+IPCAM_Info = []
 
 FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
-logging.basicConfig(level=logging.WARNING, filename='MazeLog.log' %(datetime.datetime.now().strftime("%Y-%m-%d")), filemode='a', format=FORMAT)
+logging.basicConfig(level=logging.WARNING, filename='MazeLog.log', filemode='a', format=FORMAT)
+
+def writeData2CSV(fileName, type_, dataRow): #寫入CSV檔
+	with open(fileName, type_, newline='') as csvfile:
+		# 建立 CSV 檔寫入器
+		writer = csv.writer(csvfile)
+
+		# 寫入一列資料
+		writer.writerow(dataRow) 
+
+def readCSV2List(fileName): #讀取CSV檔
+	AllData = []
+	with open(fileName, newline='') as csvfile:
+	  # 以冒號分隔欄位，讀取檔案內容
+	  rows = csv.reader(csvfile, delimiter=',')
+
+	  for row in rows:
+	    AllData.append(row)
+
+	return AllData
+
+def LoadCamInfo():
+	global IPCAM_Info
+	#名稱, 帳號, 密碼, IP, RTSP, Ax, Ay
+	IPCAM_Info = readCSV2List(IPCAM_Info_FileName)
+	for i in range(len(IPCAM_Info)):
+		IPCAM_Info[i][5] = int(IPCAM_Info[i][5])
+		IPCAM_Info[i][6] = int(IPCAM_Info[i][6])
+	# print(IPCAM_Info)
 
 def countStr(Str): #算出字串中大小寫字母與數字及其他符號的個數
 	Unit = [0, 0, 0, 0] #大寫字母/小寫字母/數字/其他符號
@@ -33,6 +67,7 @@ def Second2Datetime(sec): #秒數轉換成時間
 
 class MazeMouseTrack(object):
 	def __init__(self):
+
 		self.IPCAM = IPCAM
 		self.CAMThread = threading.Thread(target = self.IPCAM.Main) # 執行該子執行緒
 		self.CAMThread.start()  # 執行該子執行緒
@@ -63,6 +98,7 @@ class MazeMouseTrack(object):
 		self.ViewSize = self.TCAM.ViewSize #虛擬視窗顯示大小
 		self.MAZE_IS_RUN = False #當前系統是否在執行
 		self.CAM_IS_RUN = False #當前相機程式是否在執行
+		self.CAM_INIT_SUCCESS = False #CAM是否初始化成功
 		self.CAM_IS_CONN = self.TCAM.CAM_IS_CONN #當前鏡頭是否連線
 		self.TK_Food = [] #勾選放食物的臂
 		self.TK_S_Term = [] #顯示各臂短期記憶錯誤
@@ -83,13 +119,34 @@ class MazeMouseTrack(object):
 		self.TKE_Dir = ""
 		self.TKC_Food = []
 
+		self.InfoCombo = ""
+		self.BT_Choose_Dir = ""
+		self.BT_Rat_ID = ""
+		self.mazeTitle = ""
+
+		# IPCAM_Name = IPCAM_Info[0][0]
+		# IPCAM_Username = IPCAM_Info[0][1]
+		# IPCAM_Password = IPCAM_Info[0][2]
+		# IPCAM_IP = IPCAM_Info[0][3]
+		# IPCAM_Bar = IPCAM_Info[0][4]
+		# IPCAM_NewP1 = [IPCAM_Info[0][5], IPCAM_Info[0][6]]
+
+		# self.IPCAM.IPCAM_Username = IPCAM_Username
+		# self.IPCAM.IPCAM_Password = IPCAM_Password
+		# self.IPCAM.IPCAM_IP = IPCAM_IP
+		# self.IPCAM.IPCAM_Name = IPCAM_Name
+		# self.IPCAM.IPCAM_Bar = IPCAM_Bar
+		# self.IPCAM.IPCAM_NewP1 = [IPCAM_NewP1[0], IPCAM_NewP1[1]]
+
+		# self.IPCAM.CAM_INIT_SUCCESS = True
+
 		self.tkWin = tk.Tk()
 		self.tkWin.title('%d Arms Maze Tracking' %(self.ARM_UNIT)) #窗口名字
 		self.tkWin.geometry('%dx%d+20+20' %(self.WinSize[0],self.WinSize[1])) #窗口大小(寬X高+X偏移量+Y偏移量)
 		self.tkWin.resizable(False, False) #禁止變更視窗大小
 		
-		self.thread = threading.Thread(target = self.TCAM.CameraMain) # 執行該子執行緒
-		self.thread.start()  # 執行該子執行緒
+		# self.thread = threading.Thread(target = self.TCAM.CameraMain) # 執行該子執行緒
+		# self.thread.start()  # 執行該子執行緒
 
 		try:
 			self.setEachVariable() #各項變數初始化
@@ -282,52 +339,86 @@ class MazeMouseTrack(object):
 			for i in range(0,self.ARM_UNIT):
 				self.TKC_Food[i].config(state="normal")
 
+	def setIPCAMInfo(self): 
+		if(self.InfoCombo.current() != 0):
+			IPCAM_ID, IPCAM_Name = self.InfoCombo.current()-1, self.InfoCombo.get()
+
+			IPCAM_Username = IPCAM_Info[IPCAM_ID][1]
+			IPCAM_Password = IPCAM_Info[IPCAM_ID][2]
+			IPCAM_IP = IPCAM_Info[IPCAM_ID][3]
+			IPCAM_Bar = IPCAM_Info[IPCAM_ID][4]
+			IPCAM_NewP1 = [IPCAM_Info[IPCAM_ID][5], IPCAM_Info[IPCAM_ID][6]]
+			self.CAM_INIT_SUCCESS = True
+
+			self.IPCAM.IPCAM_Username = IPCAM_Username
+			self.IPCAM.IPCAM_Password = IPCAM_Password
+			self.IPCAM.IPCAM_IP = IPCAM_IP
+			self.IPCAM.IPCAM_Name = IPCAM_Name
+			self.IPCAM.IPCAM_Bar = IPCAM_Bar
+			self.IPCAM.IPCAM_NewP1 = [IPCAM_NewP1[0], IPCAM_NewP1[1]]
+
+			self.IPCAM.CAM_INIT_SUCCESS = self.CAM_INIT_SUCCESS
+
+			self.mazeTitle.config(text="IPCAM: {} ({})".format(IPCAM_Name, IPCAM_IP))
+			for i in range(1, self.ARM_UNIT+1):
+				self.TKC_Food[i-1].config(state="normal")
+			self.BT_Connect.config(state="normal", bg="DarkOliveGreen2")
+			self.BT_Choose_Dir.config(state="normal")
+			self.BT_Rat_ID.config(state="normal")
+			self.TK_Rat_ID.config(state="normal")
+			self.TKE_Dir.config(state="normal")
+
+			self.BT_LoadCAM.config(state="disabled")
+			self.InfoCombo.config(state="disabled")
+
 	def LoopMain(self): #UI執行後一直跑的迴圈
 		try:
-			self.makeBall()
-			self.CAM_IS_CONN = self.TCAM.CAM_IS_CONN
-			if self.CAM_IS_RUN and self.CAM_IS_CONN:
-				# self.BT_Start.config(bg="DarkOliveGreen2")
-				self.BT_Start.config(state="normal")
-			else:
-				self.BT_Start.config(bg="gray85")
-				self.BT_Start.config(state="disabled")
-
-			if self.MAZE_IS_RUN:
-				if self.firstMazeRun:
-					self.firstMazeRun = False
-				self.LockInput(True)
-				newMazeStatus = self.TCAM.MAZE_IS_RUN
-				self.updateData()
-				if newMazeStatus == False:
-					self.Maze_State.config(text="Maze State: Preparing...", fg="gray35")
-					self.Maze_State.place(x=self.WinSize[0]-170,y=170,anchor="ne")
-					self.BT_Start.config(text="Start", bg="DarkOliveGreen2")
-					self.MAZE_IS_RUN = False
-			else:
-				self.LockInput(False)
-				self.firstMazeRun = True
-				
-			if self.CAM_IS_CONN:
-				self.Cam_State.config(text="Camera State: Connecting...", fg="green4")
-				self.Cam_State.place(x=self.WinSize[0]-140,y=140,anchor="ne")
-				self.BT_Camera.config(state="normal")
-			else:
-				self.Cam_State.config(text="Camera State: Unconnect", fg="gray35")
-				self.Cam_State.place(x=self.WinSize[0]-160,y=140,anchor="ne")
-				self.BT_Camera.config(state="disabled")
-
-			IPCAM_MsgColor = self.IPCAM.IPCAM_MsgColor
-			IPCAM_Messenage = self.IPCAM.IPCAM_Messenage
-
-			self.TK_SHOW_SYS_Msg.set("Messenage: {}".format(IPCAM_Messenage))
 			
-			if(IPCAM_MsgColor == 0):
-				self.TK_SHOW_SYS_Msg_Text.config(fg="green4")
-			elif(IPCAM_MsgColor == 1):
-				self.TK_SHOW_SYS_Msg_Text.config(fg="blue2")
-			elif(IPCAM_MsgColor == 2):
-				self.TK_SHOW_SYS_Msg_Text.config(fg="red2")
+			if  self.CAM_INIT_SUCCESS:
+				self.makeBall()
+				self.CAM_IS_CONN = self.TCAM.CAM_IS_CONN
+				if self.CAM_IS_RUN and self.CAM_IS_CONN:
+					# self.BT_Start.config(bg="DarkOliveGreen2")
+					self.BT_Start.config(state="normal")
+				else:
+					self.BT_Start.config(bg="gray85")
+					self.BT_Start.config(state="disabled")
+
+				if self.MAZE_IS_RUN:
+					if self.firstMazeRun:
+						self.firstMazeRun = False
+					self.LockInput(True)
+					newMazeStatus = self.TCAM.MAZE_IS_RUN
+					self.updateData()
+					if newMazeStatus == False:
+						self.Maze_State.config(text="Maze State: Preparing...", fg="gray35")
+						self.Maze_State.place(x=self.WinSize[0]-170,y=170,anchor="ne")
+						self.BT_Start.config(text="Start", bg="DarkOliveGreen2")
+						self.MAZE_IS_RUN = False
+				else:
+					self.LockInput(False)
+					self.firstMazeRun = True
+					
+				if self.CAM_IS_CONN:
+					self.Cam_State.config(text="Camera State: Connecting...", fg="green4")
+					self.Cam_State.place(x=self.WinSize[0]-140,y=140,anchor="ne")
+					self.BT_Camera.config(state="normal")
+				else:
+					self.Cam_State.config(text="Camera State: Unconnect", fg="gray35")
+					self.Cam_State.place(x=self.WinSize[0]-160,y=140,anchor="ne")
+					self.BT_Camera.config(state="disabled")
+
+				IPCAM_MsgColor = self.IPCAM.IPCAM_MsgColor
+				IPCAM_Messenage = self.IPCAM.IPCAM_Messenage
+
+				self.TK_SHOW_SYS_Msg.set("Messenage: {}".format(IPCAM_Messenage))
+				
+				if(IPCAM_MsgColor == 0):
+					self.TK_SHOW_SYS_Msg_Text.config(fg="green4")
+				elif(IPCAM_MsgColor == 1):
+					self.TK_SHOW_SYS_Msg_Text.config(fg="blue2")
+				elif(IPCAM_MsgColor == 2):
+					self.TK_SHOW_SYS_Msg_Text.config(fg="red2")
 				
 
 			self.tkWin.after(10,self.LoopMain)
@@ -420,8 +511,24 @@ class MazeMouseTrack(object):
 			self.mazeCanvas.create_line(ARMS_IN_LINE[i][0][0], ARMS_IN_LINE[i][0][1], ARMS_IN_LINE[i][1][0], ARMS_IN_LINE[i][1][1], fill="DarkGoldenrod4", width=3)
 
 	def setupUI(self):
+		global IPCAM_Info
+
 		#========測試用========
 		# tk.Button(self.tkWin, text='Testing', width=10, font=('Arial', 8), command=self.PreparingTesting).place(x=100,y=10,anchor="nw")
+
+		#========左上：紀錄變數========
+		LoadCamInfo()
+		#攝影機資訊選擇(下拉選單)
+		CamInfo = ['choose IPCAM...']
+		for i in range(len(IPCAM_Info)):
+			CamInfo.append(IPCAM_Info[i][0])
+		# print(CamInfo)
+		self.InfoCombo = ttk.Combobox(self.tkWin, values=CamInfo, state="readonly")
+		self.InfoCombo.place(x=20,y=25,anchor="w")
+		self.InfoCombo.current(0)
+
+		self.BT_LoadCAM = tk.Button(self.tkWin, text='Load', width=9, font=('Arial', 10), command=self.setIPCAMInfo)
+		self.BT_LoadCAM.place(x=190,y=25,anchor="w")
 
 		#========左側：紀錄變數========
 		self.TK_Total_L_Term = tk.StringVar()
@@ -431,15 +538,15 @@ class MazeMouseTrack(object):
 		self.TK_Latency.set("Latency: %02d:%02d:%02d" %(nLate[0],nLate[1],nLate[2]))
 		self.TK_Total_L_Term.set("Total Long Term: %d" %(0))
 		self.TK_Total_S_Term.set("Total Short Term: %d" %(0))
-		tk.Label(self.tkWin,text="Statistics", font=('Arial', 12), bg="gray75").place(x=20,y=10,anchor="nw")
-		tk.Label(self.tkWin,textvariable=self.TK_Total_L_Term, font=('Arial', 14)).place(x=20,y=40,anchor="nw")
-		tk.Label(self.tkWin,textvariable=self.TK_Total_S_Term, font=('Arial', 14)).place(x=20,y=80,anchor="nw")
-		tk.Label(self.tkWin,textvariable=self.TK_Latency, font=('Arial', 14)).place(x=20,y=120,anchor="nw")
+		tk.Label(self.tkWin,text="Statistics", font=('Arial', 12), bg="gray75").place(x=20,y=50,anchor="nw")
+		tk.Label(self.tkWin,textvariable=self.TK_Total_L_Term, font=('Arial', 14)).place(x=20,y=80,anchor="nw")
+		tk.Label(self.tkWin,textvariable=self.TK_Total_S_Term, font=('Arial', 14)).place(x=20,y=115,anchor="nw")
+		tk.Label(self.tkWin,textvariable=self.TK_Latency, font=('Arial', 14)).place(x=20,y=150,anchor="nw")
 
 		#========左側：紀錄食物位置和詳細記憶錯誤========
-		tk.Label(self.tkWin,text="Food/Term", font=('Arial', 12), bg="gray75").place(x=20,y=170,anchor="nw")
-		tk.Label(self.tkWin,text="Long Term", font=('Arial', 10)).place(x=160,y=175,anchor="n")
-		tk.Label(self.tkWin,text="Short Term", font=('Arial', 10)).place(x=240,y=175,anchor="n")
+		tk.Label(self.tkWin,text="Food/Term", font=('Arial', 12), bg="gray75").place(x=20,y=195,anchor="nw")
+		tk.Label(self.tkWin,text="Long Term", font=('Arial', 10)).place(x=160,y=200,anchor="n")
+		tk.Label(self.tkWin,text="Short Term", font=('Arial', 10)).place(x=240,y=200,anchor="n")
 		for i in range(1, self.ARM_UNIT+1):
 			self.TK_Food[i-1] = tk.IntVar()
 			self.TK_L_Term[i-1] = tk.StringVar()
@@ -447,9 +554,9 @@ class MazeMouseTrack(object):
 			self.TK_L_Term[i-1].set(str(self.L_Term[i-1]))
 			self.TK_S_Term[i-1].set(str(self.S_Term[i-1]))
 			self.TKC_Food.append(0)
-			posY = 215 + 40*(i-1)
+			posY = 230 + 37*(i-1)
 			tk.Label(self.tkWin,text="Arm "+str(i), font=('Arial', 12)).place(x=20,y=posY,anchor="nw")
-			self.TKC_Food[i-1] = tk.Checkbutton(self.tkWin, variable=self.TK_Food[i-1], onvalue = 1, offvalue = 0, command=self.setFood)
+			self.TKC_Food[i-1] = tk.Checkbutton(self.tkWin, variable=self.TK_Food[i-1], onvalue = 1, offvalue = 0, command=self.setFood, state="disabled")
 			self.TKC_Food[i-1].place(x=80,y=posY,anchor="nw")
 			tk.Label(self.tkWin,textvariable=self.TK_L_Term[i-1], font=('Arial', 12)).place(x=160,y=posY,anchor="n")
 			tk.Label(self.tkWin,textvariable=self.TK_S_Term[i-1], font=('Arial', 12)).place(x=240,y=posY,anchor="n")
@@ -466,13 +573,15 @@ class MazeMouseTrack(object):
 		pViewY = int((self.WinSize[1]-self.ViewSize[1])*0.45) #虛擬視窗左上定位點Y
 		self.setArmLine()
 		self.mazeCanvas.place(x=pViewX, y=pViewY,anchor="nw")
+		self.mazeTitle = tk.Label(self.tkWin,text="IPCAM:", font=('Arial', 12))
+		self.mazeTitle.place(x=pViewX, y=12,anchor="nw")
 
-		#========右側：按鈕========
-		self.BT_Camera = tk.Button(self.tkWin, text='Camera', width=9, font=('Arial', 14), bg="gray85", command=self.CameraCheck)
+		#========右側：按鈕======== #, bg="DarkOliveGreen2"
+		self.BT_Camera = tk.Button(self.tkWin, text='Camera', width=9, font=('Arial', 14), bg="gray85", command=self.CameraCheck, state="disabled")
 		self.BT_Camera.place(x=self.WinSize[0]-20,y=20,anchor="ne")
-		self.BT_Start = tk.Button(self.tkWin, text='Start', width=9, font=('Arial', 14), bg="DarkOliveGreen2", command=self.MazeStartCheck)
+		self.BT_Start = tk.Button(self.tkWin, text='Start', width=9, font=('Arial', 14),bg="gray85", command=self.MazeStartCheck, state="disabled")
 		self.BT_Start.place(x=self.WinSize[0]-133,y=20,anchor="ne")
-		self.BT_Connect = tk.Button(self.tkWin, text='Link', width=9, font=('Arial', 14), bg="DarkOliveGreen2", fg="dark green", command=self.ConnectClick)
+		self.BT_Connect = tk.Button(self.tkWin, text='Link', width=9, font=('Arial', 14),bg="gray85", fg="dark green", command=self.ConnectClick, state="disabled")
 		self.BT_Connect.place(x=self.WinSize[0]-246,y=20,anchor="ne")
 
 		#========右側：狀態顯示========
@@ -492,15 +601,17 @@ class MazeMouseTrack(object):
 		#========右側：選擇檔案存放位置========
 		self.TK_File_Dir = tk.StringVar()
 		tk.Label(self.tkWin,text="Record File Directory", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-197,y=260,anchor="ne")
-		self.TKE_Dir = tk.Entry(self.tkWin, textvariable=self.TK_File_Dir, font=('Arial', 11), width=30)
+		self.TKE_Dir = tk.Entry(self.tkWin, textvariable=self.TK_File_Dir, font=('Arial', 11), width=30, state="disabled")
 		self.TKE_Dir.place(x=self.WinSize[0]-107,y=290,anchor="ne")
-		tk.Button(self.tkWin, text='Choose...', width=10,command=self.Choose_Dir).place(x=self.WinSize[0]-20,y=287,anchor="ne")
+		self.BT_Choose_Dir = tk.Button(self.tkWin, text='Choose...', width=10,command=self.Choose_Dir, state="disabled")
+		self.BT_Choose_Dir.place(x=self.WinSize[0]-20,y=287,anchor="ne")
 
 		#========右側：設定老鼠編號========
 		tk.Label(self.tkWin,text="Rat ID", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-302,y=325,anchor="ne")
-		self.TK_Rat_ID = tk.Entry(self.tkWin, font=('Arial', 12), width=20)
+		self.TK_Rat_ID = tk.Entry(self.tkWin, font=('Arial', 12), width=20, state="disabled")
 		self.TK_Rat_ID.place(x=self.WinSize[0]-107,y=327,anchor="ne")
-		tk.Button(self.tkWin, text='Set ID', width=10,command=self.SetRatID).place(x=self.WinSize[0]-20,y=325,anchor="ne")
+		self.BT_Rat_ID = tk.Button(self.tkWin, text='Set ID', width=10,command=self.SetRatID, state="disabled")
+		self.BT_Rat_ID.place(x=self.WinSize[0]-20,y=325,anchor="ne")
 
 		#========右側：顯示進出臂路徑========
 		tk.Label(self.tkWin,text="Rat Route", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-277,y=360,anchor="ne")

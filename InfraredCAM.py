@@ -15,7 +15,7 @@ import sys
 import traceback
 
 FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
-logging.basicConfig(level=logging.WARNING, filename='MazeLog.log' %(datetime.now().strftime("%Y-%m-%d")), filemode='a', format=FORMAT)
+logging.basicConfig(level=logging.WARNING, filename='MazeLog.log', filemode='a', format=FORMAT)
 
 #========純副程式區========
 def writeData2CSV(fileName, type_, dataRow): #寫入CSV檔
@@ -32,8 +32,8 @@ def readCSV2ARME(filename): #讀取八壁32點座標
 		for row in rows: # for x in range(0,len(rows)):
 			for x in range(int(len(row)/2)):
 				w.append([int(row[x*2]), int(row[x*2 + 1])])
-	print(w)
-	return(w)
+	# print(w)
+	return w
 
 def readCSV2List(fileName): #讀取CSV檔
 	AllData = []

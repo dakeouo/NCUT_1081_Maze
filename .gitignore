@@ -5,4 +5,11 @@ config.txt
 video_*/
 CSV_*/
 old_*.py
-MazeLog(*).log
+MazeLog*.log
+
+*.csv
+!IPCAM_INFO.csv
+!ARMS_LINE.csv
+
+*.jpg
+*.png

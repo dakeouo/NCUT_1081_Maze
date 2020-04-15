@@ -10,9 +10,10 @@ import sys
 import traceback
 
 FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
-logging.basicConfig(level=logging.WARNING, filename='MazeLog.log' %(datetime.datetime.now().strftime("%Y-%m-%d")), filemode='a', format=FORMAT)
+logging.basicConfig(level=logging.WARNING, filename='MazeLog.log', filemode='a', format=FORMAT)
 
 WINDOWS_CLOSED = False #視窗是否關閉
+CAM_INIT_SUCCESS = False
 MSG_Print = False #是否傳送訊息
 IPCAM_Username = ""
 IPCAM_Password = ""
@@ -69,14 +70,13 @@ def setMessenage(color, messenge):
 
 def Main():
 	global count, IPCAM_Image,  MSG_Print, IPCAM_Messenage, IPCAM_FrameCount, IPCAM_NowTime, IPCAM_ConfigStatus, VideoDir
-	global IPCAM_Username, IPCAM_Password, IPCAM_Name, IPCAM_IP, IPCAM_Frame, IPCAM_NewP1
+	global IPCAM_Username, IPCAM_Password, IPCAM_Name, IPCAM_IP, IPCAM_Frame, IPCAM_NewP1, CAM_INIT_SUCCESS
 
 	try:
 		IPCAM_Image = []
 		newTime = datetime.datetime.now()
 		videoTime = datetime.datetime.now()
 		
-		CAM_INIT_SUCCESS = False
 		FIRST_RUN = True
 		InitFile = "./config.txt"
 		# print(VideoDir)
@@ -84,40 +84,9 @@ def Main():
 		# sendMsg("[Username],[Password],[Camera Name],[Camera IP],[Camera FPS]")
 		while WINDOWS_IS_ACTIVE:
 			# print(IPCAM_Messenage)
-			if not CAM_INIT_SUCCESS:
-				if os.path.isfile(InitFile):
-					fp = open(InitFile, "r")
-					lines = fp.readlines()
-					fp.close()
-					if lines == []:
-						IPCAM_ConfigStatus = 1
-						setMessenage(2, "[ERROR] Config File content Empty!")
-					else:
-						data = lines[0].split(",")
-						if len(data) != 7:
-							IPCAM_ConfigStatus = 2
-							setMessenage(2, "[ERROR] Config File Data format error!")
-						else:
-							FIRST_RUN = True
-							IPCAM_Username = data[0]
-							IPCAM_Password = data[1]
-							IPCAM_Name = data[2]
-							IPCAM_IP = data[3]
-							IPCAM_Frame = int(data[4])
-							IPCAM_Bar = data[5]
-							nowNewP1 = data[6].split("_") #座標形式 => "xxx,yyy"
-							IPCAM_NewP1 = [int(nowNewP1[0]), int(nowNewP1[1])]
-							# print(IPCAM_NewP1)
 
-							# str1 = "{},{},{},{},{}".format(IPCAM_Username, IPCAM_Password, IPCAM_Name, IPCAM_IP, IPCAM_Frame)
-							# print(str1)
-							setMessenage(0, "[GOOD] Config Import Success!")
-							IPCAM_ConfigStatus = 3
-							CAM_INIT_SUCCESS = True
-				else:
-					IPCAM_ConfigStatus = 0
-					setMessenage(2, "[ERROR] No Config File (config.txt)!")
-			else:
+			if CAM_INIT_SUCCESS:
+				
 				if CAM_IS_RUN:
 					if FIRST_RUN:
 						rtsp = "rtsp://{0}:{1}@{2}:554/{3}".format(IPCAM_Username, IPCAM_Password, IPCAM_IP, IPCAM_Bar) #1920x1080
@@ -162,7 +131,7 @@ def Main():
 						setMessenage(1, "[WAIT] Setup the IP Camera")
 
 				else:
-					CAM_INIT_SUCCESS = False
+					# CAM_INIT_SUCCESS = False
 					IPCAM_Image = []
 
 	except Warning as e:
