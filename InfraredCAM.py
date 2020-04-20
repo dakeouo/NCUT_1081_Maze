@@ -455,7 +455,7 @@ class InfraredCAM:
 						else:
 							self.IPCAM.setMessenage(0, "[GOOD] CAMERA is connecting!")
 						self.CAM_IS_CONN = True
-					
+						cv2.imshow ("copy",copy)
 					# cv2.rectangle(frame, convert(self.newP1), convert(self.newP2), (0,255,0), 1) #繪製矩形
 					# cv2.imshow("frame",frame)
 					self.newP1 = [IPCAM.IPCAM_NewP1[0], IPCAM.IPCAM_NewP1[1]]
@@ -466,9 +466,11 @@ class InfraredCAM:
 					frame = cv2.resize(frame,(480,480),interpolation=cv2.INTER_CUBIC) #放大成480x480
 					frame1 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)	
 					B2,frame1 = cv2.threshold(frame1, 127,255,cv2.THRESH_BINARY)
+					cv2.imshow("frame1",frame1)
 					pr = cv2.bitwise_and(frame1,frame1, mask=copy ) #遮罩覆蓋到影像上
+					
 					frame1 = cv2.morphologyEx(pr,cv2.MORPH_OPEN,self.O)
-					# cv2.imshow("frame1",frame1)
+					
 					self.rat_XY,wh = cv2.findContours(frame1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 W=所有座標
 					if len(self.rat_XY):
 						self.TargetPos,x,y = self.coordinate(self.rat_XY)
