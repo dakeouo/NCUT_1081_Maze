@@ -403,10 +403,10 @@ class InfraredCAM:
 				self.ShortTerm[i] = self.frequency[i]-1
 
 	def DataRecord(self):  #寫入csv
-		csvTitle = ["Rat ID", "Food", "Total LongTerm", "Total ShortTerm", "Route", "Latency"]
+		csvTitle = ["Rat ID", "Food", "Total LongTerm", "Total ShortTerm", "Route", "Latency", "time"]
 		nLate = Second2Datetime(self.Latency)
 		newLatency = "%02d:%02d:%02d" %(nLate[0],nLate[1],nLate[2])
-		MazeData = [self.RatID, self.Food, self.TotalLongTerm, self.TotalShortTerm, self.Route, newLatency]
+		MazeData = [self.RatID, self.Food, self.TotalLongTerm, self.TotalShortTerm, self.Route, newLatency,self.timestart ]
 		if os.path.isfile(self.filePath):
 			csvData = readCSV2List(self.filePath)
 			if not (listAllSame(csvData[0],csvTitle)):
@@ -458,6 +458,7 @@ class InfraredCAM:
 						cv2.imshow ("copy",copy)
 					# cv2.rectangle(frame, convert(self.newP1), convert(self.newP2), (0,255,0), 1) #繪製矩形
 					# cv2.imshow("frame",frame)
+					print(rtsp)
 					self.newP1 = [IPCAM.IPCAM_NewP1[0], IPCAM.IPCAM_NewP1[1]]
 					self.newP2 = [self.newP1[0] + self.HEIGHT, self.newP1[1] + self.HEIGHT]
 
@@ -468,9 +469,9 @@ class InfraredCAM:
 					B2,frame1 = cv2.threshold(frame1, 127,255,cv2.THRESH_BINARY)
 					cv2.imshow("frame1",frame1)
 					pr = cv2.bitwise_and(frame1,frame1, mask=copy ) #遮罩覆蓋到影像上
-					
+					cv2.imshow("pr",pr)
 					frame1 = cv2.morphologyEx(pr,cv2.MORPH_OPEN,self.O)
-					
+					cv2.imshow("frame",frame1)
 					self.rat_XY,wh = cv2.findContours(frame1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 W=所有座標
 					if len(self.rat_XY):
 						self.TargetPos,x,y = self.coordinate(self.rat_XY)
