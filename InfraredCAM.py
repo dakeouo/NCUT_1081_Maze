@@ -107,17 +107,6 @@ class InfraredCAM:
 		self.ARMS_IN_LINE = []
 		self.ViewSize = (480, 480) #虛擬視窗顯示大小
 		self.TargetPos = [-1, -1] #目標變數
-		# self.ARMS_POS = [
-		# 				[272,302],[266,478],[238,478],[240,299], #I31,O31,O32,I32
-		# 				[233,295],[ 83,435],[ 60,410],[209,273], #I41,O41,O42,I42
-		# 				[206,261],[  2,252],[  2,224],[206,230], #I51,O51,O52,I52
-		# 				[210,218],[ 69, 71],[ 94, 48],[233,199], #I61,O61,O62,I62
-		# 				[244,198],[252,  1],[284,  1],[275,199], #I71,O71,O72,I72
-		# 				[286,206],[437, 65],[456, 87],[305,225], #I81,O81,O82,I82
-		# 				[309,236],[478,243],[476,274],[307,266], #I11,O11,O12,I12
-		# 				[305,280],[445,424],[419,445],[282,296]  #I21,O21,O22,I22
-		# 				]
-		# self.ARMS_POS = []#八壁遮罩
 		self.ARMS_POS = readCSV2ARME("ARMS_LINE.csv")
 		self.ARMS_LINE = [
 			[self.ARMS_POS[0],self.ARMS_POS[1],self.ARMS_POS[3],self.ARMS_POS[2]],
@@ -251,8 +240,6 @@ class InfraredCAM:
 
 		# self.NOW_STATUS = 1
 
-
-
 		if self.dangchianbi == 1:
 			ans11 = math.sqrt(pow(self.TargetPos[0] - I11[0],2) + pow(self.TargetPos[1] - I11[1],2))
 			ans12 = math.sqrt(pow(self.TargetPos[0] - I12[0],2) + pow(self.TargetPos[1] - I12[1],2))
@@ -273,7 +260,7 @@ class InfraredCAM:
 		elif self.dangchianbi == 2:
 			ans21 = math.sqrt(pow(self.TargetPos[0] - I21[0],2) + pow(self.TargetPos[1] - I21[1],2))
 			ans22 = math.sqrt(pow(self.TargetPos[0] - I22[0],2) + pow(self.TargetPos[1] - I22[1],2))
-			ans2 = ans21 + ans22	
+			ans2 = ans21 + ans22
 			# print("ans11"+str(ans1))
 			if ans2<40:
 				self.NOW_STATUS=0
@@ -284,7 +271,7 @@ class InfraredCAM:
 					pass
 				elif self.foodtest[1] == 0:
 					self.foodtest[1] = self.foodtest[1]+1
-					self.LongTerm[1] = self.LongTerm[1] + 1
+					self.LongTerm[1] = self.LongTerm[1]+1
 				# else:
 				# 	pass	
 			else:
@@ -292,7 +279,7 @@ class InfraredCAM:
 		elif self.dangchianbi == 3:
 			ans31 = math.sqrt(pow(self.TargetPos[0] - I31[0],2) + pow(self.TargetPos[1] - I31[1],2))
 			ans32 = math.sqrt(pow(self.TargetPos[0] - I32[0],2) + pow(self.TargetPos[1] - I32[1],2))
-			ans3 = ans31 + ans32	
+			ans3 = ans31 + ans32
 			# print("ans22"+str(ans2))
 			if ans3 < 40:
 				self.NOW_STATUS = 0
@@ -403,10 +390,10 @@ class InfraredCAM:
 				self.ShortTerm[i] = self.frequency[i]-1
 
 	def DataRecord(self):  #寫入csv
-		csvTitle = ["Rat ID", "Food", "Total LongTerm", "Total ShortTerm", "Route", "Latency", "time"]
+		csvTitle = ["Rat ID", "Food", "Total LongTerm", "Total ShortTerm", "Route", "Latency"]
 		nLate = Second2Datetime(self.Latency)
 		newLatency = "%02d:%02d:%02d" %(nLate[0],nLate[1],nLate[2])
-		MazeData = [self.RatID, self.Food, self.TotalLongTerm, self.TotalShortTerm, self.Route, newLatency,self.timestart ]
+		MazeData = [self.RatID, self.Food, self.TotalLongTerm, self.TotalShortTerm, self.Route, newLatency]
 		if os.path.isfile(self.filePath):
 			csvData = readCSV2List(self.filePath)
 			if not (listAllSame(csvData[0],csvTitle)):
@@ -455,10 +442,10 @@ class InfraredCAM:
 						else:
 							self.IPCAM.setMessenage(0, "[GOOD] CAMERA is connecting!")
 						self.CAM_IS_CONN = True
-						cv2.imshow ("copy",copy)
+						# cv2.imshow ("copy",copy)
 					# cv2.rectangle(frame, convert(self.newP1), convert(self.newP2), (0,255,0), 1) #繪製矩形
 					# cv2.imshow("frame",frame)
-					print(rtsp)
+					# print(rtsp)
 					self.newP1 = [IPCAM.IPCAM_NewP1[0], IPCAM.IPCAM_NewP1[1]]
 					self.newP2 = [self.newP1[0] + self.HEIGHT, self.newP1[1] + self.HEIGHT]
 
@@ -518,9 +505,9 @@ class InfraredCAM:
 								for i in range(0,len(self.ShortTerm)):
 									self.TotalShortTerm = self.TotalShortTerm + self.ShortTerm[i]
 								# print(self.TotalShortTerm)
-								for i in range(1,len(self.LongTerm)):
+								for i in range(0,len(self.LongTerm)):
 									self.TotalLongTerm = self.TotalLongTerm + self.LongTerm[i]
-								# print(self.TotalLongTerm)
+								print(self.TotalLongTerm)
 								self.DataRecord()
 								winsound.Beep(442,1000)
 								# print(self.Mouse_coordinates)
