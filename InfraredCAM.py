@@ -221,165 +221,188 @@ class InfraredCAM:
 		return self.NOW_STATUS,self.dangchianbi
 	def leave(self,dangchianbi,TargetPos): #出臂判斷
 
-		I11 = [int(self.ARMS_POS[0][0]),int(self.ARMS_POS[0][1])]
-		I12 = [int(self.ARMS_POS[3][0]),int(self.ARMS_POS[3][1])]
-		I21 = [int(self.ARMS_POS[4][0]),int(self.ARMS_POS[4][1])]
-		I22 = [int(self.ARMS_POS[7][0]),int(self.ARMS_POS[7][1])]
-		I31 = [int(self.ARMS_POS[8][0]),int(self.ARMS_POS[8][1])]
-		I32 = [int(self.ARMS_POS[11][0]),int(self.ARMS_POS[11][1])]
-		I41 = [int(self.ARMS_POS[12][0]),int(self.ARMS_POS[12][1])]
-		I42 = [int(self.ARMS_POS[15][0]),int(self.ARMS_POS[15][1])]
-		I51 = [int(self.ARMS_POS[16][0]),int(self.ARMS_POS[16][1])]
-		I52 = [int(self.ARMS_POS[19][0]),int(self.ARMS_POS[19][1])]
-		I61 = [int(self.ARMS_POS[20][0]),int(self.ARMS_POS[20][1])]
-		I62 = [int(self.ARMS_POS[23][0]),int(self.ARMS_POS[23][1])]
-		I71 = [int(self.ARMS_POS[24][0]),int(self.ARMS_POS[24][1])]
-		I72 = [int(self.ARMS_POS[27][0]),int(self.ARMS_POS[27][1])]
-		I81 = [int(self.ARMS_POS[28][0]),int(self.ARMS_POS[28][1])]
-		I82 = [int(self.ARMS_POS[31][0]),int(self.ARMS_POS[31][1])]
+		# I11 = [int(self.ARMS_POS[0][0]),int(self.ARMS_POS[0][1])]	
+		# I21 = [int(self.ARMS_POS[4][0]),int(self.ARMS_POS[4][1])]
+		# I31 = [int(self.ARMS_POS[8][0]),int(self.ARMS_POS[8][1])]
+		# I41 = [int(self.ARMS_POS[12][0]),int(self.ARMS_POS[12][1])]
+		# I51 = [int(self.ARMS_POS[16][0]),int(self.ARMS_POS[16][1])]
+		# I61 = [int(self.ARMS_POS[20][0]),int(self.ARMS_POS[20][1])]
+		# I71 = [int(self.ARMS_POS[24][0]),int(self.ARMS_POS[24][1])]
+		# I81 = [int(self.ARMS_POS[28][0]),int(self.ARMS_POS[28][1])]
 
-		# self.NOW_STATUS = 1
+		# I12 = [int(self.ARMS_POS[3][0]),int(self.ARMS_POS[3][1])]
+		# I22 = [int(self.ARMS_POS[7][0]),int(self.ARMS_POS[7][1])]
+		# I32 = [int(self.ARMS_POS[11][0]),int(self.ARMS_POS[11][1])]
+		# I42 = [int(self.ARMS_POS[15][0]),int(self.ARMS_POS[15][1])]
+		# I52 = [int(self.ARMS_POS[19][0]),int(self.ARMS_POS[19][1])]
+		# I62 = [int(self.ARMS_POS[23][0]),int(self.ARMS_POS[23][1])]
+		# I72 = [int(self.ARMS_POS[27][0]),int(self.ARMS_POS[27][1])]
+		# I82 = [int(self.ARMS_POS[31][0]),int(self.ARMS_POS[31][1])]
 
-		if self.dangchianbi == 1:
-			ans11 = math.sqrt(pow(self.TargetPos[0] - I11[0],2) + pow(self.TargetPos[1] - I11[1],2))
-			ans12 = math.sqrt(pow(self.TargetPos[0] - I12[0],2) + pow(self.TargetPos[1] - I12[1],2))
-			ans1 = ans11 + ans12	
-			# print("ans00"+str(ans0))
-			if ans1<40:
-				self.NOW_STATUS = 0
-				self.dangchianbi = 0
-				self.Route.append(1) #寫入進臂順序
-				self.frequency[0] = self.frequency[0]+1  #短期工作記憶+1
-				if self.foodtest[0] == 1: #長期工作記憶判斷
-					pass
-				elif self.foodtest[0] == 0:					
-					self.foodtest[0] = self.foodtest[0] + 1
-					self.LongTerm[0] = self.LongTerm[0] +1
-				else:
-					pass
-		elif self.dangchianbi == 2:
-			ans21 = math.sqrt(pow(self.TargetPos[0] - I21[0],2) + pow(self.TargetPos[1] - I21[1],2))
-			ans22 = math.sqrt(pow(self.TargetPos[0] - I22[0],2) + pow(self.TargetPos[1] - I22[1],2))
-			ans2 = ans21 + ans22
-			# print("ans11"+str(ans1))
-			if ans2<40:
-				self.NOW_STATUS=0
-				self.dangchianbi = 0
-				self.Route.append(2)
-				self.frequency[1] = self.frequency[1]+1
-				if self.foodtest[1] == 1:#長期工作記憶判斷
-					pass
-				elif self.foodtest[1] == 0:
-					self.foodtest[1] = self.foodtest[1]+1
-					self.LongTerm[1] = self.LongTerm[1]+1
-				# else:
-				# 	pass	
+		i1 = [0,4,8,12,16,20,24,28]
+		i2 = [3,7,11,15,19,23,27,31]
+
+		Ix1 = [int(self.ARMS_POS[i1[self.dangchianbi-1]][0]),int(self.ARMS_POS[i1[self.dangchianbi-1]][1])]
+		Ix2 = [int(self.ARMS_POS[i2[self.dangchianbi-1]][0]),int(self.ARMS_POS[i2[self.dangchianbi-1]][1])]
+
+		ans1 = math.sqrt(pow(self.TargetPos[0] - Ix1[0],2) + pow(self.TargetPos[1] - Ix1[1],2))
+		ans2 = math.sqrt(pow(self.TargetPos[0] - Ix2[0],2) + pow(self.TargetPos[1] - Ix2[1],2))
+		ans = ans1 + ans2
+		if ans < 40:
+			self.NOW_STATUS = 0
+			
+			self.Route.append(dangchianbi) #寫入進臂順序
+			self.frequency[dangchianbi-1] = self.frequency[dangchianbi-1]+1 #短期工作記憶+1
+			if self.foodtest[dangchianbi-1] == 1:	#長期工作記憶判斷
+				pass
+			elif self.foodtest[dangchianbi-1] == 0:
+				self.foodtest[dangchianbi-1] = self.foodtest[dangchianbi-1] + 1
+				self.LongTerm[(dangchianbi)-1] = self.LongTerm[dangchianbi-1] + 1
 			else:
 				pass
-		elif self.dangchianbi == 3:
-			ans31 = math.sqrt(pow(self.TargetPos[0] - I31[0],2) + pow(self.TargetPos[1] - I31[1],2))
-			ans32 = math.sqrt(pow(self.TargetPos[0] - I32[0],2) + pow(self.TargetPos[1] - I32[1],2))
-			ans3 = ans31 + ans32
-			# print("ans22"+str(ans2))
-			if ans3 < 40:
-				self.NOW_STATUS = 0
-				self.dangchianbi = 0
-				self.Route.append(3)
-				self.frequency[2]=self.frequency[2]+1
-				if self.foodtest[2] == 1:#長期工作記憶
-					pass
-				elif self.foodtest[2] == 0:
-					self.foodtest[2] = self.foodtest[2] + 1
-					self.LongTerm[2] = self.LongTerm[2] + 1
-				else:
-					pass
-		elif self.dangchianbi == 4:
-			ans41 = math.sqrt(pow(self.TargetPos[0] - I41[0],2) + pow(self.TargetPos[1] - I41[1],2))
-			ans42 = math.sqrt(pow(self.TargetPos[0] - I42[0],2) + pow(self.TargetPos[1] - I42[1],2))
-			ans4 = ans41 + ans42	
-			# print("ans22"+str(ans2))
-			if ans4 < 40:
-				self.NOW_STATUS = 0
-				self.dangchianbi = 0
-				self.Route.append(4)
-				self.frequency[3]=self.frequency[3]+1
-				if self.foodtest[3] == 1:#長期工作記憶
-					pass
-				elif self.foodtest[3] == 0:
-					self.foodtest[3] = self.foodtest[3] + 1
-					self.LongTerm[3] = self.LongTerm[3] + 1
-				else:
-					pass
-		elif self.dangchianbi == 5:
-			ans51 = math.sqrt(pow(self.TargetPos[0] - I51[0],2) + pow(self.TargetPos[1] - I51[1],2))
-			ans52 = math.sqrt(pow(self.TargetPos[0] - I52[0],2) + pow(self.TargetPos[1] - I52[1],2))
-			ans5 = ans51 + ans52	
-			# print("ans22"+str(ans2))
-			if ans5 < 40:
-				self.NOW_STATUS = 0
-				self.dangchianbi = 0
-				self.Route.append(5)
-				self.frequency[4]=self.frequency[4]+1
-				if self.foodtest[4] == 1:#長期工作記憶
-					pass
-				elif self.foodtest[4] == 0:
-					self.foodtest[4] = self.foodtest[4] + 1
-					self.LongTerm[4] = self.LongTerm[4] + 1
-				else:
-					pass
-		elif self.dangchianbi == 6:
-			ans61 = math.sqrt(pow(self.TargetPos[0] - I61[0],2) + pow(self.TargetPos[1] - I61[1],2))
-			ans62 = math.sqrt(pow(self.TargetPos[0] - I62[0],2) + pow(self.TargetPos[1] - I62[1],2))
-			ans6 = ans61 + ans62	
-			# print("ans6"+str(ans6))
-			if ans6 < 40:
-				self.NOW_STATUS = 0
-				self.dangchianbi = 0
-				self.Route.append(6)
-				self.frequency[5]=self.frequency[5]+1
-				if self.foodtest[5] == 1:#長期工作記憶
-					pass
-				elif self.foodtest[5] == 0:
-					self.foodtest[5] = self.foodtest[5] + 1
-					self.LongTerm[5] = self.LongTerm[5] + 1
-				else:
-					pass
-		elif self.dangchianbi == 7:
-			ans71 = math.sqrt(pow(self.TargetPos[0] - I71[0],2) + pow(self.TargetPos[1] - I71[1],2))
-			ans72 = math.sqrt(pow(self.TargetPos[0] - I72[0],2) + pow(self.TargetPos[1] - I72[1],2))
-			ans7 = ans71 + ans72	
-			# print("ans22"+str(ans2))
-			if ans7 < 40:
-				self.NOW_STATUS = 0
-				self.dangchianbi = 0
-				self.Route.append(7)
-				self.frequency[6]=self.frequency[6]+1
-				if self.foodtest[6] == 1:#長期工作記憶
-					pass
-				elif self.foodtest[6] == 0:
-					self.foodtest[6] = self.foodtest[6] + 1
-					self.LongTerm[6] = self.LongTerm[6] + 1
-				else:
-					pass
-		elif self.dangchianbi == 8:
-			ans81 = math.sqrt(pow(self.TargetPos[0] - I81[0],2) + pow(self.TargetPos[1] - I81[1],2))
-			ans82 = math.sqrt(pow(self.TargetPos[0] - I82[0],2) + pow(self.TargetPos[1] - I82[1],2))
-			ans8 = ans81 + ans82	
-			# print("ans22"+str(ans2))
-			if ans8 < 40:
-				self.NOW_STATUS = 0
-				self.dangchianbi = 0
-				self.Route.append(8)
-				self.frequency[7]=self.frequency[7]+1
-				if self.foodtest[7] == 1:#長期工作記憶
-					pass
-				elif self.foodtest[7] == 0:
-					self.foodtest[7] = self.foodtest[7] + 1
-					self.LongTerm[7] = self.LongTerm[7] + 1
-				else:
-					pass
-		else:
-			pass
+			self.dangchianbi = 0
+
+
+		# if self.dangchianbi == 1:
+		# 	ans11 = math.sqrt(pow(self.TargetPos[0] - I11[0],2) + pow(self.TargetPos[1] - I11[1],2))
+		# 	ans12 = math.sqrt(pow(self.TargetPos[0] - I12[0],2) + pow(self.TargetPos[1] - I12[1],2))
+		# 	ans1 = ans11 + ans12	
+		# 	# print("ans00"+str(ans0))
+		# 	if ans1<40:
+		# 		self.NOW_STATUS = 0
+		# 		self.dangchianbi = 0
+		# 		self.Route.append(1) #寫入進臂順序
+		# 		self.frequency[0] = self.frequency[0]+1  #短期工作記憶+1
+		# 		if self.foodtest[0] == 1: #長期工作記憶判斷
+		# 			pass
+		# 		elif self.foodtest[0] == 0:					
+		# 			self.foodtest[0] = self.foodtest[0] + 1
+		# 			self.LongTerm[0] = self.LongTerm[0] +1
+		# 		else:
+		# 			pass
+		# elif self.dangchianbi == 2:
+		# 	ans21 = math.sqrt(pow(self.TargetPos[0] - I21[0],2) + pow(self.TargetPos[1] - I21[1],2))
+		# 	ans22 = math.sqrt(pow(self.TargetPos[0] - I22[0],2) + pow(self.TargetPos[1] - I22[1],2))
+		# 	ans2 = ans21 + ans22
+		# 	# print("ans11"+str(ans1))
+		# 	if ans2<40:
+		# 		self.NOW_STATUS=0
+		# 		self.dangchianbi = 0
+		# 		self.Route.append(2)
+		# 		self.frequency[1] = self.frequency[1]+1
+		# 		if self.foodtest[1] == 1:#長期工作記憶判斷
+		# 			pass
+		# 		elif self.foodtest[1] == 0:
+		# 			self.foodtest[1] = self.foodtest[1]+1
+		# 			self.LongTerm[1] = self.LongTerm[1]+1
+		# 		# else:
+		# 		# 	pass	
+		# 	else:
+		# 		pass
+		# elif self.dangchianbi == 3:
+		# 	ans31 = math.sqrt(pow(self.TargetPos[0] - I31[0],2) + pow(self.TargetPos[1] - I31[1],2))
+		# 	ans32 = math.sqrt(pow(self.TargetPos[0] - I32[0],2) + pow(self.TargetPos[1] - I32[1],2))
+		# 	ans3 = ans31 + ans32
+		# 	# print("ans22"+str(ans2))
+		# 	if ans3 < 40:
+		# 		self.NOW_STATUS = 0
+		# 		self.dangchianbi = 0
+		# 		self.Route.append(3)
+		# 		self.frequency[2]=self.frequency[2]+1
+		# 		if self.foodtest[2] == 1:#長期工作記憶
+		# 			pass
+		# 		elif self.foodtest[2] == 0:
+		# 			self.foodtest[2] = self.foodtest[2] + 1
+		# 			self.LongTerm[2] = self.LongTerm[2] + 1
+		# 		else:
+		# 			pass
+		# elif self.dangchianbi == 4:
+		# 	ans41 = math.sqrt(pow(self.TargetPos[0] - I41[0],2) + pow(self.TargetPos[1] - I41[1],2))
+		# 	ans42 = math.sqrt(pow(self.TargetPos[0] - I42[0],2) + pow(self.TargetPos[1] - I42[1],2))
+		# 	ans4 = ans41 + ans42	
+		# 	# print("ans22"+str(ans2))
+		# 	if ans4 < 40:
+		# 		self.NOW_STATUS = 0
+		# 		self.dangchianbi = 0
+		# 		self.Route.append(4)
+		# 		self.frequency[3]=self.frequency[3]+1
+		# 		if self.foodtest[3] == 1:#長期工作記憶
+		# 			pass
+		# 		elif self.foodtest[3] == 0:
+		# 			self.foodtest[3] = self.foodtest[3] + 1
+		# 			self.LongTerm[3] = self.LongTerm[3] + 1
+		# 		else:
+		# 			pass
+		# elif self.dangchianbi == 5:
+		# 	ans51 = math.sqrt(pow(self.TargetPos[0] - I51[0],2) + pow(self.TargetPos[1] - I51[1],2))
+		# 	ans52 = math.sqrt(pow(self.TargetPos[0] - I52[0],2) + pow(self.TargetPos[1] - I52[1],2))
+		# 	ans5 = ans51 + ans52	
+		# 	# print("ans22"+str(ans2))
+		# 	if ans5 < 40:
+		# 		self.NOW_STATUS = 0
+		# 		self.dangchianbi = 0
+		# 		self.Route.append(5)
+		# 		self.frequency[4]=self.frequency[4]+1
+		# 		if self.foodtest[4] == 1:#長期工作記憶
+		# 			pass
+		# 		elif self.foodtest[4] == 0:
+		# 			self.foodtest[4] = self.foodtest[4] + 1
+		# 			self.LongTerm[4] = self.LongTerm[4] + 1
+		# 		else:
+		# 			pass
+		# elif self.dangchianbi == 6:
+		# 	ans61 = math.sqrt(pow(self.TargetPos[0] - I61[0],2) + pow(self.TargetPos[1] - I61[1],2))
+		# 	ans62 = math.sqrt(pow(self.TargetPos[0] - I62[0],2) + pow(self.TargetPos[1] - I62[1],2))
+		# 	ans6 = ans61 + ans62	
+		# 	# print("ans6"+str(ans6))
+		# 	if ans6 < 40:
+		# 		self.NOW_STATUS = 0
+		# 		self.dangchianbi = 0
+		# 		self.Route.append(6)
+		# 		self.frequency[5]=self.frequency[5]+1
+		# 		if self.foodtest[5] == 1:#長期工作記憶
+		# 			pass
+		# 		elif self.foodtest[5] == 0:
+		# 			self.foodtest[5] = self.foodtest[5] + 1
+		# 			self.LongTerm[5] = self.LongTerm[5] + 1
+		# 		else:
+		# 			pass
+		# elif self.dangchianbi == 7:
+		# 	ans71 = math.sqrt(pow(self.TargetPos[0] - I71[0],2) + pow(self.TargetPos[1] - I71[1],2))
+		# 	ans72 = math.sqrt(pow(self.TargetPos[0] - I72[0],2) + pow(self.TargetPos[1] - I72[1],2))
+		# 	ans7 = ans71 + ans72	
+		# 	# print("ans22"+str(ans2))
+		# 	if ans7 < 40:
+		# 		self.NOW_STATUS = 0
+		# 		self.dangchianbi = 0
+		# 		self.Route.append(7)
+		# 		self.frequency[6]=self.frequency[6]+1
+		# 		if self.foodtest[6] == 1:#長期工作記憶
+		# 			pass
+		# 		elif self.foodtest[6] == 0:
+		# 			self.foodtest[6] = self.foodtest[6] + 1
+		# 			self.LongTerm[6] = self.LongTerm[6] + 1
+		# 		else:
+		# 			pass
+		# elif self.dangchianbi == 8:
+		# 	ans81 = math.sqrt(pow(self.TargetPos[0] - I81[0],2) + pow(self.TargetPos[1] - I81[1],2))
+		# 	ans82 = math.sqrt(pow(self.TargetPos[0] - I82[0],2) + pow(self.TargetPos[1] - I82[1],2))
+		# 	ans8 = ans81 + ans82	
+		# 	# print("ans22"+str(ans2))
+		# 	if ans8 < 40:
+		# 		self.NOW_STATUS = 0
+		# 		self.dangchianbi = 0
+		# 		self.Route.append(8)
+		# 		self.frequency[7]=self.frequency[7]+1
+		# 		if self.foodtest[7] == 1:#長期工作記憶
+		# 			pass
+		# 		elif self.foodtest[7] == 0:
+		# 			self.foodtest[7] = self.foodtest[7] + 1
+		# 			self.LongTerm[7] = self.LongTerm[7] + 1
+		# 		else:
+		# 			pass
+		# else:
+		# 	pass
 
 		return self.NOW_STATUS,self.dangchianbi	
 
@@ -454,11 +477,11 @@ class InfraredCAM:
 					frame = cv2.resize(frame,(480,480),interpolation=cv2.INTER_CUBIC) #放大成480x480
 					frame1 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)	
 					B2,frame1 = cv2.threshold(frame1, 127,255,cv2.THRESH_BINARY)
-					cv2.imshow("frame1",frame1)
+					# cv2.imshow("frame1",frame1)
 					pr = cv2.bitwise_and(frame1,frame1, mask=copy ) #遮罩覆蓋到影像上
-					cv2.imshow("pr",pr)
+					# cv2.imshow("pr",pr)
 					frame1 = cv2.morphologyEx(pr,cv2.MORPH_OPEN,self.O)
-					cv2.imshow("frame",frame1)
+					# cv2.imshow("frame",frame1)
 					self.rat_XY,wh = cv2.findContours(frame1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 W=所有座標
 					if len(self.rat_XY):
 						self.TargetPos,x,y = self.coordinate(self.rat_XY)
