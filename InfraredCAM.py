@@ -96,7 +96,6 @@ class InfraredCAM:
 		self.CAM_IS_RUN = False #當前相機程式是否在執行
 
 		#變數：迷宮相關變數(這些變數[由UI端傳來的]迷宮相關變數)
-		self.filePath = "" #寫入的檔案路徑+檔名
 		self.RatID = "" #老鼠編號
 		self.TotalFood = 0 #總食物個數
 		self.Food = [] #存放食物在哪臂
@@ -159,20 +158,41 @@ class InfraredCAM:
 		self.RR2C_Time = datetime.now()
 		self.RR2C_FirstTime = True
 
+		#實驗設定變數統整
+		self.ModeType = "" #目前使用模式(訓練期/正式實驗期)
+		self.DiseaseType = "" #老鼠病症組別
+		self.DisRehType = "" #老鼠病症組別復鍵(含 健康、無復健 等)
+		self.DisDays = [False, 0, 0] #老鼠病症天數(是否手術, 月, 天)
+		self.SingleFileName = "" #固定檔名
+		self.CSVfilePath = '' #CSV路徑
+							
+
 	#========其他的副程式========
+	def checkSaveDirPath(self): #檢查儲存路徑
+		nowDatePath = './ChiMei_{}/'.format(datetime.now().strftime("%Y%m%d"))
+		DiseaseTypePath = self.DiseaseType + '/'
+		CSV_Path = 'CSV_{}({})/'.format(self.DiseaseType, datetime.now().strftime("%Y%m%d"))
+		IMG_Path = 'IMG_{}({})/'.format(self.DiseaseType, datetime.now().strftime("%Y%m%d"))
+		if not os.path.exists(nowDatePath):
+			os.mkdir(nowDatePath)
+		if not os.path.exists(nowDatePath + DiseaseTypePath):
+			os.mkdir(nowDatePath + DiseaseTypePath)
+		if not os.path.exists(nowDatePath + DiseaseTypePath + CSV_Path):
+			os.mkdir(nowDatePath + DiseaseTypePath + CSV_Path)
+		if not os.path.exists(nowDatePath + DiseaseTypePath + IMG_Path):
+			os.mkdir(nowDatePath + DiseaseTypePath + IMG_Path)
+
 	def recordRoute2CSV(self):
 		TimeDiff = (datetime.now() - self.RR2C_Time).seconds
-		CSV_Name = self.timestart.strftime("%m%d%H%M%S")+self.RatID+".csv"
-		CSV_Dir = './CSV_{}/'.format(datetime.now().strftime("%Y%m%d"))
+		CSV_Path = './ChiMei_{0}/{1}/CSV_{1}({0})/'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType)
+		CSV_Name = self.SingleFileName + ".csv"
 		self.RR2C.append([int(self.TargetPos[0]), int(self.TargetPos[1])])
-		if not os.path.exists(CSV_Dir):
-			os.mkdir(CSV_Dir)
 		if TimeDiff >= 1:
 			if self.RR2C_FirstTime:
 				self.RR2C_FirstTime = False
 			else:
 				# print(self.RR2C)
-				writeData2CSV(CSV_Dir + CSV_Name, "a", self.RR2C)
+				writeData2CSV(CSV_Path + CSV_Name, "a", self.RR2C)
 				self.RR2C = []
 				self.RR2C_Time = datetime.now()
 
@@ -254,17 +274,17 @@ class InfraredCAM:
 				self.ShortTerm[i] = self.frequency[i]-1
 
 	def DataRecord(self):  #寫入csv
-		csvTitle = ["Rat ID", "Food", "Total LongTerm", "Total ShortTerm", "Route", "Latency"]
+		csvTitle = ["Group", "Rat ID", "Food", "Total LongTerm", "Total ShortTerm", "Route", "Latency"]
 		nLate = Second2Datetime(self.Latency)
 		newLatency = "%02d:%02d:%02d" %(nLate[0],nLate[1],nLate[2])
-		MazeData = [self.RatID, self.Food, self.TotalLongTerm, self.TotalShortTerm, self.Route, newLatency]
-		if os.path.isfile(self.filePath):
-			csvData = readCSV2List(self.filePath)
+		MazeData = [self.DisRehType, self.RatID, self.Food, self.TotalLongTerm, self.TotalShortTerm, self.Route, newLatency]
+		if os.path.isfile(self.CSVfilePath):
+			csvData = readCSV2List(self.CSVfilePath)
 			if not (listAllSame(csvData[0],csvTitle)):
-				writeData2CSV(self.filePath, "w", csvTitle)
+				writeData2CSV(self.CSVfilePath, "w", csvTitle)
 		else:
-			writeData2CSV(self.filePath, "w", csvTitle)
-		writeData2CSV(self.filePath, "a", MazeData)
+			writeData2CSV(self.CSVfilePath, "w", csvTitle)
+		writeData2CSV(self.CSVfilePath, "a", MazeData)
 	
 
 	def CameraMain(self): #這個副程式是"主程式"呦~~~~~
@@ -278,7 +298,7 @@ class InfraredCAM:
 			B2 , copy = cv2.threshold(copy, 127,255,cv2.THRESH_BINARY) #二值化
 			# cv2.imshow ("copy",copy)
 
-			self.initDefault()
+			self.initDefault() #變數初始化
 				
 			#程式一執行[第一次要跑的東西]放這裡
 			for i in range(0,self.ARM_UNIT):
@@ -347,6 +367,10 @@ class InfraredCAM:
 							self.timestart = datetime.now() #起始時間
 							self.RouteArrFlag = 0
 							print("起始時間: " +str(self.timestart))
+
+							self.checkSaveDirPath() #檢查所有儲存路徑
+							self.SingleFileName = "{}_{}_{}_{}".format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, self.DisRehType, self.RatID) #固定檔名
+							self.CSVfilePath = './ChiMei_{0}/{1}/{0}.csv'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType)
 							
 							self.RR2C_FirstTime = True #這個是我寫的(測試中，不用管沒關係)
 						else:
@@ -381,8 +405,9 @@ class InfraredCAM:
 									cv2.circle(mousepath, convert(self.Mouse_coordinates[i]), 1, (0,255,0), -1)
 									# print(self.Mouse_coordinates[i])
 								# cv2.imwrite(self.RatID,mousepath)	#儲存路徑圖
-								
-								cv2.imwrite(self.timestart.strftime("%m%d%H%M%S")+self.RatID+'.jpg',mousepath)
+								IMG_Path = './ChiMei_{0}/{1}/IMG_{1}({0})/'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType)
+								IMG_Name = self.SingleFileName + ".jpg"
+								cv2.imwrite(IMG_Path + IMG_Name, mousepath)
 								# cv2.imshow("mouse path",mousepath)
 
 							else:

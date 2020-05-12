@@ -4,6 +4,7 @@ config.txt
 *.diff
 video_*/
 CSV_*/
+ChiMei_*/
 old_*.py
 MazeLog*.log
 

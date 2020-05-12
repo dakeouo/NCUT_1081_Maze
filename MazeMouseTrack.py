@@ -124,19 +124,11 @@ class MazeMouseTrack(object):
 		self.BT_Rat_ID = ""
 		self.mazeTitle = ""
 
-		# IPCAM_Name = IPCAM_Info[0][0]
-		# IPCAM_Username = IPCAM_Info[0][1]
-		# IPCAM_Password = IPCAM_Info[0][2]
-		# IPCAM_IP = IPCAM_Info[0][3]
-		# IPCAM_Bar = IPCAM_Info[0][4]
-		# IPCAM_NewP1 = [IPCAM_Info[0][5], IPCAM_Info[0][6]]
-
-		# self.IPCAM.IPCAM_Username = IPCAM_Username
-		# self.IPCAM.IPCAM_Password = IPCAM_Password
-		# self.IPCAM.IPCAM_IP = IPCAM_IP
-		# self.IPCAM.IPCAM_Name = IPCAM_Name
-		# self.IPCAM.IPCAM_Bar = IPCAM_Bar
-		# self.IPCAM.IPCAM_NewP1 = [IPCAM_NewP1[0], IPCAM_NewP1[1]]
+		#實驗設定變數統整
+		self.ModeType = "Training" #目前使用模式(訓練期/正式實驗期)
+		self.DiseaseType = "MACO" #老鼠病症組別
+		self.DisRehType = "Sham" #老鼠病症組別復鍵(含 健康、無復健 等)
+		self.DisDays = [False, 0, 0] #老鼠病症天數(是否手術, 月, 天)
 
 		# self.IPCAM.CAM_INIT_SUCCESS = True
 
@@ -254,9 +246,18 @@ class MazeMouseTrack(object):
 			self.MAZE_IS_RUN = False
 		else:
 			ErrMsg = ""
-			if self.FilePath == "":
-				ErrMsg = ErrMsg + "File Path not filled!!\n"
+			if self.ModeType == "":
+				ErrMsg = ErrMsg + "You don't have set Mode Type!!\n"
 				HaveError = True
+			if self.DiseaseType == "":
+				ErrMsg = ErrMsg + "You don't have Choose Disease Type!!\n"
+				HaveError = True
+			if self.DisRehType == "":
+				ErrMsg = ErrMsg + "You don't have Choose Disease Rehabilitation Type!!\n"
+				HaveError = True
+			# if self.FilePath == "":
+			# 	ErrMsg = ErrMsg + "File Path not filled!!\n"
+			# 	HaveError = True
 			if self.Rat_ID == "":
 				ErrMsg = ErrMsg + "Rat ID not filled!!\n"
 				HaveError = True
@@ -270,7 +271,13 @@ class MazeMouseTrack(object):
 				self.TCAM.TotalFood = self.TotalFood
 				self.TCAM.Food = self.Food
 				self.TCAM.RatID = self.Rat_ID
-				self.TCAM.filePath = (str(self.FilePath)+str(self.FileName))
+				# self.TCAM.filePath = (str(self.FilePath)+str(self.FileName))
+
+				self.TCAM.ModeType = self.ModeType
+				self.TCAM.DiseaseType = self.DiseaseType
+				self.TCAM.DisRehType = self.DisRehType
+				self.TCAM.DisDays = self.DisDays
+
 				self.Maze_State.config(text="Maze State: Recording...", fg="green4")
 				self.Maze_State.place(x=self.WinSize[0]-167,y=170,anchor="ne")
 				self.BT_Start.config(text="Stop", bg="IndianRed1")
@@ -329,12 +336,12 @@ class MazeMouseTrack(object):
 
 	def LockInput(self, state):
 		if state:
-			self.TKE_Dir.config(state="disabled")
+			# self.TKE_Dir.config(state="disabled")
 			self.TK_Rat_ID.config(state="disabled")
 			for i in range(0,self.ARM_UNIT):
 				self.TKC_Food[i].config(state="disabled")
 		else:
-			self.TKE_Dir.config(state="normal")
+			# self.TKE_Dir.config(state="normal")
 			self.TK_Rat_ID.config(state="normal")
 			for i in range(0,self.ARM_UNIT):
 				self.TKC_Food[i].config(state="normal")
@@ -363,10 +370,10 @@ class MazeMouseTrack(object):
 			for i in range(1, self.ARM_UNIT+1):
 				self.TKC_Food[i-1].config(state="normal")
 			self.BT_Connect.config(state="normal", bg="DarkOliveGreen2")
-			self.BT_Choose_Dir.config(state="normal")
+			# self.BT_Choose_Dir.config(state="normal")
 			self.BT_Rat_ID.config(state="normal")
 			self.TK_Rat_ID.config(state="normal")
-			self.TKE_Dir.config(state="normal")
+			# self.TKE_Dir.config(state="normal")
 
 			self.BT_LoadCAM.config(state="disabled")
 			self.InfoCombo.config(state="disabled")
@@ -599,12 +606,12 @@ class MazeMouseTrack(object):
 		self.TK_SHOW_Rat_ID.place(x=self.WinSize[0]-288,y=230,anchor="ne")
 
 		#========右側：選擇檔案存放位置========
-		self.TK_File_Dir = tk.StringVar()
-		tk.Label(self.tkWin,text="Record File Directory", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-197,y=260,anchor="ne")
-		self.TKE_Dir = tk.Entry(self.tkWin, textvariable=self.TK_File_Dir, font=('Arial', 11), width=30, state="disabled")
-		self.TKE_Dir.place(x=self.WinSize[0]-107,y=290,anchor="ne")
-		self.BT_Choose_Dir = tk.Button(self.tkWin, text='Choose...', width=10,command=self.Choose_Dir, state="disabled")
-		self.BT_Choose_Dir.place(x=self.WinSize[0]-20,y=287,anchor="ne")
+		# self.TK_File_Dir = tk.StringVar()
+		# tk.Label(self.tkWin,text="Record File Directory", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-197,y=260,anchor="ne")
+		# self.TKE_Dir = tk.Entry(self.tkWin, textvariable=self.TK_File_Dir, font=('Arial', 11), width=30, state="disabled")
+		# self.TKE_Dir.place(x=self.WinSize[0]-107,y=290,anchor="ne")
+		# self.BT_Choose_Dir = tk.Button(self.tkWin, text='Choose...', width=10,command=self.Choose_Dir, state="disabled")
+		# self.BT_Choose_Dir.place(x=self.WinSize[0]-20,y=287,anchor="ne")
 
 		#========右側：設定老鼠編號========
 		tk.Label(self.tkWin,text="Rat ID", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-302,y=325,anchor="ne")

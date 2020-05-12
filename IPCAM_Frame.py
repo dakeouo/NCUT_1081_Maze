@@ -30,7 +30,8 @@ IPCAM_NowTime = datetime.datetime.now()
 IPCAM_Messenage = ""
 IPCAM_MsgColor = 0
 
-VideoDir = './video_{}/'.format(datetime.datetime.now().strftime("%Y%m%d"))
+nowDatePath = './ChiMei_{}/'.format(datetime.datetime.now().strftime("%Y%m%d"))
+VideoDir = 'Video_{}/'.format(datetime.datetime.now().strftime("%Y%m%d"))
 
 WINDOWS_IS_ACTIVE = True
 CAM_IS_RUN = False
@@ -57,10 +58,13 @@ def TwoImageisSame(img1, img2):
 		return False
 
 def checkVideoDir():
-	global VideoDir
-	VideoDir = './video_{}/'.format(datetime.datetime.now().strftime("%Y%m%d"))
-	if not os.path.exists(VideoDir):
-		os.mkdir(VideoDir)
+	global nowDatePath, VideoDir
+	nowDatePath = './ChiMei_{}/'.format(datetime.datetime.now().strftime("%Y%m%d"))
+	VideoDir = 'Video_{}/'.format(datetime.datetime.now().strftime("%Y%m%d"))
+	if not os.path.exists(nowDatePath):
+		os.mkdir(nowDatePath)
+	if not os.path.exists(nowDatePath + VideoDir):
+		os.mkdir(nowDatePath + VideoDir)
 
 def setMessenage(color, messenge):
 	global IPCAM_MsgColor, IPCAM_Messenage
@@ -69,8 +73,9 @@ def setMessenage(color, messenge):
 	IPCAM_Messenage = messenge
 
 def Main():
-	global count, IPCAM_Image,  MSG_Print, IPCAM_Messenage, IPCAM_FrameCount, IPCAM_NowTime, IPCAM_ConfigStatus, VideoDir
+	global count, IPCAM_Image,  MSG_Print, IPCAM_Messenage, IPCAM_FrameCount, IPCAM_NowTime, IPCAM_ConfigStatus
 	global IPCAM_Username, IPCAM_Password, IPCAM_Name, IPCAM_IP, IPCAM_Frame, IPCAM_NewP1, CAM_INIT_SUCCESS
+	global nowDatePath, VideoDir
 
 	try:
 		IPCAM_Image = []
@@ -96,7 +101,7 @@ def Main():
 						FIRST_RUN = False
 
 						checkVideoDir() #影片資料夾檢查
-						VideoOut = cv2.VideoWriter("{}{}_{}.avi".format(VideoDir,IPCAM_Name,datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")),cv2.VideoWriter_fourcc(*'DIVX'), IPCAM_Frame, (frame.shape[1], frame.shape[0]))
+						VideoOut = cv2.VideoWriter("{}{}_{}.avi".format(nowDatePath + VideoDir, IPCAM_Name, datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")),cv2.VideoWriter_fourcc(*'DIVX'), IPCAM_Frame, (frame.shape[1], frame.shape[0]))
 
 					nowTime = datetime.datetime.now()
 					IPCAM_NowTime = datetime.datetime.now()
@@ -108,7 +113,7 @@ def Main():
 					if (nowTime - videoTime).seconds > 6000:
 						VideoOut.release()
 						checkVideoDir() #影片資料夾檢查
-						VideoOut = cv2.VideoWriter("{}{}_{}.avi".format(VideoDir,IPCAM_Name,datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")),cv2.VideoWriter_fourcc(*'DIVX'), IPCAM_Frame, (frame.shape[1], frame.shape[0]))
+						VideoOut = cv2.VideoWriter("{}{}_{}.avi".format(nowDatePath + VideoDir, IPCAM_Name, datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")),cv2.VideoWriter_fourcc(*'DIVX'), IPCAM_Frame, (frame.shape[1], frame.shape[0]))
 						videoTime = nowTime
 					else:
 						if len(IPCAM_Image) == 0:
