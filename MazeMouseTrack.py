@@ -188,7 +188,7 @@ class MazeMouseTrack(object):
 		str1 = "# RatID: {}".format(RAT_ID)
 		move = 288 - (Unit[0]*11 + (Unit[1] + Unit[2] + Unit[3])*9)
 		self.TK_SHOW_Rat_ID.config(text=str1)
-		self.TK_SHOW_Rat_ID.place(x=self.WinSize[0]-move,y=230,anchor="ne")
+		self.TK_SHOW_Rat_ID.place(x=self.WinSize[0]-move,y=280,anchor="ne")
 		self.Rat_ID = RAT_ID
 		# print(len(RAT_ID))
 
@@ -211,7 +211,7 @@ class MazeMouseTrack(object):
 			move = 290 - ct*17
 
 		self.TK_SHOW_Food.config(text=str1)
-		self.TK_SHOW_Food.place(x=self.WinSize[0]-move,y=200,anchor="ne")
+		self.TK_SHOW_Food.place(x=self.WinSize[0]-move,y=250,anchor="ne")
 
 	def ConnectClick(self):
 		if self.CAM_IS_RUN:
@@ -221,6 +221,11 @@ class MazeMouseTrack(object):
 			self.CAM_IS_RUN = False
 			self.BT_Start.config(bg="gray85", state="disabled")
 			self.BT_Camera.config(state="disabled")
+			self.BT_Setting.config(state="disabled")
+			for i in range(1, self.ARM_UNIT+1):
+				self.TKC_Food[i-1].config(state="disabled")
+			self.BT_Rat_ID.config(state="disabled")
+			self.TK_Rat_ID.config(state="disabled")
 			self.TCAM.CAM_IS_RUN = False
 			self.TCAM.CAM_IS_CONN = False
 			self.IPCAM.CAM_IS_RUN = False
@@ -234,6 +239,12 @@ class MazeMouseTrack(object):
 			self.Link_State.place(x=self.WinSize[0]-203)
 			self.CAM_IS_RUN = True
 			self.BT_Start.config(bg="DarkOliveGreen2", state="normal")
+			self.BT_Camera.config(state="normal")
+			self.BT_Setting.config(state="normal")
+			for i in range(1, self.ARM_UNIT+1):
+				self.TKC_Food[i-1].config(state="normal")
+			self.BT_Rat_ID.config(state="normal")
+			self.TK_Rat_ID.config(state="normal")
 			self.TCAM.CAM_IS_RUN = True
 			self.IPCAM.CAM_IS_RUN = True
 
@@ -241,7 +252,7 @@ class MazeMouseTrack(object):
 		HaveError = False
 		if self.MAZE_IS_RUN:
 			self.Maze_State.config(text="Maze State: Preparing...", fg="gray35")
-			self.Maze_State.place(x=self.WinSize[0]-170,y=170,anchor="ne")
+			self.Maze_State.place(x=self.WinSize[0]-170,y=220,anchor="ne")
 			self.BT_Start.config(text="Start", bg="DarkOliveGreen2")
 			self.MAZE_IS_RUN = False
 		else:
@@ -279,7 +290,7 @@ class MazeMouseTrack(object):
 				self.TCAM.DisDays = self.DisDays
 
 				self.Maze_State.config(text="Maze State: Recording...", fg="green4")
-				self.Maze_State.place(x=self.WinSize[0]-167,y=170,anchor="ne")
+				self.Maze_State.place(x=self.WinSize[0]-167,y=220,anchor="ne")
 				self.BT_Start.config(text="Stop", bg="IndianRed1")
 				self.MAZE_IS_RUN = True
 		self.TCAM.MAZE_IS_RUN = self.MAZE_IS_RUN
@@ -367,12 +378,13 @@ class MazeMouseTrack(object):
 			self.IPCAM.CAM_INIT_SUCCESS = self.CAM_INIT_SUCCESS
 
 			self.mazeTitle.config(text="IPCAM: {} ({})".format(IPCAM_Name, IPCAM_IP))
-			for i in range(1, self.ARM_UNIT+1):
-				self.TKC_Food[i-1].config(state="normal")
+			# for i in range(1, self.ARM_UNIT+1):
+			# 	self.TKC_Food[i-1].config(state="normal")
 			self.BT_Connect.config(state="normal", bg="DarkOliveGreen2")
+			# self.BT_Setting.config(state="normal")
 			# self.BT_Choose_Dir.config(state="normal")
-			self.BT_Rat_ID.config(state="normal")
-			self.TK_Rat_ID.config(state="normal")
+			# self.BT_Rat_ID.config(state="normal")
+			# self.TK_Rat_ID.config(state="normal")
 			# self.TKE_Dir.config(state="normal")
 
 			self.BT_LoadCAM.config(state="disabled")
@@ -399,7 +411,7 @@ class MazeMouseTrack(object):
 					self.updateData()
 					if newMazeStatus == False:
 						self.Maze_State.config(text="Maze State: Preparing...", fg="gray35")
-						self.Maze_State.place(x=self.WinSize[0]-170,y=170,anchor="ne")
+						self.Maze_State.place(x=self.WinSize[0]-170,y=220,anchor="ne")
 						self.BT_Start.config(text="Start", bg="DarkOliveGreen2")
 						self.MAZE_IS_RUN = False
 				else:
@@ -408,11 +420,11 @@ class MazeMouseTrack(object):
 					
 				if self.CAM_IS_CONN:
 					self.Cam_State.config(text="Camera State: Connecting...", fg="green4")
-					self.Cam_State.place(x=self.WinSize[0]-140,y=140,anchor="ne")
+					self.Cam_State.place(x=self.WinSize[0]-140,y=190,anchor="ne")
 					self.BT_Camera.config(state="normal")
 				else:
 					self.Cam_State.config(text="Camera State: Unconnect", fg="gray35")
-					self.Cam_State.place(x=self.WinSize[0]-160,y=140,anchor="ne")
+					self.Cam_State.place(x=self.WinSize[0]-160,y=190,anchor="ne")
 					self.BT_Camera.config(state="disabled")
 
 				IPCAM_MsgColor = self.IPCAM.IPCAM_MsgColor
@@ -475,7 +487,7 @@ class MazeMouseTrack(object):
 			move = 290 - ct*17
 
 		self.TK_SHOW_Food.config(text=str1)
-		self.TK_SHOW_Food.place(x=self.WinSize[0]-move,y=170,anchor="ne")
+		self.TK_SHOW_Food.place(x=self.WinSize[0]-move,y=250,anchor="ne")
 		#========檔案存放位置設置========
 		# self.FilePath = "D:/4A813024/"
 		self.FilePath = "C:/Users/E5-572G/Desktop/Research/"
@@ -490,7 +502,7 @@ class MazeMouseTrack(object):
 		str1 = "# RatID: {}".format(RAT_ID)
 		move = 288 - (Unit[0]*11 + (Unit[1] + Unit[2] + Unit[3])*9)
 		self.TK_SHOW_Rat_ID.config(text=str1)
-		self.TK_SHOW_Rat_ID.place(x=self.WinSize[0]-move,y=200,anchor="ne")
+		self.TK_SHOW_Rat_ID.place(x=self.WinSize[0]-move,y=280,anchor="ne")
 
 	def setArmNumber(self):
 		mov = 15
@@ -516,6 +528,20 @@ class MazeMouseTrack(object):
 
 		for i in range(0, self.ARM_UNIT):
 			self.mazeCanvas.create_line(ARMS_IN_LINE[i][0][0], ARMS_IN_LINE[i][0][1], ARMS_IN_LINE[i][1][0], ARMS_IN_LINE[i][1][1], fill="DarkGoldenrod4", width=3)
+
+	def tkSetting_Closing(self):
+		self.BT_Setting.config(state="normal")
+		self.tkSetting.destroy()
+
+	def tkSetting_SetupUI(self):
+		settingSize = (400, 400)
+		self.tkSetting = tk.Tk()
+		self.tkSetting.title('Tracking System Setting') #窗口名字
+		self.tkSetting.geometry('%dx%d+120+120' %(settingSize[0],settingSize[1])) #窗口大小(寬X高+X偏移量+Y偏移量)
+		self.tkSetting.resizable(False, False) #禁止變更視窗大小
+		self.BT_Setting.config(state="disabled")
+		self.tkSetting.protocol("WM_DELETE_WINDOW", self.tkSetting_Closing)
+		self.tkSetting.mainloop()
 
 	def setupUI(self):
 		global IPCAM_Info
@@ -584,26 +610,28 @@ class MazeMouseTrack(object):
 		self.mazeTitle.place(x=pViewX, y=12,anchor="nw")
 
 		#========右側：按鈕======== #, bg="DarkOliveGreen2"
-		self.BT_Camera = tk.Button(self.tkWin, text='Camera', width=9, font=('Arial', 14), bg="gray85", command=self.CameraCheck, state="disabled")
-		self.BT_Camera.place(x=self.WinSize[0]-20,y=20,anchor="ne")
-		self.BT_Start = tk.Button(self.tkWin, text='Start', width=9, font=('Arial', 14),bg="gray85", command=self.MazeStartCheck, state="disabled")
-		self.BT_Start.place(x=self.WinSize[0]-133,y=20,anchor="ne")
-		self.BT_Connect = tk.Button(self.tkWin, text='Link', width=9, font=('Arial', 14),bg="gray85", fg="dark green", command=self.ConnectClick, state="disabled")
-		self.BT_Connect.place(x=self.WinSize[0]-246,y=20,anchor="ne")
+		self.BT_Camera = tk.Button(self.tkWin, text='Show Camera', width=14, font=('Arial', 14), bg="gray85", command=self.CameraCheck, state="disabled")
+		self.BT_Camera.place(x=self.WinSize[0]-20,y=65,anchor="ne")
+		self.BT_Setting = tk.Button(self.tkWin, text='Setting', width=14, font=('Arial', 14), bg="gray85", command=self.tkSetting_SetupUI, state="disabled")
+		self.BT_Setting.place(x=self.WinSize[0]-190,y=65,anchor="ne")
+		self.BT_Start = tk.Button(self.tkWin, text='Start', width=14, font=('Arial', 14),bg="gray85", command=self.MazeStartCheck, state="disabled")
+		self.BT_Start.place(x=self.WinSize[0]-20,y=20,anchor="ne")
+		self.BT_Connect = tk.Button(self.tkWin, text='Link IPCAM', width=14, font=('Arial', 14),bg="gray85", fg="dark green", command=self.ConnectClick, state="disabled")
+		self.BT_Connect.place(x=self.WinSize[0]-190,y=20,anchor="ne")
 
 		#========右側：狀態顯示========
-		tk.Label(self.tkWin,text="Status", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-300,y=80,anchor="ne")
+		tk.Label(self.tkWin,text="Status", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-300,y=130,anchor="ne")
 		self.Link_State = tk.Label(self.tkWin,text="IPCAM Link: Unlinked", font=('Arial', 13), fg="gray35")
-		self.Link_State.place(x=self.WinSize[0]-189,y=110,anchor="ne")
+		self.Link_State.place(x=self.WinSize[0]-189,y=160,anchor="ne")
 		self.Cam_State = tk.Label(self.tkWin,text="Camera State: Unconnect", font=('Arial', 13), fg="gray35")
-		self.Cam_State.place(x=self.WinSize[0]-160,y=140,anchor="ne")
+		self.Cam_State.place(x=self.WinSize[0]-160,y=190,anchor="ne")
 		self.Maze_State = tk.Label(self.tkWin,text="Maze State: Preparing...", font=('Arial', 13), fg="gray35")
-		self.Maze_State.place(x=self.WinSize[0]-170,y=170,anchor="ne")
+		self.Maze_State.place(x=self.WinSize[0]-170,y=220,anchor="ne")
 
 		self.TK_SHOW_Food = tk.Label(self.tkWin,text="# Food: ", font=('Arial', 12))
-		self.TK_SHOW_Food.place(x=self.WinSize[0]-290,y=200,anchor="ne")
+		self.TK_SHOW_Food.place(x=self.WinSize[0]-290,y=250,anchor="ne")
 		self.TK_SHOW_Rat_ID = tk.Label(self.tkWin,text="# RatID: ", font=('Arial', 12))
-		self.TK_SHOW_Rat_ID.place(x=self.WinSize[0]-288,y=230,anchor="ne")
+		self.TK_SHOW_Rat_ID.place(x=self.WinSize[0]-288,y=280,anchor="ne")
 
 		#========右側：選擇檔案存放位置========
 		# self.TK_File_Dir = tk.StringVar()
