@@ -95,7 +95,8 @@ def Main():
 				if CAM_IS_RUN:
 					if FIRST_RUN:
 						rtsp = "rtsp://{0}:{1}@{2}:554/{3}".format(IPCAM_Username, IPCAM_Password, IPCAM_IP, IPCAM_Bar) #1920x1080
-						cap = cv2.VideoCapture(rtsp)
+						# cap = cv2.VideoCapture(rtsp)
+						cap = cv2.VideoCapture(1)
 						ret,frame = cap.read()
 						FrameCount = 0
 						FIRST_RUN = False
@@ -132,7 +133,8 @@ def Main():
 					else:
 						IPCAM_Image = []
 						setMessenage(2, "[ERROR] Frame is NULL! Reconnecting...")
-						cap = cv2.VideoCapture(rtsp)
+						# cap = cv2.VideoCapture(rtsp)
+						cap = cv2.VideoCapture(1)
 						setMessenage(1, "[WAIT] Setup the IP Camera")
 
 				else:

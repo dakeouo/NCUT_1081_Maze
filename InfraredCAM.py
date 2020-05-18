@@ -159,9 +159,9 @@ class InfraredCAM:
 		self.RR2C_FirstTime = True
 
 		#實驗設定變數統整
-		self.ModeType = "" #目前使用模式(訓練期/正式實驗期)
+		self.OperaType = "" #目前使用模式(訓練期/正式實驗期)
 		self.DiseaseType = "" #老鼠病症組別
-		self.DisRehType = "" #老鼠病症組別復鍵(含 健康、無復健 等)
+		self.DisGroupType = "" #老鼠病症組別復鍵(含 健康、無復健 等)
 		self.DisDays = [False, 0, 0] #老鼠病症天數(是否手術, 月, 天)
 		self.SingleFileName = "" #固定檔名
 		self.CSVfilePath = '' #CSV路徑
@@ -277,7 +277,7 @@ class InfraredCAM:
 		csvTitle = ["Group", "Rat ID", "Food", "Total LongTerm", "Total ShortTerm", "Route", "Latency"]
 		nLate = Second2Datetime(self.Latency)
 		newLatency = "%02d:%02d:%02d" %(nLate[0],nLate[1],nLate[2])
-		MazeData = [self.DisRehType, self.RatID, self.Food, self.TotalLongTerm, self.TotalShortTerm, self.Route, newLatency]
+		MazeData = [self.DisGroupType, self.RatID, self.Food, self.TotalLongTerm, self.TotalShortTerm, self.Route, newLatency]
 		if os.path.isfile(self.CSVfilePath):
 			csvData = readCSV2List(self.CSVfilePath)
 			if not (listAllSame(csvData[0],csvTitle)):
@@ -369,7 +369,7 @@ class InfraredCAM:
 							print("起始時間: " +str(self.timestart))
 
 							self.checkSaveDirPath() #檢查所有儲存路徑
-							self.SingleFileName = "{}_{}_{}_{}".format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, self.DisRehType, self.RatID) #固定檔名
+							self.SingleFileName = "{}_{}_{}_{}".format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, self.DisGroupType, self.RatID) #固定檔名
 							self.CSVfilePath = './ChiMei_{0}/{1}/{0}.csv'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType)
 							
 							self.RR2C_FirstTime = True #這個是我寫的(測試中，不用管沒關係)

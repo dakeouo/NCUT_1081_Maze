@@ -63,7 +63,7 @@ def countStr(Str): #算出字串中大小寫字母與數字及其他符號的個
 	return Unit
 
 def Second2Datetime(sec): #秒數轉換成時間
-	return int(sec/3600), int((sec%3600)/60), int((sec%3600)%60)
+	return int(sec/3600), int((sec%3600)/60), int((sec%3600)%60) 	
 
 class MazeMouseTrack(object):
 	def __init__(self):
@@ -125,15 +125,29 @@ class MazeMouseTrack(object):
 		self.mazeTitle = ""
 
 		#實驗設定變數統整
-		self.ModeType = "Training" #目前使用模式(訓練期/正式實驗期)
+		self.OperaType = "" #目前使用模式(訓練期/正式實驗期)
 		self.DiseaseType = "MACO" #老鼠病症組別
-		self.DisRehType = "Sham" #老鼠病症組別復鍵(含 健康、無復健 等)
+		self.DisGroupType = "Sham" #老鼠病症組別復鍵(含 健康、無復健 等)
 		self.DisDays = [False, 0, 0] #老鼠病症天數(是否手術, 月, 天)
+		self.SETTING_OPEN = False
 
+		self.TKS_Show_Opera = ""
+		self.TKS_Show_OpDay = ""
+		self.TKS_Show_Disease = ""
+		self.TKS_Show_DisGroup = ""
+		self.DiseaseCombo = ""
+		self.DisGroupCombo = ""
+
+		self.CSV_DiseaseFile = [
+			['Disease', 'MACO', '缺血性失智症'], 
+			['Disease', 'AIDS', '人類免疫缺陷病毒'],
+			['DisGroup', 'Sham', '健康組'], 
+			['DisGroup', 'Control', '患病組']
+		]
 		# self.IPCAM.CAM_INIT_SUCCESS = True
 
 		self.tkWin = tk.Tk()
-		self.tkWin.title('%d Arms Maze Tracking' %(self.ARM_UNIT)) #窗口名字
+		self.tkWin.title('%d臂迷宮路徑追蹤系統' %(self.ARM_UNIT)) #窗口名字
 		self.tkWin.geometry('%dx%d+20+20' %(self.WinSize[0],self.WinSize[1])) #窗口大小(寬X高+X偏移量+Y偏移量)
 		self.tkWin.resizable(False, False) #禁止變更視窗大小
 		
@@ -257,13 +271,13 @@ class MazeMouseTrack(object):
 			self.MAZE_IS_RUN = False
 		else:
 			ErrMsg = ""
-			if self.ModeType == "":
+			if self.OperaType == "":
 				ErrMsg = ErrMsg + "You don't have set Mode Type!!\n"
 				HaveError = True
 			if self.DiseaseType == "":
 				ErrMsg = ErrMsg + "You don't have Choose Disease Type!!\n"
 				HaveError = True
-			if self.DisRehType == "":
+			if self.DisGroupType == "":
 				ErrMsg = ErrMsg + "You don't have Choose Disease Rehabilitation Type!!\n"
 				HaveError = True
 			# if self.FilePath == "":
@@ -284,9 +298,9 @@ class MazeMouseTrack(object):
 				self.TCAM.RatID = self.Rat_ID
 				# self.TCAM.filePath = (str(self.FilePath)+str(self.FileName))
 
-				self.TCAM.ModeType = self.ModeType
+				self.TCAM.OperaType = self.OperaType
 				self.TCAM.DiseaseType = self.DiseaseType
-				self.TCAM.DisRehType = self.DisRehType
+				self.TCAM.DisGroupType = self.DisGroupType
 				self.TCAM.DisDays = self.DisDays
 
 				self.Maze_State.config(text="Maze State: Recording...", fg="green4")
@@ -397,7 +411,7 @@ class MazeMouseTrack(object):
 				self.makeBall()
 				self.CAM_IS_CONN = self.TCAM.CAM_IS_CONN
 				if self.CAM_IS_RUN and self.CAM_IS_CONN:
-					# self.BT_Start.config(bg="DarkOliveGreen2")
+					self.BT_Start.config(bg="DarkOliveGreen2")
 					self.BT_Start.config(state="normal")
 				else:
 					self.BT_Start.config(bg="gray85")
@@ -415,7 +429,10 @@ class MazeMouseTrack(object):
 						self.BT_Start.config(text="Start", bg="DarkOliveGreen2")
 						self.MAZE_IS_RUN = False
 				else:
-					self.LockInput(False)
+					if self.CAM_IS_CONN:
+						self.LockInput(False)
+					else:
+						self.LockInput(True)
 					self.firstMazeRun = True
 					
 				if self.CAM_IS_CONN:
@@ -464,6 +481,8 @@ class MazeMouseTrack(object):
 		self.TCAM.WINDOWS_IS_ACTIVE = False #傳送視窗關閉狀態
 		self.IPCAM.WINDOWS_IS_ACTIVE = False #傳送視窗關閉狀態
 		self.tkWin.destroy()
+		if self.SETTING_OPEN:
+			self.tkSetting.destroy()
 
 	def PreparingTesting(self):
 		#=======食物位置設置========
@@ -529,23 +548,167 @@ class MazeMouseTrack(object):
 		for i in range(0, self.ARM_UNIT):
 			self.mazeCanvas.create_line(ARMS_IN_LINE[i][0][0], ARMS_IN_LINE[i][0][1], ARMS_IN_LINE[i][1][0], ARMS_IN_LINE[i][1][1], fill="DarkGoldenrod4", width=3)
 
+	def tkSetting_Default(self):
+		pass
+
+	def tkSetting_BtnOpera(self, val):
+		if val == 'pre-Op':
+			self.TKS_Btn1_Opera1.config(bg="DarkOliveGreen2")
+			self.TKS_Btn1_Opera2.config(bg="gray90")
+			self.DisDays[0] = False
+		elif val == 'past-Op':
+			self.TKS_Btn1_Opera1.config(bg="gray90")
+			self.TKS_Btn1_Opera2.config(bg="DarkOliveGreen2")
+			self.DisDays[0] = True
+		self.OperaType = val
+		self.TKS_Show_Opera.config(text="Operation Type: %s" %(self.OperaType), fg="black")
+
+	def tkSetting_DiseaseConfirm(self):
+		if(self.DiseaseCombo.current() != 0):
+			self.DiseaseType = self.DiseaseCombo.get()
+			self.TKS_Show_Disease.config(text="Disease: %s" %(self.DiseaseType), fg="black")
+
+	def tkSetting_DisGroupConfirm(self):
+		if(self.DisGroupCombo.current() != 0):
+			self.DisGroupType = self.DisGroupCombo.get()
+			self.TKS_Show_DisGroup.config(text="Disease Group: %s" %(self.DisGroupType), fg="black")
+	
+	def  tkSetting_ModifyDisease(self, val):
+		if val == 'new':
+			self.TKS_Btn2_DCM1.config(bg="DarkOliveGreen2")
+			self.TKS_Btn2_DCM2.config(bg="gray90")
+		elif val == 'edit':
+			self.TKS_Btn2_DCM1.config(bg="gray90")
+			self.TKS_Btn2_DCM2.config(bg="DarkOliveGreen2")
+		self.ModifyDCM.config(state="disabled")
+		self.TKS_Btn2_DCM1.config(state="disabled")
+		self.TKS_Btn2_DCM2.config(state="disabled")
+	
+	def tkSetting_DiseaseModify(self):
+		self.DiseaseCombo.config(state="disabled")
+		self.TKS_BT_DisConfirm.config(state="disabled")
+		self.TKS_BT_DisModify.config(state="disabled")
+		self.TKS_Btn2_DCM1.config(state="normal")
+		self.TKS_Btn2_DCM2.config(state="normal")
+		self.ModifyDCM.config(state="readonly")
+	
+	def tkSetting_OperaDays(self):
+		if self.TKS_OpDay_Month.get() == "":
+			self.DisDays[1] = 0
+		else:
+			self.DisDays[1] = int(self.TKS_OpDay_Month.get())
+		if self.TKS_OpDay_Day.get() == "":
+			self.DisDays[2] = 0
+		else:
+			self.DisDays[2] = int(self.TKS_OpDay_Day.get())
+		self.TKS_Show_OpDay.config(text="Operation Days: %2d Month %2d Day" %(self.DisDays[1], self.DisDays[2]), fg="black")
+
 	def tkSetting_Closing(self):
+		self.SETTING_OPEN = False
 		self.BT_Setting.config(state="normal")
 		self.tkSetting.destroy()
 
 	def tkSetting_SetupUI(self):
-		settingSize = (400, 400)
+		self.SETTING_OPEN = True
+		settingSize = (768, 480)
 		self.tkSetting = tk.Tk()
-		self.tkSetting.title('Tracking System Setting') #窗口名字
+		self.tkSetting.title('%d臂迷宮路徑追蹤系統設定' %(self.ARM_UNIT)) #窗口名字
 		self.tkSetting.geometry('%dx%d+120+120' %(settingSize[0],settingSize[1])) #窗口大小(寬X高+X偏移量+Y偏移量)
 		self.tkSetting.resizable(False, False) #禁止變更視窗大小
+
+		self.TKS_RadValue = tk.IntVar()
+
+		# 選擇狀態是手術前後
+		self.TKS_title1 = tk.Label(self.tkSetting,text="Operation", font=('Arial', 12), bg="gray75")
+		self.TKS_title1.place(x=20,y=20,anchor="nw")
+		self.TKS_Btn1_Opera1 = tk.Button(self.tkSetting, text='pre-Op (手術前)', width=14, font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_BtnOpera('pre-Op'))
+		self.TKS_Btn1_Opera1.place(x=100,y=18,anchor="nw")
+		self.TKS_Btn1_Opera2 = tk.Button(self.tkSetting, text='past-Op (手術後)', width=14, font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_BtnOpera('past-Op'))
+		self.TKS_Btn1_Opera2.place(x=225,y=18,anchor="nw")
+		
+		# 設定天數
+		self.TKS_title2 = tk.Label(self.tkSetting,text="Op. Days", font=('Arial', 12), bg="gray75")
+		self.TKS_title2.place(x=20,y=55,anchor="nw")
+		self.TKS_OpDay_Month = tk.Entry(self.tkSetting, font=('Arial', 12), width=6, justify="right")
+		self.TKS_OpDay_Month.place(x=100,y=56,anchor="nw")
+		tk.Label(self.tkSetting, text="Month", font=('Arial', 10)).place(x=160,y=56,anchor="nw")
+		self.TKS_OpDay_Day = tk.Entry(self.tkSetting, font=('Arial', 12), width=6, justify="right")
+		self.TKS_OpDay_Day.place(x=220,y=56,anchor="nw")
+		tk.Label(self.tkSetting, text="Day", font=('Arial', 10)).place(x=280,y=56,anchor="nw")
+		self.TKS_BT_OpDayConfirm = tk.Button(self.tkSetting, text='Confirm', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_OperaDays)
+		self.TKS_BT_OpDayConfirm.place(x=320,y=53,anchor="nw")
+
+		#疾病資訊選擇(下拉選單)
+		DiseaseInfo = ['choose Disease...']
+		self.TKS_title3 = tk.Label(self.tkSetting,text="Disease", font=('Arial', 12), bg="gray75")
+		self.TKS_title3.place(x=20,y=90,anchor="nw")
+		for i in range(len(self.CSV_DiseaseFile)):
+			if self.CSV_DiseaseFile[i][0] == 'Disease':
+				DiseaseInfo.append(self.CSV_DiseaseFile[i][1])
+		self.DiseaseCombo = ttk.Combobox(self.tkSetting, values=DiseaseInfo, state="readonly")
+		self.DiseaseCombo.place(x=92,y=93,anchor="nw")
+		self.DiseaseCombo.current(0)
+		self.TKS_BT_DisConfirm = tk.Button(self.tkSetting, text='Confirm', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DiseaseConfirm)
+		self.TKS_BT_DisConfirm.place(x=260,y=87,anchor="nw")
+		self.TKS_BT_DisModify = tk.Button(self.tkSetting, text='Modify', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DiseaseModify)
+		self.TKS_BT_DisModify.place(x=345,y=87,anchor="nw")
+
+		#復健資訊選擇(下拉選單)
+		DisGroupInfo = ['choose Group...']
+		self.TKS_title4 = tk.Label(self.tkSetting,text="Group", font=('Arial', 12), bg="gray75")
+		self.TKS_title4.place(x=20,y=125,anchor="nw")
+		for i in range(len(self.CSV_DiseaseFile)):
+			if self.CSV_DiseaseFile[i][0] == 'DisGroup':
+				DisGroupInfo.append(self.CSV_DiseaseFile[i][1])
+		self.DisGroupCombo = ttk.Combobox(self.tkSetting, values=DisGroupInfo, state="readonly")
+		self.DisGroupCombo.place(x=92,y=127,anchor="nw")
+		self.DisGroupCombo.current(0)
+		self.TKS_BT_DisGroupConfirm = tk.Button(self.tkSetting, text='Confirm', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DisGroupConfirm)
+		self.TKS_BT_DisGroupConfirm.place(x=260,y=122,anchor="nw")
+		self.TKS_BT_DisGroupModify = tk.Button(self.tkSetting, text='Modify', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DisGroupConfirm)
+		self.TKS_BT_DisGroupModify.place(x=345,y=122,anchor="nw")
+		
+		# 顯示變數區域
+		self.TKS_title5 = tk.Label(self.tkSetting,text="Setting Status", font=('Arial', 12), bg="gray75")
+		self.TKS_title5.place(x=450,y=20,anchor="nw")
+		self.TKS_Show_Opera = tk.Label(self.tkSetting, text="Operation Type: (not set)", font=('Arial', 13), fg="gray35")
+		self.TKS_Show_Opera.place(x=450,y=50,anchor="nw")
+		self.TKS_Show_OpDay = tk.Label(self.tkSetting, text="Operation Days: (not set)", font=('Arial', 13), fg="gray35")
+		self.TKS_Show_OpDay.place(x=450,y=80,anchor="nw")
+		self.TKS_Show_Disease = tk.Label(self.tkSetting, text="Disease: (not set)", font=('Arial', 13), fg="gray35")
+		self.TKS_Show_Disease.place(x=450,y=110,anchor="nw")
+		self.TKS_Show_DisGroup = tk.Label(self.tkSetting, text="Disease Group: (not set)", font=('Arial', 13), fg="gray35")
+		self.TKS_Show_DisGroup.place(x=450,y=140,anchor="nw")
+
+		# 修改病因區域
+		self.TKS_title6 = tk.Label(self.tkSetting,text="Disease Combobox Modify", font=('Arial', 12), bg="gray75")
+		self.TKS_title6.place(x=20,y=180,anchor="nw")
+		self.ModifyDCM = ttk.Combobox(self.tkSetting, values=DiseaseInfo, state="disabled")
+		self.ModifyDCM.place(x=20,y=214,anchor="nw")
+		self.ModifyDCM.current(0)
+		self.TKS_Btn2_DCM1 = tk.Button(self.tkSetting, text='New Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyDisease('new'))
+		self.TKS_Btn2_DCM1.place(x=190,y=210,anchor="nw")
+		self.TKS_Btn2_DCM2 = tk.Button(self.tkSetting, text='Edit Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyDisease('edit'))
+		self.TKS_Btn2_DCM2.place(x=273,y=210,anchor="nw")
+
+		# 修改病因組別區域
+		self.TKS_title6 = tk.Label(self.tkSetting,text="Disease Group Combobox Modify", font=('Arial', 12), bg="gray75")
+		self.TKS_title6.place(x=390,y=180,anchor="nw")
+		# self.ModifyDCM = ttk.Combobox(self.tkSetting, values=DiseaseInfo, state="disabled")
+		# self.ModifyDCM.place(x=390,y=214,anchor="nw")
+		# self.ModifyDCM.current(0)
+		# self.TKS_Btn2_DCM1 = tk.Button(self.tkSetting, text='New Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyDisease('new'))
+		# self.TKS_Btn2_DCM1.place(x=560,y=210,anchor="nw")
+		# self.TKS_Btn2_DCM2 = tk.Button(self.tkSetting, text='Edit Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyDisease('edit'))
+		# self.TKS_Btn2_DCM2.place(x=643,y=210,anchor="nw")
+		
+
 		self.BT_Setting.config(state="disabled")
 		self.tkSetting.protocol("WM_DELETE_WINDOW", self.tkSetting_Closing)
 		self.tkSetting.mainloop()
 
 	def setupUI(self):
 		global IPCAM_Info
-
 		#========測試用========
 		# tk.Button(self.tkWin, text='Testing', width=10, font=('Arial', 8), command=self.PreparingTesting).place(x=100,y=10,anchor="nw")
 
@@ -632,14 +795,6 @@ class MazeMouseTrack(object):
 		self.TK_SHOW_Food.place(x=self.WinSize[0]-290,y=250,anchor="ne")
 		self.TK_SHOW_Rat_ID = tk.Label(self.tkWin,text="# RatID: ", font=('Arial', 12))
 		self.TK_SHOW_Rat_ID.place(x=self.WinSize[0]-288,y=280,anchor="ne")
-
-		#========右側：選擇檔案存放位置========
-		# self.TK_File_Dir = tk.StringVar()
-		# tk.Label(self.tkWin,text="Record File Directory", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-197,y=260,anchor="ne")
-		# self.TKE_Dir = tk.Entry(self.tkWin, textvariable=self.TK_File_Dir, font=('Arial', 11), width=30, state="disabled")
-		# self.TKE_Dir.place(x=self.WinSize[0]-107,y=290,anchor="ne")
-		# self.BT_Choose_Dir = tk.Button(self.tkWin, text='Choose...', width=10,command=self.Choose_Dir, state="disabled")
-		# self.BT_Choose_Dir.place(x=self.WinSize[0]-20,y=287,anchor="ne")
 
 		#========右側：設定老鼠編號========
 		tk.Label(self.tkWin,text="Rat ID", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-302,y=325,anchor="ne")
