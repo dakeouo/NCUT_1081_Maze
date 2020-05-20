@@ -646,7 +646,7 @@ class MazeMouseTrack(object):
 				self.ModifyDCM.config(state="disabled")
 				self.TKS_Btn2_DCM1.config(state="disabled")
 				self.TKS_Btn2_DCM2.config(state="disabled")
-			self.TKS_DCM_Confirm.config(state="normal")
+				self.TKS_DCM_Confirm.config(state="normal")
 			self.TKS_DCM_Cancel.config(state="normal")
 	
 	def tkSetting_ModifyGroupDisease(self, val):
@@ -675,7 +675,7 @@ class MazeMouseTrack(object):
 				self.ModifyDGCM.config(state="disabled")
 				self.TKS_Btn2_DGCM1.config(state="disabled")
 				self.TKS_Btn2_DGCM2.config(state="disabled")
-			self.TKS_DGCM_Confirm.config(state="normal")
+				self.TKS_DGCM_Confirm.config(state="normal")
 			self.TKS_DGCM_Cancel.config(state="normal")
 
 
@@ -688,6 +688,7 @@ class MazeMouseTrack(object):
 		self.TKS_Btn2_DCM2.config(state="normal")
 		self.ModifyDCM.config(state="readonly")
 		self.TKS_DCM_Cancel.config(state="normal")
+		self.TKS_title6.config(bg="gray75")
 
 	def tkSetting_ModifyDiseaseConfirm(self):
 		self.DiseaseCombo.config(state="readonly")
@@ -708,6 +709,8 @@ class MazeMouseTrack(object):
 
 		self.ModifyDCM.config(state="disabled")
 		self.TKS_DCM_Confirm.config(state="disabled")
+		self.TKS_DCM_Cancel.config(state="disabled")
+		self.TKS_title6.config(bg="gray85")
 
 	def tkSetting_ModifyDiseaseCancel(self):
 		self.DiseaseCombo.config(state="readonly")
@@ -724,6 +727,8 @@ class MazeMouseTrack(object):
 		self.ModifyDCM.current(0)
 		self.ModifyDCM.config(state="disabled")
 		self.TKS_DCM_Confirm.config(state="disabled")
+		self.TKS_DCM_Cancel.config(state="disabled")
+		self.TKS_title6.config(bg="gray85")
 
 	def tkSetting_DisGroupModify(self):
 		self.DisGroupCombo.current(0)
@@ -734,6 +739,7 @@ class MazeMouseTrack(object):
 		self.TKS_Btn2_DGCM2.config(state="normal")
 		self.ModifyDGCM.config(state="readonly")
 		self.TKS_DGCM_Cancel.config(state="normal")
+		self.TKS_title7.config(bg="gray75")
 
 	def tkSetting_ModifyDisGroupConfirm(self):
 		self.DisGroupCombo.config(state="readonly")
@@ -754,6 +760,8 @@ class MazeMouseTrack(object):
 
 		self.ModifyDGCM.config(state="disabled")
 		self.TKS_DGCM_Confirm.config(state="disabled")
+		self.TKS_DGCM_Cancel.config(state="disabled")
+		self.TKS_title7.config(bg="gray85")
 	
 	def tkSetting_ModifyDisGroupCancel(self):
 		self.DisGroupCombo.config(state="readonly")
@@ -761,11 +769,17 @@ class MazeMouseTrack(object):
 		self.TKS_BT_DisGroupModify.config(state="normal")
 		self.TKS_Btn2_DGCM1.config(state="disabled")
 		self.TKS_Btn2_DGCM2.config(state="disabled")
+		self.TKS_Btn2_DGCM1.config(bg="gray90")
+		self.TKS_Btn2_DGCM2.config(bg="gray90")
+		self.TKS_DGCM_Name.delete(first=0,last=50)
+		self.TKS_DGCM_Description.delete(first=0,last=50)
 		self.TKS_DGCM_Name.config(state="disabled")
 		self.TKS_DGCM_Description.config(state="disabled")
 		self.ModifyDGCM.current(0)
 		self.ModifyDGCM.config(state="disabled")
 		self.TKS_DGCM_Confirm.config(state="disabled")
+		self.TKS_DGCM_Cancel.config(state="disabled")
+		self.TKS_title7.config(bg="gray85")
 
 	def tkSetting_OperaDays(self):
 		if self.TKS_OpDay_Month.get() == "":
@@ -864,15 +878,15 @@ class MazeMouseTrack(object):
 		self.TKS_DCM_Description_val = tk.StringVar()
 		# self.TKS_DCM_Name_val = "111"
 		# self.TKS_DCM_Description_val = "111"
-		self.TKS_title6 = tk.Label(self.tkSetting, text="Disease Combobox Modify", font=('Arial', 12), bg="gray75")
+		self.TKS_title6 = tk.Label(self.tkSetting, text="Disease Combobox Modify", font=('Arial', 12), bg="gray85")
 		self.TKS_title6.place(x=20,y=180,anchor="nw")
 		self.ModifyDCM = ttk.Combobox(self.tkSetting, values=DiseaseInfo, state="disabled")
 		self.ModifyDCM.place(x=20,y=214,anchor="nw")
 		self.ModifyDCM.current(0)
 		self.TKS_Btn2_DCM1 = tk.Button(self.tkSetting, text='New Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyDisease('new'))
-		self.TKS_Btn2_DCM1.place(x=190,y=210,anchor="nw")
+		self.TKS_Btn2_DCM1.place(x=273,y=210,anchor="nw")
 		self.TKS_Btn2_DCM2 = tk.Button(self.tkSetting, text='Edit Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyDisease('edit'))
-		self.TKS_Btn2_DCM2.place(x=273,y=210,anchor="nw")
+		self.TKS_Btn2_DCM2.place(x=190,y=210,anchor="nw")
 		tk.Label(self.tkSetting, text="Disease Name", font=('Arial', 9)).place(x=20,y=240,anchor="nw")
 		self.TKS_DCM_Name = tk.Entry(self.tkSetting, font=('Arial', 12), textvariable=self.TKS_DCM_Name_val, state="disabled")
 		self.TKS_DCM_Name.place(x=20,y=257,anchor="nw")
@@ -890,15 +904,15 @@ class MazeMouseTrack(object):
 		self.TKS_DGCM_Description_val = tk.StringVar()
 		# self.TKS_DGCM_Name_val = ""
 		# self.TKS_DGCM_Description_val = ""
-		self.TKS_title7 = tk.Label(self.tkSetting,text="Disease Group Combobox Modify", font=('Arial', 12), bg="gray75")
+		self.TKS_title7 = tk.Label(self.tkSetting,text="Disease Group Combobox Modify", font=('Arial', 12), bg="gray85")
 		self.TKS_title7.place(x=390,y=180,anchor="nw")
 		self.ModifyDGCM = ttk.Combobox(self.tkSetting, values=DisGroupInfo, state="disabled")
 		self.ModifyDGCM.place(x=390,y=214,anchor="nw")
 		self.ModifyDGCM.current(0)
 		self.TKS_Btn2_DGCM1 = tk.Button(self.tkSetting, text='New Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyGroupDisease('new'))
-		self.TKS_Btn2_DGCM1.place(x=560,y=210,anchor="nw")
+		self.TKS_Btn2_DGCM1.place(x=643,y=210,anchor="nw")
 		self.TKS_Btn2_DGCM2 = tk.Button(self.tkSetting, text='Edit Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyGroupDisease('edit'))
-		self.TKS_Btn2_DGCM2.place(x=643,y=210,anchor="nw")
+		self.TKS_Btn2_DGCM2.place(x=560,y=210,anchor="nw")
 		tk.Label(self.tkSetting, text="Disease Group Name", font=('Arial', 9)).place(x=390,y=240,anchor="nw")
 		self.TKS_DGCM_Name = tk.Entry(self.tkSetting, font=('Arial', 12), textvariable=self.TKS_DGCM_Name_val, state="disabled")
 		self.TKS_DGCM_Name.place(x=390,y=257,anchor="nw")
