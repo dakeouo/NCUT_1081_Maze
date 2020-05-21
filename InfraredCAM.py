@@ -319,6 +319,7 @@ class InfraredCAM:
 						# print("CAMERA isn't CONNECT! At {}".format(datetime.now()))
 						self.CAM_IS_CONN = False
 					else:
+						self.WIDTH,self.HEIGHT = (frame.shape[1], frame.shape[0])
 						frame = cv2.resize(frame,(self.WIDTH,self.HEIGHT),interpolation=cv2.INTER_CUBIC) #調整大小1024*576
 						if IPCAM_LoadTime > 3:
 							self.IPCAM.setMessenage(1, "[WAIT] CAMERA is TIMEOUT!")
