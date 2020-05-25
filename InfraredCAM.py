@@ -170,7 +170,7 @@ class InfraredCAM:
 	#========其他的副程式========
 	def checkSaveDirPath(self): #檢查儲存路徑
 		nowDatePath = './ChiMei_{}/'.format(datetime.now().strftime("%Y%m%d"))
-		DiseaseTypePath = self.DiseaseType + '/'
+		DiseaseTypePath = '%s(%s_%2d_%2d)/' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
 		CSV_Path = 'CSV_{}({})/'.format(self.DiseaseType, datetime.now().strftime("%Y%m%d"))
 		IMG_Path = 'IMG_{}({})/'.format(self.DiseaseType, datetime.now().strftime("%Y%m%d"))
 		if not os.path.exists(nowDatePath):
@@ -184,7 +184,8 @@ class InfraredCAM:
 
 	def recordRoute2CSV(self):
 		TimeDiff = (datetime.now() - self.RR2C_Time).seconds
-		CSV_Path = './ChiMei_{0}/{1}/CSV_{1}({0})/'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType)
+		DiseaseTypePath = '%s(%s_%2d_%2d)' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
+		CSV_Path = './ChiMei_{0}/{2}/CSV_{1}({0})/'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, DiseaseTypePath)
 		CSV_Name = self.SingleFileName + ".csv"
 		self.RR2C.append([int(self.TargetPos[0]), int(self.TargetPos[1])])
 		if TimeDiff >= 1:
@@ -239,7 +240,7 @@ class InfraredCAM:
 				self.food1[i] = 0
 				break
 		return self.NOW_STATUS,self.dangchianbi
-	def leave(self,dangchianbi,TargetPos): #出臂判斷
+	def leave(self,TargetPos): #出臂判斷
 
 		i1 = [0,4,8,12,16,20,24,28]
 		i2 = [3,7,11,15,19,23,27,31]
@@ -254,12 +255,12 @@ class InfraredCAM:
 			self.NOW_STATUS = 0
 			
 			self.Route.append(dangchianbi) #寫入進臂順序
-			self.frequency[dangchianbi-1] = self.frequency[dangchianbi-1]+1 #短期工作記憶+1
-			if self.foodtest[dangchianbi-1] == 1:	#長期工作記憶判斷
+			self.frequency[self.dangchianbi-1] = self.frequency[self.dangchianbi-1]+1 #短期工作記憶+1
+			if self.foodtest[self.dangchianbi-1] == 1:	#長期工作記憶判斷
 				pass
-			elif self.foodtest[dangchianbi-1] == 0:
-				self.foodtest[dangchianbi-1] = self.foodtest[dangchianbi-1] + 1
-				self.LongTerm[(dangchianbi)-1] = self.LongTerm[dangchianbi-1] + 1
+			elif self.foodtest[self.dangchianbi-1] == 0:
+				self.foodtest[self.dangchianbi-1] = self.foodtest[self.dangchianbi-1] + 1
+				self.LongTerm[(self.dangchianbi)-1] = self.LongTerm[self.dangchianbi-1] + 1
 			else:
 				pass
 			self.dangchianbi = 0
@@ -369,8 +370,9 @@ class InfraredCAM:
 							print("起始時間: " +str(self.timestart))
 
 							self.checkSaveDirPath() #檢查所有儲存路徑
+							DiseaseTypePath = '%s(%s_%2d_%2d)' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
 							self.SingleFileName = "{}_{}_{}_{}".format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, self.DisGroupType, self.RatID) #固定檔名
-							self.CSVfilePath = './ChiMei_{0}/{1}/{0}.csv'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType)
+							self.CSVfilePath = './ChiMei_{0}/{2}/{0}.csv'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, DiseaseTypePath)
 							
 							self.RR2C_FirstTime = True #這個是我寫的(測試中，不用管沒關係)
 						else:
@@ -413,7 +415,7 @@ class InfraredCAM:
 							else:
 								pass
 						elif self.NOW_STATUS == 1: #出臂
-							self.NOW_STATUS, self.dangchianbi = self.leave(self.NOW_STATUS,self.TargetPos)
+							self.NOW_STATUS, self.dangchianbi = self.leave(self.TargetPos)
 						else:
 							pass
 

@@ -556,11 +556,12 @@ class MazeMouseTrack(object):
 			self.TKS_Btn1_Opera1.config(bg="DarkOliveGreen2")
 			self.TKS_Btn1_Opera2.config(bg="gray90")
 			self.DisDays[0] = False
+			self.OperaType = 'pre'
 		elif val == 'past-Op':
 			self.TKS_Btn1_Opera1.config(bg="gray90")
 			self.TKS_Btn1_Opera2.config(bg="DarkOliveGreen2")
 			self.DisDays[0] = True
-		self.OperaType = val
+			self.OperaType = 'past'
 		self.TKS_Show_Opera.config(text="Operation Type: %s" %(self.OperaType), fg="black")
 
 	def tkSetting_DiseaseConfirm(self):
