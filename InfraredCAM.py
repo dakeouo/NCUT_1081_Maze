@@ -162,7 +162,7 @@ class InfraredCAM:
 		self.OperaType = "" #目前使用模式(訓練期/正式實驗期)
 		self.DiseaseType = "" #老鼠病症組別
 		self.DisGroupType = "" #老鼠病症組別復鍵(含 健康、無復健 等)
-		self.DisDays = [False, 0, 0] #老鼠病症天數(是否手術, 月, 天)
+		self.DisDays = [False, -1, -1] #老鼠病症天數(是否手術, 月, 天)
 		self.SingleFileName = "" #固定檔名
 		self.CSVfilePath = '' #CSV路徑
 							

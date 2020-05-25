@@ -148,7 +148,7 @@ class MazeMouseTrack(object):
 		self.OperaType = "" #目前使用模式(訓練期/正式實驗期)
 		self.DiseaseType = "" #老鼠病症組別
 		self.DisGroupType = "" #老鼠病症組別復鍵(含 健康、無復健 等)
-		self.DisDays = [False, 0, 0] #老鼠病症天數(是否手術, 月, 天)
+		self.DisDays = [False, -1, -1] #老鼠病症天數(是否手術, 月, 天)
 		self.SETTING_OPEN = False
 
 		self.TKS_Show_Opera = ""
@@ -294,7 +294,7 @@ class MazeMouseTrack(object):
 			if self.OperaType == "":
 				ErrMsg = ErrMsg + "You don't have set Operation Type!!\n"
 				HaveError = True
-			if self.DisDays[1] == 0 and self.DisDays[2] == 0:
+			if self.DisDays[1] == -1 and self.DisDays[2] == -1:
 				ErrMsg = ErrMsg + "You don't set Operation Days!!\n"
 				HaveError = True
 			if self.DiseaseType == "":
