@@ -15,7 +15,9 @@ from PIL import Image, ImageTk
 import tkinter.ttk as ttk
 
 IPCAM_Info_FileName = "./IPCAM_INFO.csv"
+Disease_List_FileName = "./DISEASE_LIST.csv"
 IPCAM_Info = []
+Disease_List = []
 
 FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
 logging.basicConfig(level=logging.WARNING, filename='MazeLog.log', filemode='a', format=FORMAT)
@@ -47,6 +49,24 @@ def LoadCamInfo():
 		IPCAM_Info[i][5] = int(IPCAM_Info[i][5])
 		IPCAM_Info[i][6] = int(IPCAM_Info[i][6])
 	# print(IPCAM_Info)
+
+def LoadDiseaseFile():
+	global Disease_List, Disease_List_FileName
+	Disease_List = readCSV2List(Disease_List_FileName)
+	# print(Disease_List)
+
+def WriteDiseaseFile(data):
+	global Disease_List, Disease_List_FileName
+	writeData2CSV(Disease_List_FileName, "w", data[0])
+	for i in range(1, len(data)):
+		writeData2CSV(Disease_List_FileName, "a", data[i])
+
+def findDiseaseArray(arr, Dtype, text):
+	# print(Dtype, text)
+	for i in range(0,len(arr)):
+		if arr[i][1] == text and arr[i][0] == Dtype:
+			return i
+	return -1
 
 def countStr(Str): #算出字串中大小寫字母與數字及其他符號的個數
 	Unit = [0, 0, 0, 0] #大寫字母/小寫字母/數字/其他符號
@@ -126,8 +146,8 @@ class MazeMouseTrack(object):
 
 		#實驗設定變數統整
 		self.OperaType = "" #目前使用模式(訓練期/正式實驗期)
-		self.DiseaseType = "MACO" #老鼠病症組別
-		self.DisGroupType = "Sham" #老鼠病症組別復鍵(含 健康、無復健 等)
+		self.DiseaseType = "" #老鼠病症組別
+		self.DisGroupType = "" #老鼠病症組別復鍵(含 健康、無復健 等)
 		self.DisDays = [False, 0, 0] #老鼠病症天數(是否手術, 月, 天)
 		self.SETTING_OPEN = False
 
@@ -137,13 +157,13 @@ class MazeMouseTrack(object):
 		self.TKS_Show_DisGroup = ""
 		self.DiseaseCombo = ""
 		self.DisGroupCombo = ""
+		self.TKS_DCM_Name_val = ""
+		self.TKS_DCM_Description_val = ""
+		self.TKS_DGCM_Name_val = ""
+		self.TKS_DGCM_Description_val = ""
 
-		self.CSV_DiseaseFile = [
-			['Disease', 'MACO', '缺血性失智症'], 
-			['Disease', 'AIDS', '人類免疫缺陷病毒'],
-			['DisGroup', 'Sham', '健康組'], 
-			['DisGroup', 'Control', '患病組']
-		]
+		self.CSV_DiseaseFile = [] #存放CSV讀進來的內容
+		self.NOW_DiseaseList = [-1, '', '', ''] #目前編輯條目(index, 分類[疾病/分組], 名稱, 敘述)
 		# self.IPCAM.CAM_INIT_SUCCESS = True
 
 		self.tkWin = tk.Tk()
@@ -272,7 +292,10 @@ class MazeMouseTrack(object):
 		else:
 			ErrMsg = ""
 			if self.OperaType == "":
-				ErrMsg = ErrMsg + "You don't have set Mode Type!!\n"
+				ErrMsg = ErrMsg + "You don't have set Operation Type!!\n"
+				HaveError = True
+			if self.DisDays[1] == 0 and self.DisDays[2] == 0:
+				ErrMsg = ErrMsg + "You don't set Operation Days!!\n"
 				HaveError = True
 			if self.DiseaseType == "":
 				ErrMsg = ErrMsg + "You don't have Choose Disease Type!!\n"
@@ -280,9 +303,6 @@ class MazeMouseTrack(object):
 			if self.DisGroupType == "":
 				ErrMsg = ErrMsg + "You don't have Choose Disease Rehabilitation Type!!\n"
 				HaveError = True
-			# if self.FilePath == "":
-			# 	ErrMsg = ErrMsg + "File Path not filled!!\n"
-			# 	HaveError = True
 			if self.Rat_ID == "":
 				ErrMsg = ErrMsg + "Rat ID not filled!!\n"
 				HaveError = True
@@ -548,8 +568,35 @@ class MazeMouseTrack(object):
 		for i in range(0, self.ARM_UNIT):
 			self.mazeCanvas.create_line(ARMS_IN_LINE[i][0][0], ARMS_IN_LINE[i][0][1], ARMS_IN_LINE[i][1][0], ARMS_IN_LINE[i][1][1], fill="DarkGoldenrod4", width=3)
 
-	def tkSetting_Default(self):
-		pass
+	def tkSetting_UploadDisease(self, ListType, DList):
+		idx = DList[0]
+		if idx == -1:
+			self.CSV_DiseaseFile.append(DList[1:])
+		else:
+			self.CSV_DiseaseFile[idx] = DList[1:]
+		
+		WriteDiseaseFile(self.CSV_DiseaseFile)
+		LoadDiseaseFile()
+		if ListType == "Disease":
+			DiseaseInfo = ['choose Disease...']
+			for i in range(len(self.CSV_DiseaseFile)):
+				if self.CSV_DiseaseFile[i][0] == 'Disease':
+					DiseaseInfo.append(self.CSV_DiseaseFile[i][1])
+			self.DiseaseCombo.config(values=DiseaseInfo)
+			self.ModifyDCM.config(values=DiseaseInfo)
+			self.DiseaseCombo.current(0)
+			self.ModifyDCM.current(0)
+		else:
+			DisGroupInfo = ['choose Group...']
+			for i in range(len(self.CSV_DiseaseFile)):
+				if self.CSV_DiseaseFile[i][0] == 'DisGroup':
+					DisGroupInfo.append(self.CSV_DiseaseFile[i][1])
+			self.DisGroupCombo.config(values=DisGroupInfo)
+			self.ModifyDGCM.config(values=DisGroupInfo)
+			self.DisGroupCombo.current(0)
+			self.ModifyDGCM.current(0)
+		
+		self.NOW_DiseaseList = [-1, '', '', '']
 
 	def tkSetting_BtnOpera(self, val):
 		if val == 'pre-Op':
@@ -578,21 +625,163 @@ class MazeMouseTrack(object):
 		if val == 'new':
 			self.TKS_Btn2_DCM1.config(bg="DarkOliveGreen2")
 			self.TKS_Btn2_DCM2.config(bg="gray90")
+			self.TKS_DCM_Name.config(state="normal")
+			self.TKS_DCM_Description.config(state="normal")
+			self.ModifyDCM.config(state="disabled")
+			self.TKS_Btn2_DCM1.config(state="disabled")
+			self.TKS_Btn2_DCM2.config(state="disabled")
+			self.NOW_DiseaseList[0] = -1
+			self.TKS_DCM_Confirm.config(state="normal")
+			self.TKS_DCM_Cancel.config(state="normal")
 		elif val == 'edit':
-			self.TKS_Btn2_DCM1.config(bg="gray90")
-			self.TKS_Btn2_DCM2.config(bg="DarkOliveGreen2")
-		self.ModifyDCM.config(state="disabled")
-		self.TKS_Btn2_DCM1.config(state="disabled")
-		self.TKS_Btn2_DCM2.config(state="disabled")
+			if(self.ModifyDCM.current() != 0):
+				self.TKS_Btn2_DCM1.config(bg="gray90")
+				self.TKS_Btn2_DCM2.config(bg="DarkOliveGreen2")
+				self.TKS_DCM_Name.config(state="normal")
+				self.TKS_DCM_Description.config(state="normal")
+				idx = findDiseaseArray(self.CSV_DiseaseFile, 'Disease', self.ModifyDCM.get())
+				if idx != -1:
+					self.TKS_DCM_Name.insert(0, self.CSV_DiseaseFile[idx][1])
+					self.TKS_DCM_Description.insert(0, self.CSV_DiseaseFile[idx][2])
+					self.NOW_DiseaseList = [idx, 'Disease', self.CSV_DiseaseFile[idx][1], self.CSV_DiseaseFile[idx][2]]
+				self.ModifyDCM.config(state="disabled")
+				self.TKS_Btn2_DCM1.config(state="disabled")
+				self.TKS_Btn2_DCM2.config(state="disabled")
+				self.TKS_DCM_Confirm.config(state="normal")
+			self.TKS_DCM_Cancel.config(state="normal")
 	
+	def tkSetting_ModifyGroupDisease(self, val):
+		if val == 'new':
+			self.TKS_Btn2_DGCM1.config(bg="DarkOliveGreen2")
+			self.TKS_Btn2_DGCM2.config(bg="gray90")
+			self.TKS_DGCM_Name.config(state="normal")
+			self.TKS_DGCM_Description.config(state="normal")
+			self.ModifyDGCM.config(state="disabled")
+			self.TKS_Btn2_DGCM1.config(state="disabled")
+			self.TKS_Btn2_DGCM2.config(state="disabled")
+			self.NOW_DiseaseList[0] = -1
+			self.TKS_DGCM_Confirm.config(state="normal")
+			self.TKS_DGCM_Cancel.config(state="normal")
+		elif val == 'edit':
+			if(self.ModifyDGCM.current() != 0):
+				self.TKS_Btn2_DGCM1.config(bg="gray90")
+				self.TKS_Btn2_DGCM2.config(bg="DarkOliveGreen2")
+				self.TKS_DGCM_Name.config(state="normal")
+				self.TKS_DGCM_Description.config(state="normal")
+				idx = findDiseaseArray(self.CSV_DiseaseFile, 'DisGroup', self.ModifyDGCM.get())
+				if idx != -1:
+					self.TKS_DGCM_Name.insert(0, self.CSV_DiseaseFile[idx][1])
+					self.TKS_DGCM_Description.insert(0, self.CSV_DiseaseFile[idx][2])
+					self.NOW_DiseaseList = [idx, 'DisGroup', self.CSV_DiseaseFile[idx][1], self.CSV_DiseaseFile[idx][2]]
+				self.ModifyDGCM.config(state="disabled")
+				self.TKS_Btn2_DGCM1.config(state="disabled")
+				self.TKS_Btn2_DGCM2.config(state="disabled")
+				self.TKS_DGCM_Confirm.config(state="normal")
+			self.TKS_DGCM_Cancel.config(state="normal")
+
+
 	def tkSetting_DiseaseModify(self):
+		self.DiseaseCombo.current(0)
 		self.DiseaseCombo.config(state="disabled")
 		self.TKS_BT_DisConfirm.config(state="disabled")
 		self.TKS_BT_DisModify.config(state="disabled")
 		self.TKS_Btn2_DCM1.config(state="normal")
 		self.TKS_Btn2_DCM2.config(state="normal")
 		self.ModifyDCM.config(state="readonly")
+		self.TKS_DCM_Cancel.config(state="normal")
+		self.TKS_title6.config(bg="gray75")
+
+	def tkSetting_ModifyDiseaseConfirm(self):
+		self.DiseaseCombo.config(state="readonly")
+		self.TKS_BT_DisConfirm.config(state="normal")
+		self.TKS_BT_DisModify.config(state="normal")
+		self.TKS_Btn2_DCM1.config(state="disabled")
+		self.TKS_Btn2_DCM2.config(state="disabled")
+		self.TKS_Btn2_DCM1.config(bg="gray90")
+		self.TKS_Btn2_DCM2.config(bg="gray90")
+
+		self.NOW_DiseaseList[1:] = ['Disease', self.TKS_DCM_Name.get(), self.TKS_DCM_Description.get()]
+		self.tkSetting_UploadDisease('Disease', self.NOW_DiseaseList)
+
+		self.TKS_DCM_Name.delete(first=0,last=50)
+		self.TKS_DCM_Description.delete(first=0,last=50)
+		self.TKS_DCM_Name.config(state="disabled")
+		self.TKS_DCM_Description.config(state="disabled")
+
+		self.ModifyDCM.config(state="disabled")
+		self.TKS_DCM_Confirm.config(state="disabled")
+		self.TKS_DCM_Cancel.config(state="disabled")
+		self.TKS_title6.config(bg="gray85")
+
+	def tkSetting_ModifyDiseaseCancel(self):
+		self.DiseaseCombo.config(state="readonly")
+		self.TKS_BT_DisConfirm.config(state="normal")
+		self.TKS_BT_DisModify.config(state="normal")
+		self.TKS_Btn2_DCM1.config(state="disabled")
+		self.TKS_Btn2_DCM2.config(state="disabled")
+		self.TKS_Btn2_DCM1.config(bg="gray90")
+		self.TKS_Btn2_DCM2.config(bg="gray90")
+		self.TKS_DCM_Name.delete(first=0,last=50)
+		self.TKS_DCM_Description.delete(first=0,last=50)
+		self.TKS_DCM_Name.config(state="disabled")
+		self.TKS_DCM_Description.config(state="disabled")
+		self.ModifyDCM.current(0)
+		self.ModifyDCM.config(state="disabled")
+		self.TKS_DCM_Confirm.config(state="disabled")
+		self.TKS_DCM_Cancel.config(state="disabled")
+		self.TKS_title6.config(bg="gray85")
+
+	def tkSetting_DisGroupModify(self):
+		self.DisGroupCombo.current(0)
+		self.DisGroupCombo.config(state="disabled")
+		self.TKS_BT_DisGroupConfirm.config(state="disabled")
+		self.TKS_BT_DisGroupModify.config(state="disabled")
+		self.TKS_Btn2_DGCM1.config(state="normal")
+		self.TKS_Btn2_DGCM2.config(state="normal")
+		self.ModifyDGCM.config(state="readonly")
+		self.TKS_DGCM_Cancel.config(state="normal")
+		self.TKS_title7.config(bg="gray75")
+
+	def tkSetting_ModifyDisGroupConfirm(self):
+		self.DisGroupCombo.config(state="readonly")
+		self.TKS_BT_DisGroupConfirm.config(state="normal")
+		self.TKS_BT_DisGroupModify.config(state="normal")
+		self.TKS_Btn2_DGCM1.config(state="disabled")
+		self.TKS_Btn2_DGCM2.config(state="disabled")
+		self.TKS_Btn2_DGCM1.config(bg="gray90")
+		self.TKS_Btn2_DGCM2.config(bg="gray90")
+
+		self.NOW_DiseaseList[1:] = ['DisGroup', self.TKS_DGCM_Name.get(), self.TKS_DGCM_Description.get()]
+		self.tkSetting_UploadDisease('DisGroup', self.NOW_DiseaseList)
+
+		self.TKS_DGCM_Name.delete(first=0,last=50)
+		self.TKS_DGCM_Description.delete(first=0,last=50)
+		self.TKS_DGCM_Name.config(state="disabled")
+		self.TKS_DGCM_Description.config(state="disabled")
+
+		self.ModifyDGCM.config(state="disabled")
+		self.TKS_DGCM_Confirm.config(state="disabled")
+		self.TKS_DGCM_Cancel.config(state="disabled")
+		self.TKS_title7.config(bg="gray85")
 	
+	def tkSetting_ModifyDisGroupCancel(self):
+		self.DisGroupCombo.config(state="readonly")
+		self.TKS_BT_DisGroupConfirm.config(state="normal")
+		self.TKS_BT_DisGroupModify.config(state="normal")
+		self.TKS_Btn2_DGCM1.config(state="disabled")
+		self.TKS_Btn2_DGCM2.config(state="disabled")
+		self.TKS_Btn2_DGCM1.config(bg="gray90")
+		self.TKS_Btn2_DGCM2.config(bg="gray90")
+		self.TKS_DGCM_Name.delete(first=0,last=50)
+		self.TKS_DGCM_Description.delete(first=0,last=50)
+		self.TKS_DGCM_Name.config(state="disabled")
+		self.TKS_DGCM_Description.config(state="disabled")
+		self.ModifyDGCM.current(0)
+		self.ModifyDGCM.config(state="disabled")
+		self.TKS_DGCM_Confirm.config(state="disabled")
+		self.TKS_DGCM_Cancel.config(state="disabled")
+		self.TKS_title7.config(bg="gray85")
+
 	def tkSetting_OperaDays(self):
 		if self.TKS_OpDay_Month.get() == "":
 			self.DisDays[1] = 0
@@ -610,8 +799,12 @@ class MazeMouseTrack(object):
 		self.tkSetting.destroy()
 
 	def tkSetting_SetupUI(self):
+		global Disease_List
+		LoadDiseaseFile()
+		self.CSV_DiseaseFile = Disease_List
+
 		self.SETTING_OPEN = True
-		settingSize = (768, 480)
+		settingSize = (768, 400)
 		self.tkSetting = tk.Tk()
 		self.tkSetting.title('%d臂迷宮路徑追蹤系統設定' %(self.ARM_UNIT)) #窗口名字
 		self.tkSetting.geometry('%dx%d+120+120' %(settingSize[0],settingSize[1])) #窗口大小(寬X高+X偏移量+Y偏移量)
@@ -620,7 +813,7 @@ class MazeMouseTrack(object):
 		self.TKS_RadValue = tk.IntVar()
 
 		# 選擇狀態是手術前後
-		self.TKS_title1 = tk.Label(self.tkSetting,text="Operation", font=('Arial', 12), bg="gray75")
+		self.TKS_title1 = tk.Label(self.tkSetting, text="Operation", font=('Arial', 12), bg="gray75")
 		self.TKS_title1.place(x=20,y=20,anchor="nw")
 		self.TKS_Btn1_Opera1 = tk.Button(self.tkSetting, text='pre-Op (手術前)', width=14, font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_BtnOpera('pre-Op'))
 		self.TKS_Btn1_Opera1.place(x=100,y=18,anchor="nw")
@@ -628,7 +821,7 @@ class MazeMouseTrack(object):
 		self.TKS_Btn1_Opera2.place(x=225,y=18,anchor="nw")
 		
 		# 設定天數
-		self.TKS_title2 = tk.Label(self.tkSetting,text="Op. Days", font=('Arial', 12), bg="gray75")
+		self.TKS_title2 = tk.Label(self.tkSetting, text="Op. Days", font=('Arial', 12), bg="gray75")
 		self.TKS_title2.place(x=20,y=55,anchor="nw")
 		self.TKS_OpDay_Month = tk.Entry(self.tkSetting, font=('Arial', 12), width=6, justify="right")
 		self.TKS_OpDay_Month.place(x=100,y=56,anchor="nw")
@@ -641,7 +834,7 @@ class MazeMouseTrack(object):
 
 		#疾病資訊選擇(下拉選單)
 		DiseaseInfo = ['choose Disease...']
-		self.TKS_title3 = tk.Label(self.tkSetting,text="Disease", font=('Arial', 12), bg="gray75")
+		self.TKS_title3 = tk.Label(self.tkSetting, text="Disease", font=('Arial', 12), bg="gray75")
 		self.TKS_title3.place(x=20,y=90,anchor="nw")
 		for i in range(len(self.CSV_DiseaseFile)):
 			if self.CSV_DiseaseFile[i][0] == 'Disease':
@@ -656,7 +849,7 @@ class MazeMouseTrack(object):
 
 		#復健資訊選擇(下拉選單)
 		DisGroupInfo = ['choose Group...']
-		self.TKS_title4 = tk.Label(self.tkSetting,text="Group", font=('Arial', 12), bg="gray75")
+		self.TKS_title4 = tk.Label(self.tkSetting, text="Group", font=('Arial', 12), bg="gray75")
 		self.TKS_title4.place(x=20,y=125,anchor="nw")
 		for i in range(len(self.CSV_DiseaseFile)):
 			if self.CSV_DiseaseFile[i][0] == 'DisGroup':
@@ -666,11 +859,11 @@ class MazeMouseTrack(object):
 		self.DisGroupCombo.current(0)
 		self.TKS_BT_DisGroupConfirm = tk.Button(self.tkSetting, text='Confirm', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DisGroupConfirm)
 		self.TKS_BT_DisGroupConfirm.place(x=260,y=122,anchor="nw")
-		self.TKS_BT_DisGroupModify = tk.Button(self.tkSetting, text='Modify', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DisGroupConfirm)
+		self.TKS_BT_DisGroupModify = tk.Button(self.tkSetting, text='Modify', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DisGroupModify)
 		self.TKS_BT_DisGroupModify.place(x=345,y=122,anchor="nw")
 		
 		# 顯示變數區域
-		self.TKS_title5 = tk.Label(self.tkSetting,text="Setting Status", font=('Arial', 12), bg="gray75")
+		self.TKS_title5 = tk.Label(self.tkSetting, text="Setting Status", font=('Arial', 12), bg="gray75")
 		self.TKS_title5.place(x=450,y=20,anchor="nw")
 		self.TKS_Show_Opera = tk.Label(self.tkSetting, text="Operation Type: (not set)", font=('Arial', 13), fg="gray35")
 		self.TKS_Show_Opera.place(x=450,y=50,anchor="nw")
@@ -682,26 +875,56 @@ class MazeMouseTrack(object):
 		self.TKS_Show_DisGroup.place(x=450,y=140,anchor="nw")
 
 		# 修改病因區域
-		self.TKS_title6 = tk.Label(self.tkSetting,text="Disease Combobox Modify", font=('Arial', 12), bg="gray75")
+		self.TKS_DCM_Name_val = tk.StringVar()
+		self.TKS_DCM_Description_val = tk.StringVar()
+		# self.TKS_DCM_Name_val = "111"
+		# self.TKS_DCM_Description_val = "111"
+		self.TKS_title6 = tk.Label(self.tkSetting, text="Disease Combobox Modify", font=('Arial', 12), bg="gray85")
 		self.TKS_title6.place(x=20,y=180,anchor="nw")
 		self.ModifyDCM = ttk.Combobox(self.tkSetting, values=DiseaseInfo, state="disabled")
 		self.ModifyDCM.place(x=20,y=214,anchor="nw")
 		self.ModifyDCM.current(0)
 		self.TKS_Btn2_DCM1 = tk.Button(self.tkSetting, text='New Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyDisease('new'))
-		self.TKS_Btn2_DCM1.place(x=190,y=210,anchor="nw")
+		self.TKS_Btn2_DCM1.place(x=273,y=210,anchor="nw")
 		self.TKS_Btn2_DCM2 = tk.Button(self.tkSetting, text='Edit Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyDisease('edit'))
-		self.TKS_Btn2_DCM2.place(x=273,y=210,anchor="nw")
+		self.TKS_Btn2_DCM2.place(x=190,y=210,anchor="nw")
+		tk.Label(self.tkSetting, text="Disease Name", font=('Arial', 9)).place(x=20,y=240,anchor="nw")
+		self.TKS_DCM_Name = tk.Entry(self.tkSetting, font=('Arial', 12), textvariable=self.TKS_DCM_Name_val, state="disabled")
+		self.TKS_DCM_Name.place(x=20,y=257,anchor="nw")
+		tk.Label(self.tkSetting, text="Disease Description (Optional)", font=('Arial', 9)).place(x=20,y=285,anchor="nw")
+		self.TKS_DCM_Description = tk.Entry(self.tkSetting, font=('Arial', 12), textvariable=self.TKS_DCM_Description_val, width=35, state="disabled")
+		self.TKS_DCM_Description.place(x=20,y=303,anchor="nw")
+		tk.Label(self.tkSetting, text="※請敘述一下疾病中文名稱", font=('Arial', 9)).place(x=20,y=325,anchor="nw")
+		self.TKS_DCM_Confirm = tk.Button(self.tkSetting, text='Confirm', width=9, font=('Arial', 10), bg="gray90", state="disabled", command=self.tkSetting_ModifyDiseaseConfirm)
+		self.TKS_DCM_Confirm.place(x=20,y=350,anchor="nw")
+		self.TKS_DCM_Cancel = tk.Button(self.tkSetting, text='Cancel', width=9, font=('Arial', 10), bg="gray90", state="disabled", command=self.tkSetting_ModifyDiseaseCancel)
+		self.TKS_DCM_Cancel.place(x=110,y=350,anchor="nw")
 
 		# 修改病因組別區域
-		self.TKS_title6 = tk.Label(self.tkSetting,text="Disease Group Combobox Modify", font=('Arial', 12), bg="gray75")
-		self.TKS_title6.place(x=390,y=180,anchor="nw")
-		# self.ModifyDCM = ttk.Combobox(self.tkSetting, values=DiseaseInfo, state="disabled")
-		# self.ModifyDCM.place(x=390,y=214,anchor="nw")
-		# self.ModifyDCM.current(0)
-		# self.TKS_Btn2_DCM1 = tk.Button(self.tkSetting, text='New Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyDisease('new'))
-		# self.TKS_Btn2_DCM1.place(x=560,y=210,anchor="nw")
-		# self.TKS_Btn2_DCM2 = tk.Button(self.tkSetting, text='Edit Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyDisease('edit'))
-		# self.TKS_Btn2_DCM2.place(x=643,y=210,anchor="nw")
+		self.TKS_DGCM_Name_val = tk.StringVar()
+		self.TKS_DGCM_Description_val = tk.StringVar()
+		# self.TKS_DGCM_Name_val = ""
+		# self.TKS_DGCM_Description_val = ""
+		self.TKS_title7 = tk.Label(self.tkSetting,text="Disease Group Combobox Modify", font=('Arial', 12), bg="gray85")
+		self.TKS_title7.place(x=390,y=180,anchor="nw")
+		self.ModifyDGCM = ttk.Combobox(self.tkSetting, values=DisGroupInfo, state="disabled")
+		self.ModifyDGCM.place(x=390,y=214,anchor="nw")
+		self.ModifyDGCM.current(0)
+		self.TKS_Btn2_DGCM1 = tk.Button(self.tkSetting, text='New Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyGroupDisease('new'))
+		self.TKS_Btn2_DGCM1.place(x=643,y=210,anchor="nw")
+		self.TKS_Btn2_DGCM2 = tk.Button(self.tkSetting, text='Edit Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyGroupDisease('edit'))
+		self.TKS_Btn2_DGCM2.place(x=560,y=210,anchor="nw")
+		tk.Label(self.tkSetting, text="Disease Group Name", font=('Arial', 9)).place(x=390,y=240,anchor="nw")
+		self.TKS_DGCM_Name = tk.Entry(self.tkSetting, font=('Arial', 12), textvariable=self.TKS_DGCM_Name_val, state="disabled")
+		self.TKS_DGCM_Name.place(x=390,y=257,anchor="nw")
+		tk.Label(self.tkSetting, text="Disease Group Description (Optional)", font=('Arial', 9)).place(x=390,y=285,anchor="nw")
+		self.TKS_DGCM_Description = tk.Entry(self.tkSetting, font=('Arial', 12), width=35, textvariable=self.TKS_DGCM_Description_val, state="disabled")
+		self.TKS_DGCM_Description.place(x=390,y=303,anchor="nw")
+		tk.Label(self.tkSetting, text="※請敘述一下疾病復健組別內容", font=('Arial', 9)).place(x=390,y=325,anchor="nw")
+		self.TKS_DGCM_Confirm = tk.Button(self.tkSetting, text='Confirm', width=9, font=('Arial', 10), bg="gray90", state="disabled", command=self.tkSetting_ModifyDisGroupConfirm)
+		self.TKS_DGCM_Confirm.place(x=390,y=350,anchor="nw")
+		self.TKS_DGCM_Cancel = tk.Button(self.tkSetting, text='Cancel', width=9, font=('Arial', 10), bg="gray90", state="disabled", command=self.tkSetting_ModifyDisGroupCancel)
+		self.TKS_DGCM_Cancel.place(x=480,y=350,anchor="nw")
 		
 
 		self.BT_Setting.config(state="disabled")
