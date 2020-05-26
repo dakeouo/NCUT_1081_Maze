@@ -148,7 +148,7 @@ class MazeMouseTrack(object):
 		self.OperaType = "" #目前使用模式(訓練期/正式實驗期)
 		self.DiseaseType = "" #老鼠病症組別
 		self.DisGroupType = "" #老鼠病症組別復鍵(含 健康、無復健 等)
-		self.DisDays = [False, 0, 0] #老鼠病症天數(是否手術, 月, 天)
+		self.DisDays = [False, -1, -1] #老鼠病症天數(是否手術, 月, 天)
 		self.SETTING_OPEN = False
 
 		self.TKS_Show_Opera = ""
@@ -294,7 +294,7 @@ class MazeMouseTrack(object):
 			if self.OperaType == "":
 				ErrMsg = ErrMsg + "You don't have set Operation Type!!\n"
 				HaveError = True
-			if self.DisDays[1] == 0 and self.DisDays[2] == 0:
+			if self.DisDays[1] == -1 and self.DisDays[2] == -1:
 				ErrMsg = ErrMsg + "You don't set Operation Days!!\n"
 				HaveError = True
 			if self.DiseaseType == "":
@@ -603,11 +603,12 @@ class MazeMouseTrack(object):
 			self.TKS_Btn1_Opera1.config(bg="DarkOliveGreen2")
 			self.TKS_Btn1_Opera2.config(bg="gray90")
 			self.DisDays[0] = False
+			self.OperaType = 'pre'
 		elif val == 'past-Op':
 			self.TKS_Btn1_Opera1.config(bg="gray90")
 			self.TKS_Btn1_Opera2.config(bg="DarkOliveGreen2")
 			self.DisDays[0] = True
-		self.OperaType = val
+			self.OperaType = 'past'
 		self.TKS_Show_Opera.config(text="Operation Type: %s" %(self.OperaType), fg="black")
 
 	def tkSetting_DiseaseConfirm(self):
@@ -893,7 +894,7 @@ class MazeMouseTrack(object):
 		tk.Label(self.tkSetting, text="Disease Description (Optional)", font=('Arial', 9)).place(x=20,y=285,anchor="nw")
 		self.TKS_DCM_Description = tk.Entry(self.tkSetting, font=('Arial', 12), textvariable=self.TKS_DCM_Description_val, width=35, state="disabled")
 		self.TKS_DCM_Description.place(x=20,y=303,anchor="nw")
-		tk.Label(self.tkSetting, text="※盼院方能敘述一下疾病中文名稱", font=('Arial', 9)).place(x=20,y=325,anchor="nw")
+		tk.Label(self.tkSetting, text="※請敘述一下疾病中文名稱", font=('Arial', 9)).place(x=20,y=325,anchor="nw")
 		self.TKS_DCM_Confirm = tk.Button(self.tkSetting, text='Confirm', width=9, font=('Arial', 10), bg="gray90", state="disabled", command=self.tkSetting_ModifyDiseaseConfirm)
 		self.TKS_DCM_Confirm.place(x=20,y=350,anchor="nw")
 		self.TKS_DCM_Cancel = tk.Button(self.tkSetting, text='Cancel', width=9, font=('Arial', 10), bg="gray90", state="disabled", command=self.tkSetting_ModifyDiseaseCancel)
@@ -919,7 +920,7 @@ class MazeMouseTrack(object):
 		tk.Label(self.tkSetting, text="Disease Group Description (Optional)", font=('Arial', 9)).place(x=390,y=285,anchor="nw")
 		self.TKS_DGCM_Description = tk.Entry(self.tkSetting, font=('Arial', 12), width=35, textvariable=self.TKS_DGCM_Description_val, state="disabled")
 		self.TKS_DGCM_Description.place(x=390,y=303,anchor="nw")
-		tk.Label(self.tkSetting, text="※盼院方能敘述一下疾病復健組別內容", font=('Arial', 9)).place(x=390,y=325,anchor="nw")
+		tk.Label(self.tkSetting, text="※請敘述一下疾病復健組別內容", font=('Arial', 9)).place(x=390,y=325,anchor="nw")
 		self.TKS_DGCM_Confirm = tk.Button(self.tkSetting, text='Confirm', width=9, font=('Arial', 10), bg="gray90", state="disabled", command=self.tkSetting_ModifyDisGroupConfirm)
 		self.TKS_DGCM_Confirm.place(x=390,y=350,anchor="nw")
 		self.TKS_DGCM_Cancel = tk.Button(self.tkSetting, text='Cancel', width=9, font=('Arial', 10), bg="gray90", state="disabled", command=self.tkSetting_ModifyDisGroupCancel)
