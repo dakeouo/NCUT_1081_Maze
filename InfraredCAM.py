@@ -170,7 +170,7 @@ class InfraredCAM:
 	#========其他的副程式========
 	def checkSaveDirPath(self): #檢查儲存路徑
 		nowDatePath = './ChiMei_{}/'.format(datetime.now().strftime("%Y%m%d"))
-		DiseaseTypePath = '%s(%s_%2d_%2d)/' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
+		DiseaseTypePath = '%s(%s_%02d_%02d)/' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
 		CSV_Path = 'CSV_{}({})/'.format(self.DiseaseType, datetime.now().strftime("%Y%m%d"))
 		IMG_Path = 'IMG_{}({})/'.format(self.DiseaseType, datetime.now().strftime("%Y%m%d"))
 		if not os.path.exists(nowDatePath):
@@ -184,7 +184,7 @@ class InfraredCAM:
 
 	def recordRoute2CSV(self):
 		TimeDiff = (datetime.now() - self.RR2C_Time).seconds
-		DiseaseTypePath = '%s(%s_%2d_%2d)' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
+		DiseaseTypePath = '%s(%s_%02d_%02d)' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
 		CSV_Path = './ChiMei_{0}/{2}/CSV_{1}({0})/'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, DiseaseTypePath)
 		CSV_Name = self.SingleFileName + ".csv"
 		self.RR2C.append([int(self.TargetPos[0]), int(self.TargetPos[1])])
@@ -254,7 +254,7 @@ class InfraredCAM:
 		if ans < 40:
 			self.NOW_STATUS = 0
 			
-			self.Route.append(dangchianbi) #寫入進臂順序
+			self.Route.append(self.dangchianbi) #寫入進臂順序
 			self.frequency[self.dangchianbi-1] = self.frequency[self.dangchianbi-1]+1 #短期工作記憶+1
 			if self.foodtest[self.dangchianbi-1] == 1:	#長期工作記憶判斷
 				pass
@@ -371,7 +371,7 @@ class InfraredCAM:
 							print("起始時間: " +str(self.timestart))
 
 							self.checkSaveDirPath() #檢查所有儲存路徑
-							DiseaseTypePath = '%s(%s_%2d_%2d)' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
+							DiseaseTypePath = '%s(%s_%02d_%02d)' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
 							self.SingleFileName = "{}_{}_{}_{}".format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, self.DisGroupType, self.RatID) #固定檔名
 							self.CSVfilePath = './ChiMei_{0}/{2}/{0}.csv'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, DiseaseTypePath)
 							
@@ -408,9 +408,10 @@ class InfraredCAM:
 									cv2.circle(mousepath, convert(self.Mouse_coordinates[i]), 1, (0,255,0), -1)
 									# print(self.Mouse_coordinates[i])
 								# cv2.imwrite(self.RatID,mousepath)	#儲存路徑圖
-								IMG_Path = './ChiMei_{0}/{1}/IMG_{1}({0})/'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType)
+								DiseaseTypePath = '%s(%s_%02d_%02d)' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
+								IMG_Path = './ChiMei_{0}/{2}/IMG_{1}({0})/'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, DiseaseTypePath)
 								IMG_Name = self.SingleFileName + ".jpg"
-								cv2.imwrite(IMG_Path + IMG_Name, mousepath)
+								cv2.imencode('.jpg', mousepath)[1].tofile(IMG_Path + IMG_Name)
 								# cv2.imshow("mouse path",mousepath)
 
 							else:
