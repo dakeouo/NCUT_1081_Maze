@@ -800,137 +800,154 @@ class MazeMouseTrack(object):
 
 	def tkSetting_SetupUI(self):
 		global Disease_List
-		LoadDiseaseFile()
-		self.CSV_DiseaseFile = Disease_List
+		try:
+			LoadDiseaseFile()
+			self.CSV_DiseaseFile = Disease_List
 
-		self.SETTING_OPEN = True
-		settingSize = (768, 400)
-		self.tkSetting = tk.Tk()
-		self.tkSetting.title('%d臂迷宮路徑追蹤系統設定' %(self.ARM_UNIT)) #窗口名字
-		self.tkSetting.geometry('%dx%d+120+120' %(settingSize[0],settingSize[1])) #窗口大小(寬X高+X偏移量+Y偏移量)
-		self.tkSetting.resizable(False, False) #禁止變更視窗大小
+			self.SETTING_OPEN = True
+			settingSize = (768, 400)
+			self.tkSetting = tk.Tk()
+			self.tkSetting.title('%d臂迷宮路徑追蹤系統設定' %(self.ARM_UNIT)) #窗口名字
+			self.tkSetting.geometry('%dx%d+120+120' %(settingSize[0],settingSize[1])) #窗口大小(寬X高+X偏移量+Y偏移量)
+			self.tkSetting.resizable(False, False) #禁止變更視窗大小
 
-		self.TKS_RadValue = tk.IntVar()
+			self.TKS_RadValue = tk.IntVar()
 
-		# 選擇狀態是手術前後
-		self.TKS_title1 = tk.Label(self.tkSetting, text="Operation", font=('Arial', 12), bg="gray75")
-		self.TKS_title1.place(x=20,y=20,anchor="nw")
-		self.TKS_Btn1_Opera1 = tk.Button(self.tkSetting, text='pre-Op (手術前)', width=14, font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_BtnOpera('pre-Op'))
-		self.TKS_Btn1_Opera1.place(x=100,y=18,anchor="nw")
-		self.TKS_Btn1_Opera2 = tk.Button(self.tkSetting, text='past-Op (手術後)', width=14, font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_BtnOpera('past-Op'))
-		self.TKS_Btn1_Opera2.place(x=225,y=18,anchor="nw")
-		
-		# 設定天數
-		self.TKS_title2 = tk.Label(self.tkSetting, text="Op. Days", font=('Arial', 12), bg="gray75")
-		self.TKS_title2.place(x=20,y=55,anchor="nw")
-		self.TKS_OpDay_Month = tk.Entry(self.tkSetting, font=('Arial', 12), width=6, justify="right")
-		self.TKS_OpDay_Month.place(x=100,y=56,anchor="nw")
-		tk.Label(self.tkSetting, text="Month", font=('Arial', 10)).place(x=160,y=56,anchor="nw")
-		self.TKS_OpDay_Day = tk.Entry(self.tkSetting, font=('Arial', 12), width=6, justify="right")
-		self.TKS_OpDay_Day.place(x=220,y=56,anchor="nw")
-		tk.Label(self.tkSetting, text="Day", font=('Arial', 10)).place(x=280,y=56,anchor="nw")
-		self.TKS_BT_OpDayConfirm = tk.Button(self.tkSetting, text='Confirm', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_OperaDays)
-		self.TKS_BT_OpDayConfirm.place(x=320,y=53,anchor="nw")
+			# 選擇狀態是手術前後
+			self.TKS_title1 = tk.Label(self.tkSetting, text="Operation", font=('Arial', 12), bg="gray75")
+			self.TKS_title1.place(x=20,y=20,anchor="nw")
+			self.TKS_Btn1_Opera1 = tk.Button(self.tkSetting, text='pre-Op (手術前)', width=14, font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_BtnOpera('pre-Op'))
+			self.TKS_Btn1_Opera1.place(x=100,y=18,anchor="nw")
+			self.TKS_Btn1_Opera2 = tk.Button(self.tkSetting, text='past-Op (手術後)', width=14, font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_BtnOpera('past-Op'))
+			self.TKS_Btn1_Opera2.place(x=225,y=18,anchor="nw")
+			
+			# 設定天數
+			self.TKS_title2 = tk.Label(self.tkSetting, text="Op. Days", font=('Arial', 12), bg="gray75")
+			self.TKS_title2.place(x=20,y=55,anchor="nw")
+			self.TKS_OpDay_Month = tk.Entry(self.tkSetting, font=('Arial', 12), width=6, justify="right")
+			self.TKS_OpDay_Month.place(x=100,y=56,anchor="nw")
+			tk.Label(self.tkSetting, text="Month", font=('Arial', 10)).place(x=160,y=56,anchor="nw")
+			self.TKS_OpDay_Day = tk.Entry(self.tkSetting, font=('Arial', 12), width=6, justify="right")
+			self.TKS_OpDay_Day.place(x=220,y=56,anchor="nw")
+			tk.Label(self.tkSetting, text="Day", font=('Arial', 10)).place(x=280,y=56,anchor="nw")
+			self.TKS_BT_OpDayConfirm = tk.Button(self.tkSetting, text='Confirm', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_OperaDays)
+			self.TKS_BT_OpDayConfirm.place(x=320,y=53,anchor="nw")
 
-		#疾病資訊選擇(下拉選單)
-		DiseaseInfo = ['choose Disease...']
-		self.TKS_title3 = tk.Label(self.tkSetting, text="Disease", font=('Arial', 12), bg="gray75")
-		self.TKS_title3.place(x=20,y=90,anchor="nw")
-		for i in range(len(self.CSV_DiseaseFile)):
-			if self.CSV_DiseaseFile[i][0] == 'Disease':
-				DiseaseInfo.append(self.CSV_DiseaseFile[i][1])
-		self.DiseaseCombo = ttk.Combobox(self.tkSetting, values=DiseaseInfo, state="readonly")
-		self.DiseaseCombo.place(x=92,y=93,anchor="nw")
-		self.DiseaseCombo.current(0)
-		self.TKS_BT_DisConfirm = tk.Button(self.tkSetting, text='Confirm', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DiseaseConfirm)
-		self.TKS_BT_DisConfirm.place(x=260,y=87,anchor="nw")
-		self.TKS_BT_DisModify = tk.Button(self.tkSetting, text='Modify', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DiseaseModify)
-		self.TKS_BT_DisModify.place(x=345,y=87,anchor="nw")
+			#疾病資訊選擇(下拉選單)
+			DiseaseInfo = ['choose Disease...']
+			self.TKS_title3 = tk.Label(self.tkSetting, text="Disease", font=('Arial', 12), bg="gray75")
+			self.TKS_title3.place(x=20,y=90,anchor="nw")
+			for i in range(len(self.CSV_DiseaseFile)):
+				if self.CSV_DiseaseFile[i][0] == 'Disease':
+					DiseaseInfo.append(self.CSV_DiseaseFile[i][1])
+			self.DiseaseCombo = ttk.Combobox(self.tkSetting, values=DiseaseInfo, state="readonly")
+			self.DiseaseCombo.place(x=92,y=93,anchor="nw")
+			self.DiseaseCombo.current(0)
+			self.TKS_BT_DisConfirm = tk.Button(self.tkSetting, text='Confirm', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DiseaseConfirm)
+			self.TKS_BT_DisConfirm.place(x=260,y=87,anchor="nw")
+			self.TKS_BT_DisModify = tk.Button(self.tkSetting, text='Modify', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DiseaseModify)
+			self.TKS_BT_DisModify.place(x=345,y=87,anchor="nw")
 
-		#復健資訊選擇(下拉選單)
-		DisGroupInfo = ['choose Group...']
-		self.TKS_title4 = tk.Label(self.tkSetting, text="Group", font=('Arial', 12), bg="gray75")
-		self.TKS_title4.place(x=20,y=125,anchor="nw")
-		for i in range(len(self.CSV_DiseaseFile)):
-			if self.CSV_DiseaseFile[i][0] == 'DisGroup':
-				DisGroupInfo.append(self.CSV_DiseaseFile[i][1])
-		self.DisGroupCombo = ttk.Combobox(self.tkSetting, values=DisGroupInfo, state="readonly")
-		self.DisGroupCombo.place(x=92,y=127,anchor="nw")
-		self.DisGroupCombo.current(0)
-		self.TKS_BT_DisGroupConfirm = tk.Button(self.tkSetting, text='Confirm', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DisGroupConfirm)
-		self.TKS_BT_DisGroupConfirm.place(x=260,y=122,anchor="nw")
-		self.TKS_BT_DisGroupModify = tk.Button(self.tkSetting, text='Modify', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DisGroupModify)
-		self.TKS_BT_DisGroupModify.place(x=345,y=122,anchor="nw")
-		
-		# 顯示變數區域
-		self.TKS_title5 = tk.Label(self.tkSetting, text="Setting Status", font=('Arial', 12), bg="gray75")
-		self.TKS_title5.place(x=450,y=20,anchor="nw")
-		self.TKS_Show_Opera = tk.Label(self.tkSetting, text="Operation Type: (not set)", font=('Arial', 13), fg="gray35")
-		self.TKS_Show_Opera.place(x=450,y=50,anchor="nw")
-		self.TKS_Show_OpDay = tk.Label(self.tkSetting, text="Operation Days: (not set)", font=('Arial', 13), fg="gray35")
-		self.TKS_Show_OpDay.place(x=450,y=80,anchor="nw")
-		self.TKS_Show_Disease = tk.Label(self.tkSetting, text="Disease: (not set)", font=('Arial', 13), fg="gray35")
-		self.TKS_Show_Disease.place(x=450,y=110,anchor="nw")
-		self.TKS_Show_DisGroup = tk.Label(self.tkSetting, text="Disease Group: (not set)", font=('Arial', 13), fg="gray35")
-		self.TKS_Show_DisGroup.place(x=450,y=140,anchor="nw")
+			#復健資訊選擇(下拉選單)
+			DisGroupInfo = ['choose Group...']
+			self.TKS_title4 = tk.Label(self.tkSetting, text="Group", font=('Arial', 12), bg="gray75")
+			self.TKS_title4.place(x=20,y=125,anchor="nw")
+			for i in range(len(self.CSV_DiseaseFile)):
+				if self.CSV_DiseaseFile[i][0] == 'DisGroup':
+					DisGroupInfo.append(self.CSV_DiseaseFile[i][1])
+			self.DisGroupCombo = ttk.Combobox(self.tkSetting, values=DisGroupInfo, state="readonly")
+			self.DisGroupCombo.place(x=92,y=127,anchor="nw")
+			self.DisGroupCombo.current(0)
+			self.TKS_BT_DisGroupConfirm = tk.Button(self.tkSetting, text='Confirm', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DisGroupConfirm)
+			self.TKS_BT_DisGroupConfirm.place(x=260,y=122,anchor="nw")
+			self.TKS_BT_DisGroupModify = tk.Button(self.tkSetting, text='Modify', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DisGroupModify)
+			self.TKS_BT_DisGroupModify.place(x=345,y=122,anchor="nw")
+			
+			# 顯示變數區域
+			self.TKS_title5 = tk.Label(self.tkSetting, text="Setting Status", font=('Arial', 12), bg="gray75")
+			self.TKS_title5.place(x=450,y=20,anchor="nw")
+			self.TKS_Show_Opera = tk.Label(self.tkSetting, text="Operation Type: (not set)", font=('Arial', 13), fg="gray35")
+			self.TKS_Show_Opera.place(x=450,y=50,anchor="nw")
+			self.TKS_Show_OpDay = tk.Label(self.tkSetting, text="Operation Days: (not set)", font=('Arial', 13), fg="gray35")
+			self.TKS_Show_OpDay.place(x=450,y=80,anchor="nw")
+			self.TKS_Show_Disease = tk.Label(self.tkSetting, text="Disease: (not set)", font=('Arial', 13), fg="gray35")
+			self.TKS_Show_Disease.place(x=450,y=110,anchor="nw")
+			self.TKS_Show_DisGroup = tk.Label(self.tkSetting, text="Disease Group: (not set)", font=('Arial', 13), fg="gray35")
+			self.TKS_Show_DisGroup.place(x=450,y=140,anchor="nw")
 
-		# 修改病因區域
-		self.TKS_DCM_Name_val = tk.StringVar()
-		self.TKS_DCM_Description_val = tk.StringVar()
-		# self.TKS_DCM_Name_val = "111"
-		# self.TKS_DCM_Description_val = "111"
-		self.TKS_title6 = tk.Label(self.tkSetting, text="Disease Combobox Modify", font=('Arial', 12), bg="gray85")
-		self.TKS_title6.place(x=20,y=180,anchor="nw")
-		self.ModifyDCM = ttk.Combobox(self.tkSetting, values=DiseaseInfo, state="disabled")
-		self.ModifyDCM.place(x=20,y=214,anchor="nw")
-		self.ModifyDCM.current(0)
-		self.TKS_Btn2_DCM1 = tk.Button(self.tkSetting, text='New Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyDisease('new'))
-		self.TKS_Btn2_DCM1.place(x=273,y=210,anchor="nw")
-		self.TKS_Btn2_DCM2 = tk.Button(self.tkSetting, text='Edit Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyDisease('edit'))
-		self.TKS_Btn2_DCM2.place(x=190,y=210,anchor="nw")
-		tk.Label(self.tkSetting, text="Disease Name", font=('Arial', 9)).place(x=20,y=240,anchor="nw")
-		self.TKS_DCM_Name = tk.Entry(self.tkSetting, font=('Arial', 12), textvariable=self.TKS_DCM_Name_val, state="disabled")
-		self.TKS_DCM_Name.place(x=20,y=257,anchor="nw")
-		tk.Label(self.tkSetting, text="Disease Description (Optional)", font=('Arial', 9)).place(x=20,y=285,anchor="nw")
-		self.TKS_DCM_Description = tk.Entry(self.tkSetting, font=('Arial', 12), textvariable=self.TKS_DCM_Description_val, width=35, state="disabled")
-		self.TKS_DCM_Description.place(x=20,y=303,anchor="nw")
-		tk.Label(self.tkSetting, text="※請敘述一下疾病中文名稱", font=('Arial', 9)).place(x=20,y=325,anchor="nw")
-		self.TKS_DCM_Confirm = tk.Button(self.tkSetting, text='Confirm', width=9, font=('Arial', 10), bg="gray90", state="disabled", command=self.tkSetting_ModifyDiseaseConfirm)
-		self.TKS_DCM_Confirm.place(x=20,y=350,anchor="nw")
-		self.TKS_DCM_Cancel = tk.Button(self.tkSetting, text='Cancel', width=9, font=('Arial', 10), bg="gray90", state="disabled", command=self.tkSetting_ModifyDiseaseCancel)
-		self.TKS_DCM_Cancel.place(x=110,y=350,anchor="nw")
+			# 修改病因區域
+			self.TKS_DCM_Name_val = tk.StringVar()
+			self.TKS_DCM_Description_val = tk.StringVar()
+			# self.TKS_DCM_Name_val = "111"
+			# self.TKS_DCM_Description_val = "111"
+			self.TKS_title6 = tk.Label(self.tkSetting, text="Disease Combobox Modify", font=('Arial', 12), bg="gray85")
+			self.TKS_title6.place(x=20,y=180,anchor="nw")
+			self.ModifyDCM = ttk.Combobox(self.tkSetting, values=DiseaseInfo, state="disabled")
+			self.ModifyDCM.place(x=20,y=214,anchor="nw")
+			self.ModifyDCM.current(0)
+			self.TKS_Btn2_DCM1 = tk.Button(self.tkSetting, text='New Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyDisease('new'))
+			self.TKS_Btn2_DCM1.place(x=273,y=210,anchor="nw")
+			self.TKS_Btn2_DCM2 = tk.Button(self.tkSetting, text='Edit Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyDisease('edit'))
+			self.TKS_Btn2_DCM2.place(x=190,y=210,anchor="nw")
+			tk.Label(self.tkSetting, text="Disease Name", font=('Arial', 9)).place(x=20,y=240,anchor="nw")
+			self.TKS_DCM_Name = tk.Entry(self.tkSetting, font=('Arial', 12), textvariable=self.TKS_DCM_Name_val, state="disabled")
+			self.TKS_DCM_Name.place(x=20,y=257,anchor="nw")
+			tk.Label(self.tkSetting, text="Disease Description (Optional)", font=('Arial', 9)).place(x=20,y=285,anchor="nw")
+			self.TKS_DCM_Description = tk.Entry(self.tkSetting, font=('Arial', 12), textvariable=self.TKS_DCM_Description_val, width=35, state="disabled")
+			self.TKS_DCM_Description.place(x=20,y=303,anchor="nw")
+			tk.Label(self.tkSetting, text="※請敘述一下疾病中文名稱", font=('Arial', 9)).place(x=20,y=325,anchor="nw")
+			self.TKS_DCM_Confirm = tk.Button(self.tkSetting, text='Confirm', width=9, font=('Arial', 10), bg="gray90", state="disabled", command=self.tkSetting_ModifyDiseaseConfirm)
+			self.TKS_DCM_Confirm.place(x=20,y=350,anchor="nw")
+			self.TKS_DCM_Cancel = tk.Button(self.tkSetting, text='Cancel', width=9, font=('Arial', 10), bg="gray90", state="disabled", command=self.tkSetting_ModifyDiseaseCancel)
+			self.TKS_DCM_Cancel.place(x=110,y=350,anchor="nw")
 
-		# 修改病因組別區域
-		self.TKS_DGCM_Name_val = tk.StringVar()
-		self.TKS_DGCM_Description_val = tk.StringVar()
-		# self.TKS_DGCM_Name_val = ""
-		# self.TKS_DGCM_Description_val = ""
-		self.TKS_title7 = tk.Label(self.tkSetting,text="Disease Group Combobox Modify", font=('Arial', 12), bg="gray85")
-		self.TKS_title7.place(x=390,y=180,anchor="nw")
-		self.ModifyDGCM = ttk.Combobox(self.tkSetting, values=DisGroupInfo, state="disabled")
-		self.ModifyDGCM.place(x=390,y=214,anchor="nw")
-		self.ModifyDGCM.current(0)
-		self.TKS_Btn2_DGCM1 = tk.Button(self.tkSetting, text='New Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyGroupDisease('new'))
-		self.TKS_Btn2_DGCM1.place(x=643,y=210,anchor="nw")
-		self.TKS_Btn2_DGCM2 = tk.Button(self.tkSetting, text='Edit Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyGroupDisease('edit'))
-		self.TKS_Btn2_DGCM2.place(x=560,y=210,anchor="nw")
-		tk.Label(self.tkSetting, text="Disease Group Name", font=('Arial', 9)).place(x=390,y=240,anchor="nw")
-		self.TKS_DGCM_Name = tk.Entry(self.tkSetting, font=('Arial', 12), textvariable=self.TKS_DGCM_Name_val, state="disabled")
-		self.TKS_DGCM_Name.place(x=390,y=257,anchor="nw")
-		tk.Label(self.tkSetting, text="Disease Group Description (Optional)", font=('Arial', 9)).place(x=390,y=285,anchor="nw")
-		self.TKS_DGCM_Description = tk.Entry(self.tkSetting, font=('Arial', 12), width=35, textvariable=self.TKS_DGCM_Description_val, state="disabled")
-		self.TKS_DGCM_Description.place(x=390,y=303,anchor="nw")
-		tk.Label(self.tkSetting, text="※請敘述一下疾病復健組別內容", font=('Arial', 9)).place(x=390,y=325,anchor="nw")
-		self.TKS_DGCM_Confirm = tk.Button(self.tkSetting, text='Confirm', width=9, font=('Arial', 10), bg="gray90", state="disabled", command=self.tkSetting_ModifyDisGroupConfirm)
-		self.TKS_DGCM_Confirm.place(x=390,y=350,anchor="nw")
-		self.TKS_DGCM_Cancel = tk.Button(self.tkSetting, text='Cancel', width=9, font=('Arial', 10), bg="gray90", state="disabled", command=self.tkSetting_ModifyDisGroupCancel)
-		self.TKS_DGCM_Cancel.place(x=480,y=350,anchor="nw")
-		
+			# 修改病因組別區域
+			self.TKS_DGCM_Name_val = tk.StringVar()
+			self.TKS_DGCM_Description_val = tk.StringVar()
+			# self.TKS_DGCM_Name_val = ""
+			# self.TKS_DGCM_Description_val = ""
+			self.TKS_title7 = tk.Label(self.tkSetting,text="Disease Group Combobox Modify", font=('Arial', 12), bg="gray85")
+			self.TKS_title7.place(x=390,y=180,anchor="nw")
+			self.ModifyDGCM = ttk.Combobox(self.tkSetting, values=DisGroupInfo, state="disabled")
+			self.ModifyDGCM.place(x=390,y=214,anchor="nw")
+			self.ModifyDGCM.current(0)
+			self.TKS_Btn2_DGCM1 = tk.Button(self.tkSetting, text='New Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyGroupDisease('new'))
+			self.TKS_Btn2_DGCM1.place(x=643,y=210,anchor="nw")
+			self.TKS_Btn2_DGCM2 = tk.Button(self.tkSetting, text='Edit Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyGroupDisease('edit'))
+			self.TKS_Btn2_DGCM2.place(x=560,y=210,anchor="nw")
+			tk.Label(self.tkSetting, text="Disease Group Name", font=('Arial', 9)).place(x=390,y=240,anchor="nw")
+			self.TKS_DGCM_Name = tk.Entry(self.tkSetting, font=('Arial', 12), textvariable=self.TKS_DGCM_Name_val, state="disabled")
+			self.TKS_DGCM_Name.place(x=390,y=257,anchor="nw")
+			tk.Label(self.tkSetting, text="Disease Group Description (Optional)", font=('Arial', 9)).place(x=390,y=285,anchor="nw")
+			self.TKS_DGCM_Description = tk.Entry(self.tkSetting, font=('Arial', 12), width=35, textvariable=self.TKS_DGCM_Description_val, state="disabled")
+			self.TKS_DGCM_Description.place(x=390,y=303,anchor="nw")
+			tk.Label(self.tkSetting, text="※請敘述一下疾病復健組別內容", font=('Arial', 9)).place(x=390,y=325,anchor="nw")
+			self.TKS_DGCM_Confirm = tk.Button(self.tkSetting, text='Confirm', width=9, font=('Arial', 10), bg="gray90", state="disabled", command=self.tkSetting_ModifyDisGroupConfirm)
+			self.TKS_DGCM_Confirm.place(x=390,y=350,anchor="nw")
+			self.TKS_DGCM_Cancel = tk.Button(self.tkSetting, text='Cancel', width=9, font=('Arial', 10), bg="gray90", state="disabled", command=self.tkSetting_ModifyDisGroupCancel)
+			self.TKS_DGCM_Cancel.place(x=480,y=350,anchor="nw")
+			
 
-		self.BT_Setting.config(state="disabled")
-		self.tkSetting.protocol("WM_DELETE_WINDOW", self.tkSetting_Closing)
-		self.tkSetting.mainloop()
+			self.BT_Setting.config(state="disabled")
+			self.tkSetting.protocol("WM_DELETE_WINDOW", self.tkSetting_Closing)
+			self.tkSetting.mainloop()
+		except Warning as e:
+			detail = e.args[0] #取得詳細內容
+			cl, exc, tb = sys.exc_info() #取得Call Stack
+			lastCallStack = traceback.extract_tb(tb)[-1] #取得Call Stack的最後一筆資料
+			# fileName = lastCallStack[0] #取得發生的檔案名稱
+			lineNum = lastCallStack[1] #取得發生的行號
+			funcName = lastCallStack[2] #取得發生的函數名稱
+			logging.warning("{} line {}, in '{}': {}".format(cl, lineNum, funcName, detail))
 
+		except Exception as e:
+			detail = e.args[0] #取得詳細內容
+			cl, exc, tb = sys.exc_info() #取得Call Stack
+			lastCallStack = traceback.extract_tb(tb)[-1] #取得Call Stack的最後一筆資料
+			# fileName = lastCallStack[0] #取得發生的檔案名稱
+			lineNum = lastCallStack[1] #取得發生的行號
+			funcName = lastCallStack[2] #取得發生的函數名稱
+			logging.error("{} line {}, in '{}': {}".format(cl, lineNum, funcName, detail))
 	def setupUI(self):
 		global IPCAM_Info
 		#========測試用========
