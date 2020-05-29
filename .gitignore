@@ -9,8 +9,6 @@ old_*.py
 MazeLog*.log
 
 *.csv
-!IPCAM_INFO.csv
-!ARMS_LINE.csv
 
 *.jpg
 *.png
