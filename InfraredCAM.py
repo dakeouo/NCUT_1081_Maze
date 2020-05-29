@@ -398,7 +398,7 @@ class InfraredCAM:
 								# print(self.TotalShortTerm)
 								for i in range(0,len(self.LongTerm)):
 									self.TotalLongTerm = self.TotalLongTerm + self.LongTerm[i]
-								print(self.TotalLongTerm)
+								# print(self.TotalLongTerm)
 								self.DataRecord()
 								winsound.Beep(442,1000)
 								# print(self.Mouse_coordinates)
@@ -428,6 +428,15 @@ class InfraredCAM:
 				else:
 					self.CAM_IS_CONN = False
 					self.TargetPos = (-1, -1)
+
+				# ==== 給IPCAM的參數 ====
+				self.IPCAM.SHOW_StartFlag = self.MAZE_IS_RUN
+				self.IPCAM.SHOW_CurrentArm = self.dangchianbi
+				self.IPCAM.SHOW_MazeState = self.NOW_STATUS
+				self.IPCAM.SHOW_DiseaseType = self.DiseaseType
+				self.IPCAM.SHOW_DisGroupType = self.DisGroupType
+				self.IPCAM.SHOW_DisDays = self.DisDays[:]
+				self.IPCAM.SHOW_RatID = self.RatID
 
 				#開視窗查看影像
 				if self.OPEN_CAMERA_WINDOW and self.CAM_IS_RUN:

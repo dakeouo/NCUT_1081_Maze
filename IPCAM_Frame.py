@@ -27,6 +27,8 @@ IPCAM_ConfigStatus = 0
 IPCAM_NewP1 = [0, 0]
 IPCAM_NowTime = datetime.datetime.now()
 
+Record_Frame = []
+
 IPCAM_Messenage = ""
 IPCAM_MsgColor = 0
 
@@ -35,6 +37,18 @@ VideoDir = 'Video_{}/'.format(datetime.datetime.now().strftime("%Y%m%d"))
 
 WINDOWS_IS_ACTIVE = True
 CAM_IS_RUN = False
+
+SHOW_StartFlag = False
+SHOW_CurrentArm = 0
+SHOW_MazeState = 0
+
+SHOW_DiseaseType = "" #老鼠病症組別
+SHOW_DisGroupType = "" #老鼠病症組別復鍵(含 健康、無復健 等)
+SHOW_DisDays = [False, -1, -1] #老鼠病症天數(是否手術, 月, 天)
+SHOW_RatID = "" #老鼠ID
+
+def convert(list):
+    return tuple(list)
 
 def makeBlackImage(): #製造出全黑圖片(10x10) <= 這個贈品很好用，送你XD
 	pixels = []
@@ -71,6 +85,35 @@ def setMessenage(color, messenge):
 	time.sleep(0.2)
 	IPCAM_MsgColor = color
 	IPCAM_Messenage = messenge
+
+def addExpInfo2img(img):
+	global SHOW_StartFlag, SHOW_CurrentArm, SHOW_MazeState
+	global SHOW_DiseaseType, SHOW_DisGroupType, SHOW_DisDays, SHOW_RatID, IPCAM_Name
+
+	imgX, imgY = (img.shape[1], img.shape[0])
+
+	nowTime = datetime.datetime.now().strftime("%m%d %H:%M:%S")
+	if SHOW_StartFlag:
+		cv2.rectangle(img, (20, 40), (300, 240), (0, 0, 0), -1)
+		cv2.putText(img, "StartFlag: {}".format(SHOW_StartFlag), (30, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255))
+		cv2.putText(img, "CurrentArm: {}".format(SHOW_CurrentArm), (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255))
+		cv2.putText(img, "MazeState: {}".format(SHOW_MazeState), (30, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255))
+		if not SHOW_DisDays[0]:
+			DisText = "Dis: pre %02dM%02dD" %(SHOW_DisDays[1], SHOW_DisDays[2])
+		else:
+			DisText = "Dis: past %02dM%02dD" %(SHOW_DisDays[1], SHOW_DisDays[2])
+		cv2.putText(img, DisText, (30, 130), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255))
+		cv2.putText(img, "DiseaseType: {}".format(SHOW_DiseaseType), (30, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255))
+		cv2.putText(img, "DisGroupType: {}".format(SHOW_DisGroupType), (30, 170), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255))
+		cv2.putText(img, "RatID: {}".format(SHOW_RatID), (30, 190), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255))
+		cv2.putText(img, "nowTime: {}".format(nowTime), (30, 210), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255))
+	else:
+		cv2.rectangle(img, (20, 40), (300, 120), (0, 0, 0), -1)
+		cv2.putText(img, "StartFlag: {}".format(SHOW_StartFlag), (30, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255))
+		cv2.putText(img, "IPCAM: {}".format(IPCAM_Name), (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255))
+		cv2.putText(img, "nowTime: {}".format(nowTime), (30, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255))
+
+	return img
 
 def Main():
 	global count, IPCAM_Image,  MSG_Print, IPCAM_Messenage, IPCAM_FrameCount, IPCAM_NowTime, IPCAM_ConfigStatus
@@ -117,13 +160,21 @@ def Main():
 						VideoOut = cv2.VideoWriter("{}{}_{}.avi".format(nowDatePath + VideoDir, IPCAM_Name, datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")),cv2.VideoWriter_fourcc(*'DIVX'), IPCAM_Frame, (frame.shape[1], frame.shape[0]))
 						videoTime = nowTime
 					else:
-						if len(IPCAM_Image) == 0:
-							VideoOut.write(cv2.resize(makeBlackImage(),(frame.shape[1], frame.shape[0]),interpolation=cv2.INTER_CUBIC))
-						else:
-							VideoOut.write(IPCAM_Image)
+						# if len(IPCAM_Image) == 0:
+						# 	VideoOut.write(cv2.resize(makeBlackImage(),(frame.shape[1], frame.shape[0]),interpolation=cv2.INTER_CUBIC))
+						# else:
+						# 	VideoOut.write(IPCAM_Image)
+						
+						if len(Record_Frame) == 0:
+							Record_Frame = cv2.resize(makeBlackImage(),(frame.shape[1], frame.shape[0]),interpolation=cv2.INTER_CUBIC)
+						recordBroad = addExpInfo2img(Record_Frame)
+						VideoOut.write(Record_Frame)
+						# cv2.imshow('recordBroad', recordBroad)
+						# cv2.waitKey(1)
 
 					if frame is not None:
 						IPCAM_Image = frame
+						Record_Frame = frame.copy()
 						FrameCount = FrameCount + 1
 						if (nowTime - newTime).seconds > 0:
 							IPCAM_FrameCount = FrameCount
@@ -140,6 +191,7 @@ def Main():
 				else:
 					# CAM_INIT_SUCCESS = False
 					IPCAM_Image = []
+					Record_Frame = []
 
 	except Warning as e:
 		detail = e.args[0] #取得詳細內容
