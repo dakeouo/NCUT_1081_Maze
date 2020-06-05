@@ -152,6 +152,7 @@ class InfraredCAM:
 				 [1,1,1,1,1],
 				 [1,1,1,1,1],
 				 [1,1,1,1,1]], dtype="uint8")
+		self.oo = np.ones([10,10])
 		self.READ_FOOD = False #第一次讀取哪壁有食物
 		self.frequency = []  #進臂次數
 		self.NOW_STATUS = 0 #進臂or出臂
@@ -364,6 +365,8 @@ class InfraredCAM:
 					pr = cv2.bitwise_and(frame1,frame1, mask= copy ) #遮罩覆蓋到影像上
 					# cv2.imshow("pr",pr)
 					frame1 = cv2.morphologyEx(pr,cv2.MORPH_OPEN,self.O)
+					frame1 = cv2.morphologyEx(frame1,cv2.MORPH_CLOSE,self.oo)
+					
 					# cv2.imshow("frame",frame1)
 					self.rat_XY,wh = cv2.findContours(frame1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 W=所有座標
 					if len(self.rat_XY):
@@ -448,15 +451,14 @@ class InfraredCAM:
 				else:
 					self.CAM_IS_CONN = False
 					self.TargetPos = (-1, -1)
-
 				# ==== 給IPCAM的參數 ====
-				self.IPCAM.SHOW_StartFlag = self.MAZE_IS_RUN
-				self.IPCAM.SHOW_CurrentArm = self.dangchianbi
-				self.IPCAM.SHOW_MazeState = self.NOW_STATUS
-				self.IPCAM.SHOW_DiseaseType = self.DiseaseType
-				self.IPCAM.SHOW_DisGroupType = self.DisGroupType
-				self.IPCAM.SHOW_DisDays = self.DisDays[:]
-				self.IPCAM.SHOW_RatID = self.RatID
+				# self.IPCAM.SHOW_StartFlag = self.MAZE_IS_RUN
+				# self.IPCAM.SHOW_CurrentArm = self.dangchianbi
+				# self.IPCAM.SHOW_MazeState = self.NOW_STATUS
+				# self.IPCAM.SHOW_DiseaseType = self.DiseaseType
+				# self.IPCAM.SHOW_DisGroupType = self.DisGroupType
+				# self.IPCAM.SHOW_DisDays = self.DisDays[:]
+				# self.IPCAM.SHOW_RatID = self.RatID
 
 				#開視窗查看影像
 				if self.OPEN_CAMERA_WINDOW and self.CAM_IS_RUN:
