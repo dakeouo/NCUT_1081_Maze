@@ -16,6 +16,10 @@ import traceback
 
 FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
 logging.basicConfig(level=logging.WARNING, filename='MazeLog.log', filemode='a', format=FORMAT)
+fistimeinline = True #第一次跑進臂線判斷
+Inlinepoint1 = []	#八個進臂線座標點1
+Inlinepoint2 = []	#八個進臂線座標點2
+Inlinepoint_long = [] #八個臂的進臂線長
 
 #========純副程式區========
 def writeData2CSV(fileName, type_, dataRow): #寫入CSV檔
@@ -220,28 +224,43 @@ class InfraredCAM:
 			self.frequency.append(0)
 	def examination(self,NOW_STATUS,TargetPos): #進臂判斷
 		#八壁32點
-		
 		#mask = [[[x11,y11],[x12,y12]],...]
-		mask = []
-		Ratinline = 65/20
+		global fistimeinline,Inlinepoint1,Inlinepoint2,Inlinepoint_long 
+		Ratinline = 65/20	
 		self.NOW_STATUS = 0
-		for i in range(0,self.ARM_UNIT):
-			# mask1 = [int(ARMS_LINE[i][0][0] -(ARMS_LINE[i][0][0] - ARMS_LINE[i][1][0])/Ratinline) , int(ARMS_LINE[i][0][1]-(ARMS_LINE[i][0][1] - ARMS_LINE[i][1][1])/Ratinline)]
-			# mask2 = [int(ARMS_LINE[i][2][0]-(ARMS_LINE[i][2][0] - ARMS_LINE[i][3][0])/Ratinline) , int(ARMS_LINE[i][2][1]-(ARMS_LINE[i][2][1] - ARMS_LINE[i][3][1])/Ratinline)]
-			mask1 = [int(self.ARMS_LINE[i][0][0] -(self.ARMS_LINE[i][0][0] - self.ARMS_LINE[i][1][0])/self.ARM_LINE_DISTANCE) , int(self.ARMS_LINE[i][0][1]-(self.ARMS_LINE[i][0][1] - self.ARMS_LINE[i][1][1])/self.ARM_LINE_DISTANCE)]
-			mask2 = [int(self.ARMS_LINE[i][2][0]-(self.ARMS_LINE[i][2][0] - self.ARMS_LINE[i][3][0])/self.ARM_LINE_DISTANCE) , int(self.ARMS_LINE[i][2][1]-(self.ARMS_LINE[i][2][1] - self.ARMS_LINE[i][3][1])/self.ARM_LINE_DISTANCE)]
-			ans1 = math.sqrt(pow(self.TargetPos[0] - mask1[0],2) + pow(self.TargetPos[1] - mask1[1],2))
-			ans2 = math.sqrt(pow(self.TargetPos[0] - mask2[0],2) + pow(self.TargetPos[1] - mask2[1],2))
-			ans3 = ans1 + ans2    #白色與一臂的距離
-			# print("ans%d %s" %(i, ans3))
-			if ans3 < 40:
-				self.NOW_STATUS = 1
-				self.dangchianbi= (i + 1)
-				self.food1[i] = 0
-				break
+		if fistimeinline == True:  #計算八臂進臂線座標點與進臂線的距離(只會跑一次)
+			Inlinepoint1 = []	#八個進臂線座標點1
+			Inlinepoint2 = []	#八個進臂線座標點2
+			Inlinepoint_long = [] #八個臂的進臂線長
+
+			for i in range(0,self.ARM_UNIT):
+				mask1 = [int(self.ARMS_LINE[i][0][0] -(self.ARMS_LINE[i][0][0] - self.ARMS_LINE[i][1][0])/self.ARM_LINE_DISTANCE) , int(self.ARMS_LINE[i][0][1]-(self.ARMS_LINE[i][0][1] - self.ARMS_LINE[i][1][1])/self.ARM_LINE_DISTANCE)]
+				mask2 = [int(self.ARMS_LINE[i][2][0]-(self.ARMS_LINE[i][2][0] - self.ARMS_LINE[i][3][0])/self.ARM_LINE_DISTANCE) , int(self.ARMS_LINE[i][2][1]-(self.ARMS_LINE[i][2][1] - self.ARMS_LINE[i][3][1])/self.ARM_LINE_DISTANCE)]
+				#mask1,mask2 為計算每臂進臂線座標
+				ans4 = math.sqrt(pow(mask2[0] - mask1[0],2) + pow(mask2[1] - mask1[1],2))
+				Inlinepoint1.append(mask1)
+				Inlinepoint2.append(mask2)
+				Inlinepoint_long.append(int(ans4))
+				fistimeinline = False
+			# print(Inlinepoint1)
+			# print(Inlinepoint2)
+			# print(Inlinepoint_long)
+		else:
+			for i in range(0,self.ARM_UNIT):
+				ans1 = math.sqrt(pow(self.TargetPos[0] - Inlinepoint1[i][0],2) + pow(self.TargetPos[1] - Inlinepoint1[i][1],2))
+				ans2 = math.sqrt(pow(self.TargetPos[0] - Inlinepoint2[i][0],2) + pow(self.TargetPos[1] - Inlinepoint2[i][1],2))
+				# print("NOW_STATUS{}".format(self.NOW_STATUS))
+			# print("進壁線%d %s"%(i,ans4))
+				ans3 = ans1 + ans2    #白色與一臂的距離
+				# print("ans%d %s" %(i, ans3))
+				if ans3 < Inlinepoint_long[i]+5:
+					self.NOW_STATUS = 1
+					self.dangchianbi= (i + 1)
+					self.food1[i] = 0
+					break
 		return self.NOW_STATUS,self.dangchianbi
 	def leave(self,TargetPos): #出臂判斷
-
+		# print("NOW_STATUS{}".format(self.NOW_STATUS))
 		i1 = [0,4,8,12,16,20,24,28]
 		i2 = [3,7,11,15,19,23,27,31]
 
@@ -250,8 +269,9 @@ class InfraredCAM:
 
 		ans1 = math.sqrt(pow(self.TargetPos[0] - Ix1[0],2) + pow(self.TargetPos[1] - Ix1[1],2))
 		ans2 = math.sqrt(pow(self.TargetPos[0] - Ix2[0],2) + pow(self.TargetPos[1] - Ix2[1],2))
+		ans4 = math.sqrt(pow(Ix1[0] - Ix2[0],2) + pow(Ix1[1] - Ix2[1],2))
 		ans = ans1 + ans2
-		if ans < 40:
+		if ans < ans4+5:
 			self.NOW_STATUS = 0
 			
 			self.Route.append(self.dangchianbi) #寫入進臂順序
@@ -341,7 +361,7 @@ class InfraredCAM:
 					frame1 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)	
 					B2,frame1 = cv2.threshold(frame1, 127,255,cv2.THRESH_BINARY)
 					# cv2.imshow("frame1",frame1)
-					pr = cv2.bitwise_and(frame1,frame1, mask=copy ) #遮罩覆蓋到影像上
+					pr = cv2.bitwise_and(frame1,frame1, mask= copy ) #遮罩覆蓋到影像上
 					# cv2.imshow("pr",pr)
 					frame1 = cv2.morphologyEx(pr,cv2.MORPH_OPEN,self.O)
 					# cv2.imshow("frame",frame1)
