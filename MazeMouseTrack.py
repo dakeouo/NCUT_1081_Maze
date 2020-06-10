@@ -6,6 +6,7 @@ from tkinter import filedialog
 import threading
 # from ThermalCAM import ThermalCAM as TCAM
 from InfraredCAM import InfraredCAM as TCAM
+import DebugVideo as DBGV
 import IPCAM_Frame as IPCAM
 import logging
 import sys
@@ -96,6 +97,11 @@ class MazeMouseTrack(object):
 		self.TCAM = TCAM()
 		self.thread = threading.Thread(target = self.TCAM.CameraMain) # 執行該子執行緒
 		self.thread.start()  # 執行該子執行緒
+
+		#狀態顯示&錄影程式
+		self.DBGV = DBGV
+		self.DBGVThread = threading.Thread(target = self.DBGV.DBGV_Main) # 執行該子執行緒
+		self.DBGVThread.start()  # 執行該子執行緒
 
 		#變數：迷宮系統相關
 		self.ARM_UNIT = self.TCAM.ARM_UNIT #迷宮臂數
@@ -267,6 +273,11 @@ class MazeMouseTrack(object):
 			self.OPEN_CAMERA_WINDOW = False
 			self.TCAM.OPEN_CAMERA_WINDOW = self.OPEN_CAMERA_WINDOW
 			self.makeBall()
+			if self.SETTING_OPEN:
+				self.SETTING_OPEN = False
+				self.DBGV.Maze_SetState = False
+				self.BT_Setting.config(state="disabled")
+				self.tkSetting.destroy()
 		else:
 			self.BT_Connect.config(text="Unlink", bg="tomato", fg="brown4")
 			self.Link_State.config(text="IPCAM Link: Linked",fg="green4")
@@ -297,6 +308,12 @@ class MazeMouseTrack(object):
 			if self.DisDays[1] == -1 and self.DisDays[2] == -1:
 				ErrMsg = ErrMsg + "You don't set Operation Days!!\n"
 				HaveError = True
+			else:
+				if(self.DisDays[1] == -1):
+					self.DisDays[1] = 0
+				if(self.DisDays[2] == -1):
+					self.DisDays[2] = 0
+
 			if self.DiseaseType == "":
 				ErrMsg = ErrMsg + "You don't have Choose Disease Type!!\n"
 				HaveError = True
@@ -337,6 +354,7 @@ class MazeMouseTrack(object):
 			self.BT_Camera.config(bg="lemon chiffon")
 			self.OPEN_CAMERA_WINDOW = True
 		self.TCAM.OPEN_CAMERA_WINDOW = self.OPEN_CAMERA_WINDOW
+		self.DBGV.Maze_CameraState = self.OPEN_CAMERA_WINDOW
 
 	def Choose_Dir(self): #選擇CSV檔要存至哪個位置
 		FileDir = filedialog.asksaveasfilename(
@@ -448,6 +466,7 @@ class MazeMouseTrack(object):
 						self.Maze_State.place(x=self.WinSize[0]-170,y=220,anchor="ne")
 						self.BT_Start.config(text="Start", bg="DarkOliveGreen2")
 						self.MAZE_IS_RUN = False
+						self.Maze_StartState = False
 				else:
 					if self.CAM_IS_CONN:
 						self.LockInput(False)
@@ -476,6 +495,9 @@ class MazeMouseTrack(object):
 				elif(IPCAM_MsgColor == 2):
 					self.TK_SHOW_SYS_Msg_Text.config(fg="red2")
 				
+				self.DBGV.Maze_StartState = self.MAZE_IS_RUN
+				self.DBGV.Maze_LinkState = self.CAM_IS_RUN
+				self.DBGV.Maze_CameraState = self.OPEN_CAMERA_WINDOW
 
 			self.tkWin.after(10,self.LoopMain)
 
@@ -500,6 +522,7 @@ class MazeMouseTrack(object):
 	def windowsClosing(self):
 		self.TCAM.WINDOWS_IS_ACTIVE = False #傳送視窗關閉狀態
 		self.IPCAM.WINDOWS_IS_ACTIVE = False #傳送視窗關閉狀態
+		self.DBGV.WINDOWS_IS_ACTIVE = False #傳送視窗關閉狀態
 		self.tkWin.destroy()
 		if self.SETTING_OPEN:
 			self.tkSetting.destroy()
@@ -795,12 +818,14 @@ class MazeMouseTrack(object):
 
 	def tkSetting_Closing(self):
 		self.SETTING_OPEN = False
+		self.DBGV.Maze_SetState = False
 		self.BT_Setting.config(state="normal")
 		self.tkSetting.destroy()
 
 	def tkSetting_SetupUI(self):
 		global Disease_List
 		try:
+			self.DBGV.Maze_SetState = True
 			LoadDiseaseFile()
 			self.CSV_DiseaseFile = Disease_List
 
@@ -866,13 +891,26 @@ class MazeMouseTrack(object):
 			# 顯示變數區域
 			self.TKS_title5 = tk.Label(self.tkSetting, text="Setting Status", font=('Arial', 12), bg="gray75")
 			self.TKS_title5.place(x=450,y=20,anchor="nw")
-			self.TKS_Show_Opera = tk.Label(self.tkSetting, text="Operation Type: (not set)", font=('Arial', 13), fg="gray35")
+			if self.OperaType != "":
+				self.TKS_Show_Opera = tk.Label(self.tkSetting, text="Operation Type: {}".format(self.OperaType), font=('Arial', 13), fg="black")
+			else:
+				self.TKS_Show_Opera = tk.Label(self.tkSetting, text="Operation Type: (not set)", font=('Arial', 13), fg="gray35")
 			self.TKS_Show_Opera.place(x=450,y=50,anchor="nw")
-			self.TKS_Show_OpDay = tk.Label(self.tkSetting, text="Operation Days: (not set)", font=('Arial', 13), fg="gray35")
+			
+			if self.DisDays[1] != -1 and self.DisDays[2] != -1:
+				self.TKS_Show_OpDay = tk.Label(self.tkSetting, text="Operation Days: %2d Month %2d Day" %(self.DisDays[1], self.DisDays[2]), font=('Arial', 13), fg="black")
+			else:
+				self.TKS_Show_OpDay = tk.Label(self.tkSetting, text="Operation Type: (not set)", font=('Arial', 13), fg="gray35")
 			self.TKS_Show_OpDay.place(x=450,y=80,anchor="nw")
-			self.TKS_Show_Disease = tk.Label(self.tkSetting, text="Disease: (not set)", font=('Arial', 13), fg="gray35")
+			if self.DiseaseType != "":
+				self.TKS_Show_Disease = tk.Label(self.tkSetting, text="Operation Type: {}".format(self.DiseaseType), font=('Arial', 13), fg="black")
+			else:
+				self.TKS_Show_Disease = tk.Label(self.tkSetting, text="Disease: (not set)", font=('Arial', 13), fg="gray35")
 			self.TKS_Show_Disease.place(x=450,y=110,anchor="nw")
-			self.TKS_Show_DisGroup = tk.Label(self.tkSetting, text="Disease Group: (not set)", font=('Arial', 13), fg="gray35")
+			if self.DisGroupType != "":
+				self.TKS_Show_DisGroup = tk.Label(self.tkSetting, text="Disease Group: {}".format(self.DisGroupType), font=('Arial', 13), fg="black")
+			else:
+				self.TKS_Show_DisGroup = tk.Label(self.tkSetting, text="Disease Group: (not set)", font=('Arial', 13), fg="gray35")
 			self.TKS_Show_DisGroup.place(x=450,y=140,anchor="nw")
 
 			# 修改病因區域
@@ -1066,6 +1104,7 @@ class MazeMouseTrack(object):
 		self.tkWin.mainloop()
 		self.thread.join() # 等待子執行緒結束
 		self.CAMThread.join()
+		self.DBGVThread.join()
 		
 if __name__ == '__main__':
   MazeMouseTrack()

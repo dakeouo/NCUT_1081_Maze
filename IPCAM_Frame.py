@@ -8,6 +8,7 @@ import time
 import logging
 import sys
 import traceback
+import DebugVideo as DBGV
 
 FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
 logging.basicConfig(level=logging.WARNING, filename='MazeLog.log', filemode='a', format=FORMAT)
@@ -54,7 +55,7 @@ def setMessenage(color, messenge):
 def Main():
 	global IPCAM_Image, IPCAM_FrameCount
 	global IPCAM_Username, IPCAM_Password, IPCAM_Name, IPCAM_IP, IPCAM_Frame, IPCAM_NewP1, IPCAM_NowTime
-	global CAM_INIT_SUCCESS, CAM_IS_RUN
+	global CAM_INIT_SUCCESS, CAM_IS_RUN, DBGV
 
 	try:
 		FIRST_RUN = True
@@ -66,22 +67,29 @@ def Main():
 						IPCAM_Image = []
 						FrameCount = 0
 						rtsp = "rtsp://{0}:{1}@{2}:554/{3}".format(IPCAM_Username, IPCAM_Password, IPCAM_IP, IPCAM_Bar) #1920x1080
+
 						cap = cv2.VideoCapture(rtsp)
 						FIRST_RUN = False
 
 					nowTime = datetime.datetime.now()
 					if cap.isOpened():
 						ret,frame = cap.read()
+						DBGV.IPCAM_Name = IPCAM_Name
+						DBGV.IPCAM_IP = IPCAM_IP
+						DBGV.IPCAM_NewP1 = IPCAM_NewP1
 					else:
 						setMessenage(2, "[ERROR] Camera Not Open!!")
 						cap = cv2.VideoCapture(rtsp)
 
 					if frame is not None:
 						IPCAM_Image = frame
+						DBGV.IPCAM_Image = frame
 						FrameCount = FrameCount + 1
 						IPCAM_NowTime = datetime.datetime.now() #影像讀取成功的時間
+						DBGV.IPCAM_NowTime = IPCAM_NowTime
 						if (nowTime - newTime).seconds > 0:
 							IPCAM_FrameCount = FrameCount
+							DBGV.IPCAM_FrameCount = FrameCount
 							FrameCount = 0
 							newTime = datetime.datetime.now() #更新啟始時間
 					else:
@@ -91,6 +99,7 @@ def Main():
 					setMessenage(1, "[INFO] CAMERA Unlink")
 					FIRST_RUN = True
 					IPCAM_Image = []
+					DBGV.IPCAM_Image = []
 					FrameCount = 0
 
 	except Warning as e:

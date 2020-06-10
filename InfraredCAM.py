@@ -10,6 +10,7 @@ import csv
 import winsound
 import threading
 import IPCAM_Frame as IPCAM
+import DebugVideo as DBGV
 import logging
 import sys
 import traceback
@@ -83,6 +84,7 @@ def makeBlackImage(): #製造出全黑圖片(10x10) <= 這個贈品很好用，�
 class InfraredCAM:
 	def __init__(self):
 		self.IPCAM = IPCAM
+		self.DBGV = DBGV
 
 		self.myTime = datetime.now()
 		# self.myTimeMsec = int(self.myTime.strftime("%S"))
@@ -449,14 +451,13 @@ class InfraredCAM:
 					self.CAM_IS_CONN = False
 					self.TargetPos = (-1, -1)
 
-				# ==== 給IPCAM的參數 ====
-				self.IPCAM.SHOW_StartFlag = self.MAZE_IS_RUN
-				self.IPCAM.SHOW_CurrentArm = self.dangchianbi
-				self.IPCAM.SHOW_MazeState = self.NOW_STATUS
-				self.IPCAM.SHOW_DiseaseType = self.DiseaseType
-				self.IPCAM.SHOW_DisGroupType = self.DisGroupType
-				self.IPCAM.SHOW_DisDays = self.DisDays[:]
-				self.IPCAM.SHOW_RatID = self.RatID
+				# ==== 給DBGV的參數 ====
+				self.DBGV.Exp_Food = self.Food
+				self.DBGV.Exp_Disense = self.DiseaseType
+				self.DBGV.Exp_DisGroup = self.DisGroupType
+				self.DBGV.Exp_DisDay = self.DisDays[:]
+				self.DBGV.Exp_RatID = self.RatID	
+				self.DBGV.Exp_StartTime = self.timestart
 
 				#開視窗查看影像
 				if self.OPEN_CAMERA_WINDOW and self.CAM_IS_RUN:
