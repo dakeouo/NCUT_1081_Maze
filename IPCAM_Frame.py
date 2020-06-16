@@ -61,29 +61,41 @@ def Main():
 		FIRST_RUN = True
 		newTime = datetime.datetime.now() #啟始時間
 		while WINDOWS_IS_ACTIVE:
-			if CAM_INIT_SUCCESS:			
+			DBGV.CheckP_IPCAM = "1"
+			if CAM_INIT_SUCCESS:
+				DBGV.CheckP_IPCAM = "2"			
 				if CAM_IS_RUN:
+					DBGV.CheckP_IPCAM = "3"
 					if FIRST_RUN:
+						DBGV.CheckP_IPCAM = "4"
 						IPCAM_Image = []
 						FrameCount = 0
 						rtsp = "rtsp://{0}:{1}@{2}:554/{3}".format(IPCAM_Username, IPCAM_Password, IPCAM_IP, IPCAM_Bar) #1920x1080
 
+						DBGV.CheckP_IPCAM = "5"
 						cap = cv2.VideoCapture(rtsp)
 						FIRST_RUN = False
+						DBGV.CheckP_IPCAM = "6"
 
 					nowTime = datetime.datetime.now()
 					if cap.isOpened():
+						DBGV.CheckP_IPCAM = "7"
 						ret,frame = cap.read()
+						DBGV.CheckP_IPCAM = "8"
 						DBGV.IPCAM_Name = IPCAM_Name
 						DBGV.IPCAM_IP = IPCAM_IP
 						DBGV.IPCAM_NewP1 = IPCAM_NewP1
+						DBGV.CheckP_IPCAM = "9"
 					else:
+						DBGV.CheckP_IPCAM = "10"
 						setMessenage(2, "[ERROR] Camera Not Open!!")
 						cap = cv2.VideoCapture(rtsp)
+						DBGV.CheckP_IPCAM = "11"
 
 					if frame is not None:
+						DBGV.CheckP_IPCAM = "12"
 						IPCAM_Image = frame
-						DBGV.IPCAM_Image = frame
+						DBGV.IPCAM_Image = frame.copy()
 						FrameCount = FrameCount + 1
 						IPCAM_NowTime = datetime.datetime.now() #影像讀取成功的時間
 						DBGV.IPCAM_NowTime = IPCAM_NowTime
@@ -93,14 +105,18 @@ def Main():
 							FrameCount = 0
 							newTime = datetime.datetime.now() #更新啟始時間
 					else:
+						DBGV.CheckP_IPCAM = "13"
 						setMessenage(2, "[ERROR] Frame is NULL! Reconnecting...")
 						cap = cv2.VideoCapture(rtsp)
+						DBGV.CheckP_IPCAM = "14"
 				else:
+					DBGV.CheckP_IPCAM = "15"
 					setMessenage(1, "[INFO] CAMERA Unlink")
 					FIRST_RUN = True
 					IPCAM_Image = []
 					DBGV.IPCAM_Image = []
 					FrameCount = 0
+					DBGV.CheckP_IPCAM = "16"
 
 	except Warning as e:
 		detail = e.args[0] #取得詳細內容

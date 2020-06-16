@@ -5,11 +5,17 @@ from PIL import Image
 import datetime
 import logging
 import sys
+import os
 import traceback
 import random as rand
+import DebugVideo as DBGV
 
 WINDOWS_IS_ACTIVE = True	#UI是否在執行中
 SAVE_PAST_DATA = True #儲存上次記錄
+SET_VIDEO_PATH = False #是否已設定影片路徑
+nowDatePath = './ChiMei_{}/'.format(datetime.datetime.now().strftime("%Y%m%d"))
+VideoDir = 'Video_{}/'.format(datetime.datetime.now().strftime("%Y%m%d"))
+
 # IPCAM Information
 IPCAM_Name = ""			#攝相機名稱
 IPCAM_IP = ""			#攝相機IP
@@ -61,9 +67,9 @@ WOI_Color = [(0,128,230), (0,230,230), (0,230,0), (230,230,0), (230,0,230)]
 WOI_Count = 5000
 
 # 檢查點
-CheckP_UI = 0		#UI程式檢查點
-CheckP_ICAM = 0		#影像處理程式檢查點
-CheckP_IPCAM = 0	#IPCAM程式檢查點
+CheckP_UI = "0"		#UI程式檢查點
+CheckP_ICAM = "0"		#影像處理程式檢查點
+CheckP_IPCAM = "0"	#IPCAM程式檢查點
 
 FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
 logging.basicConfig(level=logging.WARNING, filename='MazeLog.log', filemode='a', format=FORMAT)
@@ -79,6 +85,15 @@ def makeSingaleColorImage(color): #製造單色圖片(10x10)
 	newBlack = Image.fromarray(array)
 	newBlack = cv2.cvtColor(np.asarray(newBlack),cv2.COLOR_RGB2BGR)  
 	return newBlack
+
+def checkVideoDir():
+	global nowDatePath, VideoDir
+	nowDatePath = './ChiMei_{}/'.format(datetime.datetime.now().strftime("%Y%m%d"))
+	VideoDir = 'Video_{}/'.format(datetime.datetime.now().strftime("%Y%m%d"))
+	if not os.path.exists(nowDatePath):
+		os.mkdir(nowDatePath)
+	if not os.path.exists(nowDatePath + VideoDir):
+		os.mkdir(nowDatePath + VideoDir)
 
 def Second2Datetime(sec): #秒數轉換成時間
 	return int(sec/3600), int((sec%3600)/60), int((sec%3600)%60)
@@ -117,13 +132,14 @@ def makeFrameView(frame):
 		newPos = (int(Data_TargetPos[0] * (FrameSize[1]/480)), int(Data_TargetPos[1] * (FrameSize[1]/480)))
 		cv2.circle(frame, newPos, 12, (0,0,255), -1)
 
-		if len(White_CenterPos) > len(WOI_Color):
-			newlen = len(WOI_Color)
-		else:
-			newlen = len(White_CenterPos)
-		for i in range(newlen):
+		for i in range(len(White_CenterPos)):
+			if i < 5:
+				pointColor = WOI_Color[i]
+			else:
+				pointColor = (64,64,64)
 			newPos = (int(White_CenterPos[i][0] * (FrameSize[1]/480)), int(White_CenterPos[i][1] * (FrameSize[1]/480)))
-			cv2.circle(frame, newPos, 8, WOI_Color[i], -1)
+			cv2.circle(frame, newPos, 9, (255,255,255), -1)
+			cv2.circle(frame, newPos, 8, pointColor, -1)
 
 
 	frame = cv2.resize(frame, newFrameSize, interpolation=cv2.INTER_CUBIC)
@@ -142,14 +158,14 @@ def makeDashBoard():
 
 	#欄位初始點
 	BasicPos1 = 10 	#第一欄
-	BasicPos2 = 260	#第二欄
-	BasicPos3 = 460	#第三欄
+	BasicPos2 = 250	#第二欄
+	BasicPos3 = 490	#第三欄
 
 	#字體顏色
 	unSetFontColor = (128, 128, 128)
 
 	result = makeSingaleColorImage((0,0,0))
-	result = cv2.resize(result, (680, 680), interpolation=cv2.INTER_CUBIC)
+	result = cv2.resize(result, (720, 680), interpolation=cv2.INTER_CUBIC)
 	cv2.putText(result, "DateTime: {}".format(Maze_DateTime.strftime("%Y%m%d %H:%M:%S")), (BasicPos1, 20), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	cv2.putText(result, IPCAM_Name, (BasicPos1, 40), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	
@@ -190,12 +206,13 @@ def makeDashBoard():
 		cv2.putText(result, "-Food: {}".format(Exp_Food), (BasicPos1, 220), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 		cv2.putText(result, "-Disence: {}".format(Exp_Disense), (BasicPos1, 240), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 		cv2.putText(result, "-DisGroup: {}".format(Exp_DisGroup), (BasicPos1, 260), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+		cv2.putText(result, "-ArmState:", (BasicPos1, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 		if Data_ArmState == 0:
-			cv2.putText(result, "-ArmState: Not Entry", (BasicPos1, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+			cv2.putText(result, "Not Entry", (BasicPos1 + 100, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,0,255), 0, cv2.LINE_AA)
 		elif Data_ArmState == 1:
-			cv2.putText(result, "-ArmState: Entry", (BasicPos1, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+			cv2.putText(result, "Entry", (BasicPos1 + 100, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,0), 0, cv2.LINE_AA)
 		else:
-			cv2.putText(result, "-ArmState: %d" %(Data_ArmState), (BasicPos1, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+			cv2.putText(result, "%d" %(Data_ArmState), (BasicPos1, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 		cv2.putText(result, "-RatID: {}".format(Exp_RatID), (BasicPos1, 300), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 
 		if Exp_DisDay[0]:
@@ -204,7 +221,11 @@ def makeDashBoard():
 			cv2.putText(result, "-DisDay: PreOP %02dM %02dD" %(Exp_DisDay[1], Exp_DisDay[2]), (BasicPos2, 240), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 		nowLatency = Second2Datetime((Maze_DateTime - Exp_StartTime).seconds)
 		cv2.putText(result, "-Latency: %02d:%02d:%02d" %(nowLatency), (BasicPos2, 260), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
-		cv2.putText(result, "-CurrentArm: Arm%d" %(Data_CurrentArm), (BasicPos2, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+		cv2.putText(result, "-CurrentArm:", (BasicPos2, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+		if Data_CurrentArm == 0:
+			cv2.putText(result, "None", (BasicPos2 + 120, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+		else:
+			cv2.putText(result, "Arm%d" %(Data_CurrentArm), (BasicPos2 + 120, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
 		cv2.putText(result, "-TargetPos: {}".format(Data_TargetPos), (BasicPos2, 300), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	else:
 		cv2.putText(result, "-Food: None", (BasicPos1, 220), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
@@ -227,11 +248,15 @@ def makeDashBoard():
 	for i in range(len(TableRowPos)):
 		cv2.putText(result, TableTitle[i], (TableRowPos[i], TableColPos - 20), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
 	for i in range(8):
+		if Data_ArmInOutDistance[i] == min(Data_ArmInOutDistance[0:7]) and Data_ArmInOutDistance[i] < 150 and Maze_StartState:
+			AIOD_Color = (0,128,255)
+		else:
+			AIOD_Color = (255,255,255)
 		cv2.putText(result, "Arm%d" %(i+1), (TableRowPos[0], TableColPos + i*TableColLen), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
 		cv2.putText(result, "%3d" %(Data_LongTerm[i]), (TableRowPos[1] + 10, TableColPos + i*TableColLen), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 		cv2.putText(result, "%3d" %(Data_ShortTerm[i]), (TableRowPos[2] + 10, TableColPos + i*TableColLen), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 		cv2.putText(result, "%4.2f" %(Data_ArmInOutLen[i]), (TableRowPos[3] + 20, TableColPos + i*TableColLen), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
-		cv2.putText(result, "%4.2f" %(Data_ArmInOutDistance[i]), (TableRowPos[4] + 20, TableColPos + i*TableColLen), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+		cv2.putText(result, "%4.2f" %(Data_ArmInOutDistance[i]), (TableRowPos[4] + 20, TableColPos + i*TableColLen), cv2.FONT_HERSHEY_DUPLEX, 0.5, AIOD_Color, 0, cv2.LINE_AA)
 	cv2.putText(result, "ArmOutLen:", (TableRowPos[0], TableColPos + 8*TableColLen), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
 	cv2.putText(result, "%4.2f" %(Data_ArmInOutDistance[8]), (TableRowPos[0] + 120, TableColPos + 8*TableColLen), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	cv2.putText(result, "ArmOutDis:", (TableRowPos[3], TableColPos + 8*TableColLen), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
@@ -276,7 +301,7 @@ def makeDashBoard():
 	# if WOI_Count < 500:
 	# 	WOI_Count = WOI_Count + 1
 	# else:
-	# 	randWhiteData(5)
+	# 	randWhiteData(10)
 	# 	WOI_Count = 0
 
 	for i in range(len(WOI_Color)):
@@ -295,20 +320,22 @@ def makeDashBoard():
 	cv2.putText(result, "MMT-UI:", (BasicPos3, checkBasicPos + 20), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	cv2.putText(result, "ICAM:", (BasicPos3, checkBasicPos + 40), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	cv2.putText(result, "IPCAM:", (BasicPos3, checkBasicPos + 60), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
-	cv2.putText(result, "%d" %(CheckP_UI), (BasicPos3 + 70, checkBasicPos + 20), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
-	cv2.putText(result, "%d" %(CheckP_ICAM), (BasicPos3 + 70, checkBasicPos + 40), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
-	cv2.putText(result, "%d" %(CheckP_IPCAM), (BasicPos3 + 70, checkBasicPos + 60), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+	cv2.putText(result, str(CheckP_UI), (BasicPos3 + 70, checkBasicPos + 20), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+	cv2.putText(result, str(CheckP_ICAM), (BasicPos3 + 70, checkBasicPos + 40), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+	cv2.putText(result, str(CheckP_IPCAM), (BasicPos3 + 70, checkBasicPos + 60), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 
 	return result
 
 def DBGV_Main(): #DBGV主程式
-	global WINDOWS_IS_ACTIVE, Maze_DateTime, Maze_FrameLoadTime, SAVE_PAST_DATA
-	global IPCAM_Image, IPCAM_Status, IPCAM_FrameSize, IPCAM_IP, IPCAM_FrameCount, IPCAM_NewP1
+	global WINDOWS_IS_ACTIVE, Maze_DateTime, Maze_FrameLoadTime, SAVE_PAST_DATA, SET_VIDEO_PATH
+	global IPCAM_Image, IPCAM_Status, IPCAM_FrameSize, IPCAM_IP, IPCAM_FrameCount, IPCAM_NewP1, IPCAM_Name
 	global Maze_StartState, Maze_LinkState, Maze_SetState, Maze_CameraState, Maze_FrameLoadTime
 	global Data_TotalTerm, Exp_StartTime, Exp_RatID
 	global PastData_RatID, PastData_TotalTerm, PastData_StartTime, PastData_Latency
+	global VideoDir, nowDatePath, DBGV
 
 	try:
+		videoTime = datetime.datetime.now()
 		while WINDOWS_IS_ACTIVE:
 			Maze_DateTime = datetime.datetime.now()
 			Maze_FrameLoadTime = (Maze_DateTime - IPCAM_NowTime).microseconds
@@ -331,8 +358,21 @@ def DBGV_Main(): #DBGV主程式
 					if Exp_StartTime is not None:
 						PastData_StartTime = Exp_StartTime
 						PastData_Latency = (Maze_DateTime - Exp_StartTime).seconds
-					PastData_TotalTerm = Data_TotalTerm
+					PastData_TotalTerm = [Data_TotalTerm[0], Data_TotalTerm[1]]
 					SAVE_PAST_DATA = True
+
+			if SET_VIDEO_PATH:
+				if (Maze_DateTime - videoTime).seconds > 6000:
+					VideoOut.release()
+					SET_VIDEO_PATH = False
+				else:
+					VideoOut.write(TotalBoard)
+			else:
+				checkVideoDir() #影片資料夾檢查
+				videoFullName = "{}{}_{}.avi".format(nowDatePath + VideoDir, 'ChiMei', datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S"))
+				VideoOut = cv2.VideoWriter(videoFullName,cv2.VideoWriter_fourcc(*'DIVX'), 30, (TotalBoard.shape[1], TotalBoard.shape[0]))
+				videoTime = datetime.datetime.now()
+				SET_VIDEO_PATH = True
 
 			cv2.imshow("DashBoard Video", TotalBoard)
 			cv2.waitKey(1)

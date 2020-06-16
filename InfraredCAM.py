@@ -473,6 +473,16 @@ class InfraredCAM:
 				self.DBGV.Exp_DisDay = self.DisDays[:]
 				self.DBGV.Exp_RatID = self.RatID	
 				self.DBGV.Exp_StartTime = self.timestart
+				self.DBGV.Data_ArmInOutLen = Inlinepoint_long
+				self.DBGV.Data_ArmInOutDistance = dangchianjiuli
+				self.DBGV.Data_TargetPos = self.TargetPos
+				self.DBGV.Data_Route = self.Route
+				self.DBGV.Data_LongTerm = self.LongTerm
+				self.DBGV.Data_ShortTerm = self.ShortTerm
+				self.DBGV.Data_TotalTerm = [self.TotalLongTerm, self.TotalShortTerm]
+				self.DBGV.Data_ArmState = self.NOW_STATUS
+				self.DBGV.Data_CurrentArm = self.dangchianbi
+				
 
 				#開視窗查看影像
 				if self.OPEN_CAMERA_WINDOW and self.CAM_IS_RUN:
