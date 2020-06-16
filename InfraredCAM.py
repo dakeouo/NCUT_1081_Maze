@@ -15,6 +15,8 @@ import logging
 import sys
 import traceback
 
+
+
 FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
 logging.basicConfig(level=logging.WARNING, filename='MazeLog.log', filemode='a', format=FORMAT)
 fistimeinline = True #第一次跑進臂線判斷
@@ -113,6 +115,7 @@ class InfraredCAM:
 		self.ARMS_IN_LINE = []
 		self.ViewSize = (480, 480) #虛擬視窗顯示大小
 		self.TargetPos = [-1, -1] #目標變數
+		self.TargetPos_All = [] #一次抓取到的所有白色物體座標
 		self.ARMS_POS = readCSV2ARME("ARMS_LINE.csv")
 		self.ARMS_LINE = [
 			[self.ARMS_POS[0],self.ARMS_POS[1],self.ARMS_POS[3],self.ARMS_POS[2]],
@@ -207,7 +210,7 @@ class InfraredCAM:
 
 
 	def coordinate(self,rat_XY):  #白色物體座標
-		X = rat_XY[0]
+		X = rat_XY
 		Xa = np.max(X,axis=0)
 		Ya = np.min(X,axis=0)
 		coo = (((Xa - Ya)/2) + Ya)
@@ -246,6 +249,7 @@ class InfraredCAM:
 				Inlinepoint2.append(mask2)
 				Inlinepoint_long[i] = int(ans4)
 				fistimeinline = False
+
 			# print(Inlinepoint1)
 			# print(Inlinepoint2)
 			# print(Inlinepoint_long)
@@ -263,8 +267,8 @@ class InfraredCAM:
 					self.dangchianbi= (i + 1)
 					self.food1[i] = 0
 					break
-			print("Inlinepoint_long: {}".format(Inlinepoint_long))
-			print("dangchianjiuli: {}".format(dangchianjiuli))
+			# print("Inlinepoint_long: {}".format(Inlinepoint_long))
+			# print("dangchianjiuli: {}".format(dangchianjiuli))
 
 		return self.NOW_STATUS,self.dangchianbi
 	def leave(self,TargetPos): #出臂判斷
@@ -272,19 +276,23 @@ class InfraredCAM:
 		# print("NOW_STATUS{}".format(self.NOW_STATUS))
 		i1 = [0,4,8,12,16,20,24,28]
 		i2 = [3,7,11,15,19,23,27,31]
-
 		Ix1 = [int(self.ARMS_POS[i1[self.dangchianbi-1]][0]),int(self.ARMS_POS[i1[self.dangchianbi-1]][1])]
 		Ix2 = [int(self.ARMS_POS[i2[self.dangchianbi-1]][0]),int(self.ARMS_POS[i2[self.dangchianbi-1]][1])]
-
 		ans1 = math.sqrt(pow(self.TargetPos[0] - Ix1[0],2) + pow(self.TargetPos[1] - Ix1[1],2))
 		ans2 = math.sqrt(pow(self.TargetPos[0] - Ix2[0],2) + pow(self.TargetPos[1] - Ix2[1],2))
 		ans4 = math.sqrt(pow(Ix1[0] - Ix2[0],2) + pow(Ix1[1] - Ix2[1],2))
 		Inlinepoint_long[8] = int(ans4)
-
 		ans = ans1 + ans2
 		dangchianjiuli[8] = ans
-		print("Inlinepoint_long: {}".format(Inlinepoint_long))
-		print("dangchianjiuli: {}".format(dangchianjiuli))
+		# print("Inlinepoint_long: {}".format(Inlinepoint_long))
+		# print("dangchianjiuli: {}".format(dangchianjiuli))
+		# self.DBGV.CheckP_ICAM = 1051
+		# cv2.line(self.DBGV.FrameView,(Ix1[0],Ix1[1]), (Ix2[0],Ix2[1]), (0, 255, 125), 1)  #畫出臂線
+		#  self.DBGV.CheckP_ICAM = 1052
+
+		print("出臂線距離: {}".format(ans))
+		print("出臂線長度: {}".format(ans4))
+
 		if ans < ans4+10:
 			self.NOW_STATUS = 0
 			
@@ -333,6 +341,7 @@ class InfraredCAM:
 			copy = cv2.cvtColor(copy, cv2.COLOR_BGR2GRAY)  #灰階
 			B2 , copy = cv2.threshold(copy, 127,255,cv2.THRESH_BINARY) #二值化
 			# cv2.imshow ("copy",copy)
+			self.DBGV.CheckP_ICAM = 1005
 
 			self.initDefault() #變數初始化
 				
@@ -382,11 +391,19 @@ class InfraredCAM:
 					frame1 = cv2.morphologyEx(frame1,cv2.MORPH_CLOSE,self.oo)
 					
 					# cv2.imshow("frame",frame1)
+					# cv2.waitKey(1)
 					self.rat_XY,wh = cv2.findContours(frame1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 W=所有座標
+
 					if len(self.rat_XY):
-						self.TargetPos,x,y = self.coordinate(self.rat_XY)
-						self.Mouse_coordinates.append(self.TargetPos)
-					cv2.waitKey(1)
+						self.TargetPos_All = []
+						for i in range(0,len(self.rat_XY)):
+							self.TargetPos,x,y = self.coordinate(self.rat_XY[i])
+							self.TargetPos_All.append(self.TargetPos)
+						print(self.TargetPos_All)
+						self.DBGV.Data_TargetPos = self.TargetPos_All[0]   #將座標丟給DebugVideo
+						self.TargetPos = self.TargetPos_All[0]
+						self.Mouse_coordinates.append(self.TargetPos_All[0])
+					#
 					# pass
 					#把[影像擷取的東西]放這裡
 					if self.MAZE_IS_RUN: #UI start 後動作
@@ -405,7 +422,7 @@ class InfraredCAM:
 							self.READ_FOOD = True
 							self.timestart = datetime.now() #起始時間
 							self.RouteArrFlag = 0
-							print("起始時間: " +str(self.timestart))
+							# print("起始時間: " +str(self.timestart))
 
 							self.checkSaveDirPath() #檢查所有儲存路徑
 							DiseaseTypePath = '%s(%s_%02d_%02d)' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
@@ -454,7 +471,8 @@ class InfraredCAM:
 							else:
 								pass
 						elif self.NOW_STATUS == 1: #出臂
-							self.NOW_STATUS, self.dangchianbi = self.leave(self.TargetPos)
+							self.NOW_STATUS, self.dangchianbi = self.leave(self.TargetPos_All[0])
+
 						else:
 							pass
 
@@ -484,6 +502,7 @@ class InfraredCAM:
 				self.DBGV.Data_CurrentArm = self.dangchianbi
 				
 
+				self.DBGV.Data_ArmState = self.NOW_STATUS
 				#開視窗查看影像
 				if self.OPEN_CAMERA_WINDOW and self.CAM_IS_RUN:
 					#這個我就先留下來
