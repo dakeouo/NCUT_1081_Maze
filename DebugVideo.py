@@ -60,9 +60,10 @@ PastData_TotalTerm = [0, 0] 	#總工作記憶錯誤(長期, 短期)
 PastData_Latency = 0  			#總時間長度
 
 # 白色物體
-White_Contours = []		#白色物體邊緣
-White_ContourArea = []	#白色物體面積大小
-White_CenterPos = []	#白色物體中心座標
+White_Contours = []			#白色物體邊緣
+White_ContourArea = []		#白色物體面積大小
+White_CenterPos = []		#白色物體中心座標
+White_PosShowFinish = False #白色物體的點是否皆顯示完成
 WOI_Color = [(0,128,230), (0,230,230), (0,230,0), (230,230,0), (230,0,230)]
 WOI_Count = 5000
 
@@ -109,7 +110,7 @@ def randWhiteData(unit):
 
 def makeFrameView(frame):
 	global IPCAM_NewP1, SAVE_PAST_DATA
-	global Data_TargetPos, White_CenterPos, WOI_Color
+	global Data_TargetPos, White_CenterPos, WOI_Color, White_PosShowFinish
 
 	FrameStatus = False
 	FrameSize = [0, 0]
@@ -132,6 +133,7 @@ def makeFrameView(frame):
 		newPos = (int(Data_TargetPos[0] * (FrameSize[1]/480)), int(Data_TargetPos[1] * (FrameSize[1]/480)))
 		cv2.circle(frame, newPos, 12, (0,0,255), -1)
 
+		White_PosShowFinish = False
 		for i in range(len(White_CenterPos)):
 			if i < 5:
 				pointColor = WOI_Color[i]
@@ -140,7 +142,7 @@ def makeFrameView(frame):
 			newPos = (int(White_CenterPos[i][0] * (FrameSize[1]/480)), int(White_CenterPos[i][1] * (FrameSize[1]/480)))
 			cv2.circle(frame, newPos, 9, (255,255,255), -1)
 			cv2.circle(frame, newPos, 8, pointColor, -1)
-
+		White_PosShowFinish = True
 
 	frame = cv2.resize(frame, newFrameSize, interpolation=cv2.INTER_CUBIC)
 
