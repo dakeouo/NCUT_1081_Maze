@@ -215,7 +215,8 @@ class InfraredCAM:
 		Ya = np.min(X,axis=0)
 		coo = (((Xa - Ya)/2) + Ya)
 		doo = [int(coo[0][0]), int(coo[0][1])]
-		return doo,Xa[0],Ya[0]
+		area = cv2.contourArea(X)
+		return doo,Xa[0],Ya[0],area
 
 	def initDefault(self): #初始化
 		self.foodtest = []
@@ -386,26 +387,32 @@ class InfraredCAM:
 					B2,frame1 = cv2.threshold(frame1, 127,255,cv2.THRESH_BINARY)
 					# cv2.imshow("frame1",frame1)
 					pr = cv2.bitwise_and(frame1,frame1, mask= copy ) #遮罩覆蓋到影像上
-					# cv2.imshow("pr",pr)
+					cv2.imshow("pr",pr)
 					frame1 = cv2.morphologyEx(pr,cv2.MORPH_OPEN,self.O)
 					frame1 = cv2.morphologyEx(frame1,cv2.MORPH_CLOSE,self.oo)
 					
 					# cv2.imshow("frame",frame1)
-					# cv2.waitKey(1)
+					cv2.waitKey(1)
 					self.rat_XY,wh = cv2.findContours(frame1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 W=所有座標
 
 					if len(self.rat_XY):
 						self.TargetPos_All = []
+						self.White_ContourArea_All = []
 						for i in range(0,len(self.rat_XY)):
-							self.TargetPos,x,y = self.coordinate(self.rat_XY[i])
+							self.TargetPos,x,y,area = self.coordinate(self.rat_XY[i])
+							self.White_ContourArea_All.append(int(area))	#面積寫入
 							self.TargetPos_All.append(self.TargetPos)
-						print(self.TargetPos_All)
+						# self.DBGV.White_CenterPos = self.TargetPos_All  #將所有白色物體"	座標"丟給DebugVideo
+						# self.DBGV.White_ContourArea = self.White_ContourArea_All#將所有白色物體"面積"丟給DebugVideo
+						print(self.White_ContourArea_All)
+						# print(len(self.TargetPos_All))
+						# print(self.TargetPos_All)
 						self.DBGV.Data_TargetPos = self.TargetPos_All[0]   #將座標丟給DebugVideo
 						self.TargetPos = self.TargetPos_All[0]
 						self.Mouse_coordinates.append(self.TargetPos_All[0])
 					#
 					# pass
-					#把[影像擷取的東西]放這裡
+					#把[影像擷取的東西]放這裡	
 					if self.MAZE_IS_RUN: #UI start 後動作
 						
 						self.sterm()
