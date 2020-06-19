@@ -233,12 +233,14 @@ class InfraredCAM:
 	def examination(self,NOW_STATUS,TargetPos): #進臂判斷
 		#八壁32點
 		#mask = [[[x11,y11],[x12,y12]],...]
-		global fistimeinline,Inlinepoint1,Inlinepoint2,Inlinepoint_long,dangchianjiuli
+		global fistimeinline,Inlinepoint1,Inlinepoint2,Inlinepoint_long,dangchianjiuli,maskkk
 		Ratinline = 65/20	
 		self.NOW_STATUS = 0
 		if fistimeinline == True:  #計算八臂進臂線座標點與進臂線的距離(只會跑一次)
 			Inlinepoint1 = []	#八個進臂線座標點1
 			Inlinepoint2 = []	#八個進臂線座標點2
+			maskkk = [[[0,0],[0,0]],[[0,0],[0,0]],[[0,0],[0,0]],[[0,0],[0,0]],[[0,0],[0,0]],[[0,0],[0,0]],[[0,0],[0,0]],[[0,0],[0,0]],[[0,0],[0,0]]] #每臂進臂線的兩點座標
+			
 			Inlinepoint_long = [0,0,0,0,0,0,0,0,0] #八個臂的進臂線長
 
 			for i in range(0,self.ARM_UNIT):
@@ -248,13 +250,21 @@ class InfraredCAM:
 				ans4 = math.sqrt(pow(mask2[0] - mask1[0],2) + pow(mask2[1] - mask1[1],2))
 				Inlinepoint1.append(mask1)
 				Inlinepoint2.append(mask2)
+				maskkk[i][0] = mask1
+				maskkk[i][1] = mask2
+				# maskkk = [mask1,mask2]
+				self.DBGV.Data_ArmInOutPosLine = maskkk #進出臂線座標 丟給DBGV
 				Inlinepoint_long[i] = int(ans4)
 				fistimeinline = False
-
+			# print(self.DBGV.Data_ArmInOutPosLine)
 			# print(Inlinepoint1)
 			# print(Inlinepoint2)
 			# print(Inlinepoint_long)
+			
 		else:
+			maskkk[8][0] = [0,0] #將出壁線移走
+			maskkk[8][1] = [0,1]
+			print(maskkk)
 			for i in range(0,self.ARM_UNIT):
 				ans1 = math.sqrt(pow(self.TargetPos[0] - Inlinepoint1[i][0],2) + pow(self.TargetPos[1] - Inlinepoint1[i][1],2))
 				ans2 = math.sqrt(pow(self.TargetPos[0] - Inlinepoint2[i][0],2) + pow(self.TargetPos[1] - Inlinepoint2[i][1],2))
@@ -273,7 +283,7 @@ class InfraredCAM:
 
 		return self.NOW_STATUS,self.dangchianbi
 	def leave(self,TargetPos): #出臂判斷
-		global Inlinepoint_long,dangchianjiuli
+		global Inlinepoint_long,dangchianjiuli,maskkk
 		# print("NOW_STATUS{}".format(self.NOW_STATUS))
 		i1 = [0,4,8,12,16,20,24,28]
 		i2 = [3,7,11,15,19,23,27,31]
@@ -284,16 +294,19 @@ class InfraredCAM:
 		ans4 = math.sqrt(pow(Ix1[0] - Ix2[0],2) + pow(Ix1[1] - Ix2[1],2))
 		Inlinepoint_long[8] = int(ans4)
 		ans = ans1 + ans2
-		dangchianjiuli[8] = ans
+		dangchianjiuli[8] = ans 
 		# print("Inlinepoint_long: {}".format(Inlinepoint_long))
 		# print("dangchianjiuli: {}".format(dangchianjiuli))
 		# self.DBGV.CheckP_ICAM = 1051
-		# cv2.line(self.DBGV.FrameView,(Ix1[0],Ix1[1]), (Ix2[0],Ix2[1]), (0, 255, 125), 1)  #畫出臂線
-		#  self.DBGV.CheckP_ICAM = 1052
+		# cv2.line(self.DBGV.FrameView,(int(Ix1[0]*(680/480)),int(Ix1[1]*(680/480))), (int(Ix2[0]*(680/480)),int(Ix2[1]*(680/480))), (0, 255, 125), 1)  #畫出臂線
+		self.DBGV.CheckP_ICAM = 1052
 
-		print("出臂線距離: {}".format(ans))
-		print("出臂線長度: {}".format(ans4))
-
+		# print("出臂線距離: {}".format(ans))
+		# print("出臂線長度: {}".format(ans4))
+		maskkk[8][0] = Ix1	#出臂線兩點之一寫入
+		maskkk[8][1] = Ix2 	#出臂線兩點之一寫入
+		self.DBGV.Data_ArmInOutPosLine = maskkk #進出臂線座標 丟給DBGV
+		print(maskkk)
 		if ans < ans4+10:
 			self.NOW_STATUS = 0
 			
@@ -402,9 +415,10 @@ class InfraredCAM:
 							self.TargetPos,x,y,area = self.coordinate(self.rat_XY[i])
 							self.White_ContourArea_All.append(int(area))	#面積寫入
 							self.TargetPos_All.append(self.TargetPos)
-						# self.DBGV.White_CenterPos = self.TargetPos_All  #將所有白色物體"	座標"丟給DebugVideo
-						# self.DBGV.White_ContourArea = self.White_ContourArea_All#將所有白色物體"面積"丟給DebugVideo
-						print(self.White_ContourArea_All)
+						if self.DBGV.White_PosShowFinish == True:
+							self.DBGV.White_CenterPos = self.TargetPos_All  			#將所有白色物體"座標"丟給DebugVideo
+							self.DBGV.White_ContourArea = self.White_ContourArea_All	#將所有白色物體"面積"丟給DebugVideo
+						# print(self.White_ContourArea_All)
 						# print(len(self.TargetPos_All))
 						# print(self.TargetPos_All)
 						self.DBGV.Data_TargetPos = self.TargetPos_All[0]   #將座標丟給DebugVideo

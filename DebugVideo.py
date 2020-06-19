@@ -334,7 +334,7 @@ def DBGV_Main(): #DBGV主程式
 	global Maze_StartState, Maze_LinkState, Maze_SetState, Maze_CameraState, Maze_FrameLoadTime
 	global Data_TotalTerm, Exp_StartTime, Exp_RatID
 	global PastData_RatID, PastData_TotalTerm, PastData_StartTime, PastData_Latency
-	global VideoDir, nowDatePath, DBGV
+	global VideoDir, nowDatePath, DBGV ,FrameView
 
 	try:
 		videoTime = datetime.datetime.now()
