@@ -14,7 +14,7 @@ import DebugVideo as DBGV
 import logging
 import sys
 import traceback
-
+import shutil
 
 
 FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
@@ -474,6 +474,12 @@ class InfraredCAM:
 					# pass
 					#把[影像擷取的東西]放這裡	
 					if self.MAZE_IS_RUN: #UI start 後動作
+						shutil.copyfile("IPCAM_INFO.csv", "IPCAM_INFO1.txt") #複製攝影機資訊
+						shutil.move("IPCAM_INFO1.txt", "./ChiMei_{}".format(datetime.now().strftime("%Y%m%d")))
+						shutil.copyfile("ARMS_LINE.csv", "ARMS_LINE1.txt")	#複製八臂32點
+						shutil.move("ARMS_LINE1.txt", "./ChiMei_{}".format(datetime.now().strftime("%Y%m%d")))
+
+
 						self.DBGV.CheckP_ICAM = 1022
 						self.sterm()
 						if not self.READ_FOOD: #把Food食物狀態寫進判斷狀態
