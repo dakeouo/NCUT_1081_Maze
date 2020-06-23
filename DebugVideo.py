@@ -44,6 +44,11 @@ Exp_StartTime = None				#實驗啟始時間
 
 # Experiment Data
 Data_TargetPos = [0, 0]		#老鼠座標點
+Data_ArmInOutPosLine = [
+	[[0, 0], [0, 0]], [[0, 0], [0, 0]], [[0, 0], [0, 0]], [[0, 0], [0, 0]], 
+	[[0, 0], [0, 0]], [[0, 0], [0, 0]], [[0, 0], [0, 0]], [[0, 0], [0, 0]], 
+	[[0, 0], [0, 0]]
+] 	#老鼠進出臂線繪製(進1, 進2, 進3, 進4, 進5, 進6, 進7, 進8, 出)
 Data_ArmInOutLen = [0, 0, 0, 0, 0, 0, 0, 0, 0] 		#老鼠進出臂線長度(進1, 進2, 進3, 進4, 進5, 進6, 進7, 進8, 出)
 Data_ArmInOutDistance = [0, 0, 0, 0, 0, 0, 0, 0, 0]	#老鼠進出臂線距離(進1, 進2, 進3, 進4, 進5, 進6, 進7, 進8, 出)
 Data_Route = [] 			#進臂順序
@@ -99,6 +104,18 @@ def checkVideoDir():
 def Second2Datetime(sec): #秒數轉換成時間
 	return int(sec/3600), int((sec%3600)/60), int((sec%3600)%60)
 
+def exchangeContours(Contours, size):
+	new_Contours = []
+	for i in range(len(Contours)):
+		# print(len(Contours[i]))
+		if len(Contours[i]) == 1:
+			if len(Contours[i][0]) != 2:
+				print(len(Contours[i][0]))
+			# new_Contours.append([Contours[i][0][0], Contours[i][0][1]])
+			new_Contours.append([int((Contours[i][0][0]/480)*size), int((Contours[i][0][1]/480)*size)])
+
+	return new_Contours
+
 def randWhiteData(unit):
 	global White_ContourArea, White_CenterPos
 	White_ContourArea = []	#白色物體面積大小
@@ -110,7 +127,7 @@ def randWhiteData(unit):
 
 def makeFrameView(frame):
 	global IPCAM_NewP1, SAVE_PAST_DATA
-	global Data_TargetPos, White_CenterPos, WOI_Color, White_PosShowFinish
+	global Data_TargetPos, White_CenterPos, WOI_Color, White_PosShowFinish, White_Contours
 
 	FrameStatus = False
 	FrameSize = [0, 0]
@@ -128,20 +145,31 @@ def makeFrameView(frame):
 		newP1 = IPCAM_NewP1
 		newP2 = [newP1[0] + FrameSize[1], newP1[1] + FrameSize[1]]
 		frame = frame[newP1[1]:newP2[1], newP1[0]:newP2[0]]
+
 		newFrameSize = (int(FrameSize[1] * (680/FrameSize[1])), int(FrameSize[1] * (680/FrameSize[1])))
 		
 		newPos = (int(Data_TargetPos[0] * (FrameSize[1]/480)), int(Data_TargetPos[1] * (FrameSize[1]/480)))
 		cv2.circle(frame, newPos, 12, (0,0,255), -1)
 
 		White_PosShowFinish = False
+		NEW_White_Contours = []
+		for i in range(len(White_CenterPos)):
+			# White_Contours[i] = exchangeContours(White_Contours[i], FrameSize[1])
+			NEW_White_Contours.append(exchangeContours(White_Contours[i], FrameSize[1]))
 		for i in range(len(White_CenterPos)):
 			if i < 5:
 				pointColor = WOI_Color[i]
 			else:
 				pointColor = (64,64,64)
 			newPos = (int(White_CenterPos[i][0] * (FrameSize[1]/480)), int(White_CenterPos[i][1] * (FrameSize[1]/480)))
+			# print(White_Contours[i])
+
+			# cv2.drawContours(frame, White_Contours[i], -1, pointColor, 3)
+			cv2.polylines(frame, np.array([NEW_White_Contours[i]]), True, pointColor, 2)
+
 			cv2.circle(frame, newPos, 9, (255,255,255), -1)
 			cv2.circle(frame, newPos, 8, pointColor, -1)
+
 		White_PosShowFinish = True
 
 	frame = cv2.resize(frame, newFrameSize, interpolation=cv2.INTER_CUBIC)
@@ -153,9 +181,9 @@ def makeDashBoard():
 	global IPCAM_Name, IPCAM_IP, IPCAM_FrameCount, IPCAM_FrameSize, IPCAM_NewP1, IPCAM_NowTime, IPCAM_Status
 	global Maze_StartState, Maze_LinkState, Maze_SetState, Maze_CameraState, Maze_FrameLoadTime
 	global Exp_Disense, Exp_DisGroup, Exp_DisDay, Exp_Food, Exp_RatID, Exp_StartTime
-	global Data_ArmInOutLen, Data_ArmInOutDistance, Data_TargetPos, Data_LongTerm, Data_ShortTerm, Data_TotalTerm, Data_Route, Data_ArmState, Data_CurrentArm
+	global Data_ArmInOutLen, Data_ArmInOutDistance, Data_TargetPos, Data_LongTerm, Data_ShortTerm, Data_TotalTerm, Data_Route, Data_ArmState, Data_CurrentArm, Data_ArmInOutPosLine
 	global PastData_RatID, PastData_TotalTerm, PastData_StartTime, PastData_Latency
-	global White_Contours, White_ContourArea, White_CenterPos, WOI_Count
+	global White_Contours, White_ContourArea, White_CenterPos, WOI_Count, White_PosShowFinish
 	global CheckP_UI, CheckP_ICAM, CheckP_IPCAM
 
 	#欄位初始點
@@ -204,10 +232,11 @@ def makeDashBoard():
 
 	# Experiment Information
 	cv2.putText(result, "=Experiment Information=", (BasicPos1, 200), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
+	cv2.putText(result, "-TargetPos: {}".format(Data_TargetPos), (BasicPos2, 200), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	if Maze_StartState:
 		cv2.putText(result, "-Food: {}".format(Exp_Food), (BasicPos1, 220), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 		cv2.putText(result, "-Disence: {}".format(Exp_Disense), (BasicPos1, 240), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
-		cv2.putText(result, "-DisGroup: {}".format(Exp_DisGroup), (BasicPos1, 260), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+		cv2.putText(result, "-DisGroup: {}".format(Exp_DisGroup), (BasicPos2, 240), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 		cv2.putText(result, "-ArmState:", (BasicPos1, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 		if Data_ArmState == 0:
 			cv2.putText(result, "Not Entry", (BasicPos1 + 100, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,0,255), 0, cv2.LINE_AA)
@@ -218,32 +247,32 @@ def makeDashBoard():
 		cv2.putText(result, "-RatID: {}".format(Exp_RatID), (BasicPos1, 300), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 
 		if Exp_DisDay[0]:
-			cv2.putText(result, "-DisDay: PastOP %02dM %02dD" %(Exp_DisDay[1], Exp_DisDay[2]), (BasicPos2, 240), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+			cv2.putText(result, "-DisType: PastOP", (BasicPos1, 260), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 		else:
-			cv2.putText(result, "-DisDay: PreOP %02dM %02dD" %(Exp_DisDay[1], Exp_DisDay[2]), (BasicPos2, 240), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+			cv2.putText(result, "-DisType: PreOP" , (BasicPos1, 260), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+		cv2.putText(result, "-DisDay: %02dM %02dD" %(Exp_DisDay[1], Exp_DisDay[2]), (BasicPos2, 260), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+
 		nowLatency = Second2Datetime((Maze_DateTime - Exp_StartTime).seconds)
-		cv2.putText(result, "-Latency: %02d:%02d:%02d" %(nowLatency), (BasicPos2, 260), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+		cv2.putText(result, "-Latency: %02d:%02d:%02d" %(nowLatency), (BasicPos2, 300), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 		cv2.putText(result, "-CurrentArm:", (BasicPos2, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 		if Data_CurrentArm == 0:
 			cv2.putText(result, "None", (BasicPos2 + 120, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 		else:
 			cv2.putText(result, "Arm%d" %(Data_CurrentArm), (BasicPos2 + 120, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
-		cv2.putText(result, "-TargetPos: {}".format(Data_TargetPos), (BasicPos2, 300), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	else:
 		cv2.putText(result, "-Food: None", (BasicPos1, 220), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
 		cv2.putText(result, "-Disence: None", (BasicPos1, 240), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
-		cv2.putText(result, "-DisGroup: None", (BasicPos1, 260), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
+		cv2.putText(result, "-DisType: None", (BasicPos1, 260), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
 		cv2.putText(result, "-ArmState: None", (BasicPos1, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
 		cv2.putText(result, "-RatID: None", (BasicPos1, 300), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
 
-		cv2.putText(result, "-DisDay: None", (BasicPos2, 240), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
-		cv2.putText(result, "-Latency: None", (BasicPos2, 260), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
+		cv2.putText(result, "-DisGroup: None", (BasicPos2, 240), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
+		cv2.putText(result, "-DisDay: None", (BasicPos2, 260), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
 		cv2.putText(result, "-CurrentArm: None", (BasicPos2, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
-		cv2.putText(result, "-TargetPos: None", (BasicPos2, 300), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
-
+		cv2.putText(result, "-Latency: None", (BasicPos2, 300), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
 
 	# Experiment Data
-	TableColPos = 340
+	TableColPos = 360
 	TableColLen = 21
 	TableRowPos = [BasicPos1, BasicPos1 + 60, BasicPos1 + 130, BasicPos1 + 200, BasicPos1 + 300]
 	TableTitle = ['', 'LTerm', 'STerm', 'ArmInLen', 'ArmInDis']
@@ -276,7 +305,7 @@ def makeDashBoard():
 	RouteNewLine = 20
 	cv2.putText(result, "=Entry Route=", (BasicPos1, RouteColPos - 22), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
 	# Data_Route = []
-	# for i in range(100):
+	# for i in range(50):
 	# 	Data_Route.append(rand.randint(1,8))
 	for i in range(len(Data_Route)):
 		cv2.putText(result, str(Data_Route[i]), (BasicPos1 + RouteRowPos*(i%RouteNewLine), RouteColPos + RouteColLen*int(i/RouteNewLine)), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
@@ -305,7 +334,7 @@ def makeDashBoard():
 	# else:
 	# 	randWhiteData(10)
 	# 	WOI_Count = 0
-
+	White_PosShowFinish = False
 	for i in range(len(WOI_Color)):
 		if i < len(White_ContourArea):
 			cv2.putText(result, "Index: %d" %(i), (BasicPos3, 220 + WOI_ColLen*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, WOI_Color[i], 0, cv2.LINE_AA)
@@ -315,6 +344,7 @@ def makeDashBoard():
 			cv2.putText(result, "Index: None", (BasicPos3, 220 + WOI_ColLen*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
 			cv2.putText(result, "CenterPos: [%d,%d]" %(0,0), (BasicPos3, 240 + WOI_ColLen*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
 			cv2.putText(result, "ContourArea: None", (BasicPos3, 260 + WOI_ColLen*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
+	White_PosShowFinish = True
 
 	# Function Check Point
 	checkBasicPos = 550
@@ -376,6 +406,7 @@ def DBGV_Main(): #DBGV主程式
 				videoTime = datetime.datetime.now()
 				SET_VIDEO_PATH = True
 
+			# print(Data_ArmInOutPosLine)
 			cv2.imshow("DashBoard Video", TotalBoard)
 			cv2.waitKey(1)
 

@@ -522,7 +522,7 @@ class InfraredCAM:
 				self.DBGV.Data_TotalTerm = [self.TotalLongTerm, self.TotalShortTerm]
 				self.DBGV.Data_ArmState = self.NOW_STATUS
 				self.DBGV.Data_CurrentArm = self.dangchianbi
-				
+				self.DBGV.Data_ArmInOutPosLine = self.MASK_POS
 
 				self.DBGV.Data_ArmState = self.NOW_STATUS
 				#開視窗查看影像
