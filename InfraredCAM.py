@@ -14,7 +14,7 @@ import DebugVideo as DBGV
 import logging
 import sys
 import traceback
-
+import shutil
 
 
 FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
@@ -180,10 +180,12 @@ class InfraredCAM:
 
 	#========其他的副程式========
 	def checkSaveDirPath(self): #檢查儲存路徑
+		self.DBGV.CheckP_ICAM = 1044
 		nowDatePath = './ChiMei_{}/'.format(datetime.now().strftime("%Y%m%d"))
 		DiseaseTypePath = '%s(%s_%02d_%02d)/' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
 		CSV_Path = 'CSV_{}({})/'.format(self.DiseaseType, datetime.now().strftime("%Y%m%d"))
 		IMG_Path = 'IMG_{}({})/'.format(self.DiseaseType, datetime.now().strftime("%Y%m%d"))
+		self.DBGV.CheckP_ICAM = 1045
 		if not os.path.exists(nowDatePath):
 			os.mkdir(nowDatePath)
 		if not os.path.exists(nowDatePath + DiseaseTypePath):
@@ -194,31 +196,40 @@ class InfraredCAM:
 			os.mkdir(nowDatePath + DiseaseTypePath + IMG_Path)
 
 	def recordRoute2CSV(self):
+		self.DBGV.CheckP_ICAM = 1046
 		TimeDiff = (datetime.now() - self.RR2C_Time).seconds
 		DiseaseTypePath = '%s(%s_%02d_%02d)' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
 		CSV_Path = './ChiMei_{0}/{2}/CSV_{1}({0})/'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, DiseaseTypePath)
 		CSV_Name = self.SingleFileName + ".csv"
 		self.RR2C.append([int(self.TargetPos[0]), int(self.TargetPos[1])])
+		self.DBGV.CheckP_ICAM = 1047
 		if TimeDiff >= 1:
+			self.DBGV.CheckP_ICAM = 1048
 			if self.RR2C_FirstTime:
+				self.DBGV.CheckP_ICAM = 1049
 				self.RR2C_FirstTime = False
 			else:
 				# print(self.RR2C)
+				self.DBGV.CheckP_ICAM = 1050
 				writeData2CSV(CSV_Path + CSV_Name, "a", self.RR2C)
+				self.DBGV.CheckP_ICAM = 1051
 				self.RR2C = []
 				self.RR2C_Time = datetime.now()
 
 
 	def coordinate(self,rat_XY):  #白色物體座標
+		self.DBGV.CheckP_ICAM = 1052
 		X = rat_XY
 		Xa = np.max(X,axis=0)
 		Ya = np.min(X,axis=0)
 		coo = (((Xa - Ya)/2) + Ya)
 		doo = [int(coo[0][0]), int(coo[0][1])]
 		area = cv2.contourArea(X)
+		self.DBGV.CheckP_ICAM = 1053
 		return doo,Xa[0],Ya[0],area
 
 	def initDefault(self): #初始化
+		self.DBGV.CheckP_ICAM = 1054
 		self.foodtest = []
 		self.Latency = 0
 		self.food1 = []
@@ -227,6 +238,7 @@ class InfraredCAM:
 		self.ShortTerm = []
 		self.LongTerm = []
 		for i in range(0,self.ARM_UNIT):
+			self.DBGV.CheckP_ICAM = 1055
 			self.ShortTerm.append(0)
 			self.LongTerm.append(0)
 			self.frequency.append(0)
@@ -236,7 +248,9 @@ class InfraredCAM:
 		global fistimeinline,Inlinepoint1,Inlinepoint2,Inlinepoint_long,dangchianjiuli,maskkk
 		Ratinline = 65/20	
 		self.NOW_STATUS = 0
+		self.DBGV.CheckP_ICAM = 1056
 		if fistimeinline == True:  #計算八臂進臂線座標點與進臂線的距離(只會跑一次)
+			self.DBGV.CheckP_ICAM = 1057
 			Inlinepoint1 = []	#八個進臂線座標點1
 			Inlinepoint2 = []	#八個進臂線座標點2
 			maskkk = [[[0,0],[0,0]],[[0,0],[0,0]],[[0,0],[0,0]],[[0,0],[0,0]],[[0,0],[0,0]],[[0,0],[0,0]],[[0,0],[0,0]],[[0,0],[0,0]],[[0,0],[0,0]]] #每臂進臂線的兩點座標
@@ -244,6 +258,7 @@ class InfraredCAM:
 			Inlinepoint_long = [0,0,0,0,0,0,0,0,0] #八個臂的進臂線長
 
 			for i in range(0,self.ARM_UNIT):
+				self.DBGV.CheckP_ICAM = 1058
 				mask1 = [int(self.ARMS_LINE[i][0][0] -(self.ARMS_LINE[i][0][0] - self.ARMS_LINE[i][1][0])/self.ARM_LINE_DISTANCE) , int(self.ARMS_LINE[i][0][1]-(self.ARMS_LINE[i][0][1] - self.ARMS_LINE[i][1][1])/self.ARM_LINE_DISTANCE)]
 				mask2 = [int(self.ARMS_LINE[i][2][0]-(self.ARMS_LINE[i][2][0] - self.ARMS_LINE[i][3][0])/self.ARM_LINE_DISTANCE) , int(self.ARMS_LINE[i][2][1]-(self.ARMS_LINE[i][2][1] - self.ARMS_LINE[i][3][1])/self.ARM_LINE_DISTANCE)]
 				#mask1,mask2 為計算每臂進臂線座標
@@ -256,16 +271,19 @@ class InfraredCAM:
 				self.DBGV.Data_ArmInOutPosLine = maskkk #進出臂線座標 丟給DBGV
 				Inlinepoint_long[i] = int(ans4)
 				fistimeinline = False
+				self.DBGV.CheckP_ICAM = 1059
 			# print(self.DBGV.Data_ArmInOutPosLine)
 			# print(Inlinepoint1)
 			# print(Inlinepoint2)
 			# print(Inlinepoint_long)
 			
 		else:
+			self.DBGV.CheckP_ICAM = 1060
 			maskkk[8][0] = [0,0] #將出壁線移走
 			maskkk[8][1] = [0,1]
-			print(maskkk)
+			# print(maskkk)
 			for i in range(0,self.ARM_UNIT):
+				self.DBGV.CheckP_ICAM = 1061
 				ans1 = math.sqrt(pow(self.TargetPos[0] - Inlinepoint1[i][0],2) + pow(self.TargetPos[1] - Inlinepoint1[i][1],2))
 				ans2 = math.sqrt(pow(self.TargetPos[0] - Inlinepoint2[i][0],2) + pow(self.TargetPos[1] - Inlinepoint2[i][1],2))
 				# print("NOW_STATUS{}".format(self.NOW_STATUS))
@@ -273,7 +291,9 @@ class InfraredCAM:
 				ans3 = ans1 + ans2    #白色與一臂的距離
 				dangchianjiuli[i] = ans3 #將白色與一臂的距離寫入
 				# print("ans%d %s" %(i, ans3))
+				self.DBGV.CheckP_ICAM = 1062
 				if ans3 < Inlinepoint_long[i]+10:
+					self.DBGV.CheckP_ICAM = 1063
 					self.NOW_STATUS = 1
 					self.dangchianbi= (i + 1)
 					self.food1[i] = 0
@@ -285,6 +305,7 @@ class InfraredCAM:
 	def leave(self,TargetPos): #出臂判斷
 		global Inlinepoint_long,dangchianjiuli,maskkk
 		# print("NOW_STATUS{}".format(self.NOW_STATUS))
+		self.DBGV.CheckP_ICAM = 1064
 		i1 = [0,4,8,12,16,20,24,28]
 		i2 = [3,7,11,15,19,23,27,31]
 		Ix1 = [int(self.ARMS_POS[i1[self.dangchianbi-1]][0]),int(self.ARMS_POS[i1[self.dangchianbi-1]][1])]
@@ -306,8 +327,10 @@ class InfraredCAM:
 		maskkk[8][0] = Ix1	#出臂線兩點之一寫入
 		maskkk[8][1] = Ix2 	#出臂線兩點之一寫入
 		self.DBGV.Data_ArmInOutPosLine = maskkk #進出臂線座標 丟給DBGV
-		print(maskkk)
+		# print(maskkk)
+		self.DBGV.CheckP_ICAM = 1065
 		if ans < ans4+10:
+			self.DBGV.CheckP_ICAM = 1066
 			self.NOW_STATUS = 0
 			
 			self.Route.append(self.dangchianbi) #寫入進臂順序
@@ -321,25 +344,33 @@ class InfraredCAM:
 				pass
 			self.dangchianbi = 0
 
-
+			self.DBGV.CheckP_ICAM = 1067
 		return self.NOW_STATUS,self.dangchianbi	
 
 
 	def sterm(self):  #短期工作記憶錯誤判斷
+		self.DBGV.CheckP_ICAM = 1067
 		for i in range(0,8):
+			self.DBGV.CheckP_ICAM = 1068
 			if self.frequency[i]>0:
+				self.DBGV.CheckP_ICAM = 1069
 				self.ShortTerm[i] = self.frequency[i]-1
 
 	def DataRecord(self):  #寫入csv
+		self.DBGV.CheckP_ICAM = 1070
 		csvTitle = ["Group", "Rat ID", "Food", "Total LongTerm", "Total ShortTerm", "Route", "Latency"]
 		nLate = Second2Datetime(self.Latency)
 		newLatency = "%02d:%02d:%02d" %(nLate[0],nLate[1],nLate[2])
 		MazeData = [self.DisGroupType, self.RatID, self.Food, self.TotalLongTerm, self.TotalShortTerm, self.Route, newLatency]
+		self.DBGV.CheckP_ICAM = 1071
 		if os.path.isfile(self.CSVfilePath):
+			self.DBGV.CheckP_ICAM = 1072
 			csvData = readCSV2List(self.CSVfilePath)
 			if not (listAllSame(csvData[0],csvTitle)):
+				self.DBGV.CheckP_ICAM = 1073
 				writeData2CSV(self.CSVfilePath, "w", csvTitle)
 		else:
+			self.DBGV.CheckP_ICAM = 1074
 			writeData2CSV(self.CSVfilePath, "w", csvTitle)
 		writeData2CSV(self.CSVfilePath, "a", MazeData)
 	
@@ -358,78 +389,98 @@ class InfraredCAM:
 			self.DBGV.CheckP_ICAM = 1005
 
 			self.initDefault() #變數初始化
-				
+			self.DBGV.CheckP_ICAM = 1006
 			#程式一執行[第一次要跑的東西]放這裡
 			for i in range(0,self.ARM_UNIT):
+				self.DBGV.CheckP_ICAM = 1007
 				mask1 = [int(self.ARMS_LINE[i][0][0] -(self.ARMS_LINE[i][0][0] - self.ARMS_LINE[i][1][0])/self.ARM_LINE_DISTANCE) , int(self.ARMS_LINE[i][0][1]-(self.ARMS_LINE[i][0][1] - self.ARMS_LINE[i][1][1])/self.ARM_LINE_DISTANCE)]
 				mask2 = [int(self.ARMS_LINE[i][2][0]-(self.ARMS_LINE[i][2][0] - self.ARMS_LINE[i][3][0])/self.ARM_LINE_DISTANCE) , int(self.ARMS_LINE[i][2][1]-(self.ARMS_LINE[i][2][1] - self.ARMS_LINE[i][3][1])/self.ARM_LINE_DISTANCE)]
 				# ARMS_IN_LINE1 = [mask1,mask2]
 				self.ARMS_IN_LINE.append([mask1,mask2])
+				self.DBGV.CheckP_ICAM = 1008
 			# print(self.ARMS_IN_LINE)
 			while self.WINDOWS_IS_ACTIVE:
 				#確定要連線時才會跑這個
 				if self.CAM_IS_RUN:
+					self.DBGV.CheckP_ICAM = 1009
 					frame = self.IPCAM.IPCAM_Image
 					IPCAM_LoadTime = (datetime.now() - self.IPCAM.IPCAM_NowTime).seconds
-					
+					self.DBGV.CheckP_ICAM = 1010
 					if len(frame) == 0:
 						frame = cv2.resize(makeBlackImage(),(1280,720),interpolation=cv2.INTER_CUBIC)
 						self.IPCAM.setMessenage(2, "[ERROR] CAMERA isn't CONNECT!")
 						# print("CAMERA isn't CONNECT! At {}".format(datetime.now()))
 						self.CAM_IS_CONN = False
+						self.DBGV.CheckP_ICAM = 1011
 					else:
 						self.WIDTH,self.HEIGHT = (frame.shape[1], frame.shape[0])
 						frame = cv2.resize(frame,(self.WIDTH,self.HEIGHT),interpolation=cv2.INTER_CUBIC) #調整大小1024*576
 						if IPCAM_LoadTime > 3:
 							self.IPCAM.setMessenage(1, "[WAIT] CAMERA is TIMEOUT!")
+							self.DBGV.CheckP_ICAM = 1012
 							# print("CAMERA is TIMEOUT! At {}".format(datetime.now()))
 						else:
 							self.IPCAM.setMessenage(0, "[GOOD] CAMERA is connecting!")
+							self.DBGV.CheckP_ICAM = 1013
 						self.CAM_IS_CONN = True
 						# cv2.imshow ("copy",copy)
 					# cv2.rectangle(frame, convert(self.newP1), convert(self.newP2), (0,255,0), 1) #繪製矩形
 					# cv2.imshow("frame",frame)
 					# print(rtsp)
+					self.DBGV.CheckP_ICAM = 1014
 					self.newP1 = [IPCAM.IPCAM_NewP1[0], IPCAM.IPCAM_NewP1[1]]
 					self.newP2 = [self.newP1[0] + self.HEIGHT, self.newP1[1] + self.HEIGHT]
-
+					self.DBGV.CheckP_ICAM = 1015
 					frame = frame[self.newP1[1]:self.newP2[1], self.newP1[0]:self.newP2[0]] #擷取兩個點的範圍
 					# cv2.polylines(frame, [self.MASK_POS], True, (0, 255, 255), 2)  #加上3臂輔助線
 					frame = cv2.resize(frame,(480,480),interpolation=cv2.INTER_CUBIC) #放大成480x480
 					frame1 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)	
 					B2,frame1 = cv2.threshold(frame1, 127,255,cv2.THRESH_BINARY)
+					self.DBGV.CheckP_ICAM = 1016
 					# cv2.imshow("frame1",frame1)
 					pr = cv2.bitwise_and(frame1,frame1, mask= copy ) #遮罩覆蓋到影像上
-					cv2.imshow("pr",pr)
+					# cv2.imshow("pr",pr)
 					frame1 = cv2.morphologyEx(pr,cv2.MORPH_OPEN,self.O)
 					frame1 = cv2.morphologyEx(frame1,cv2.MORPH_CLOSE,self.oo)
 					
 					# cv2.imshow("frame",frame1)
+
 					cv2.waitKey(1)
 					self.rat_XY,wh = cv2.findContours(frame1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 W=所有座標
-
+					self.DBGV.CheckP_ICAM = 1017
 					if len(self.rat_XY):
 						self.TargetPos_All = []
 						self.White_ContourArea_All = []
+						self.DBGV.CheckP_ICAM = 1018
 						for i in range(0,len(self.rat_XY)):
 							self.TargetPos,x,y,area = self.coordinate(self.rat_XY[i])
 							self.White_ContourArea_All.append(int(area))	#面積寫入
 							self.TargetPos_All.append(self.TargetPos)
+							self.DBGV.CheckP_ICAM = 1019
 						if self.DBGV.White_PosShowFinish == True:
 							self.DBGV.White_CenterPos = self.TargetPos_All  			#將所有白色物體"座標"丟給DebugVideo
 							self.DBGV.White_ContourArea = self.White_ContourArea_All	#將所有白色物體"面積"丟給DebugVideo
 							self.DBGV.White_Contours = self.rat_XY 						#將所有白色物體"邊緣"丟給DebugVideo
+							print(self.DBGV.White_Contours)
+							self.DBGV.CheckP_ICAM = 1020
 						# print(self.White_ContourArea_All)
 						# print(len(self.TargetPos_All))
 						# print(self.TargetPos_All)
 						self.DBGV.Data_TargetPos = self.TargetPos_All[0]   #將座標丟給DebugVideo
 						self.TargetPos = self.TargetPos_All[0]
 						self.Mouse_coordinates.append(self.TargetPos_All[0])
+						self.DBGV.CheckP_ICAM = 1021
 					#
 					# pass
 					#把[影像擷取的東西]放這裡	
 					if self.MAZE_IS_RUN: #UI start 後動作
-						
+						shutil.copyfile("IPCAM_INFO.csv", "IPCAM_INFO1.txt") #複製攝影機資訊
+						shutil.move("IPCAM_INFO1.txt", "./ChiMei_{}".format(datetime.now().strftime("%Y%m%d")))
+						shutil.copyfile("ARMS_LINE.csv", "ARMS_LINE1.txt")	#複製八臂32點
+						shutil.move("ARMS_LINE1.txt", "./ChiMei_{}".format(datetime.now().strftime("%Y%m%d")))
+
+
+						self.DBGV.CheckP_ICAM = 1022
 						self.sterm()
 						if not self.READ_FOOD: #把Food食物狀態寫進判斷狀態
 							mousepath = []  
@@ -438,48 +489,63 @@ class InfraredCAM:
 							# cv2.imshow("mousepath",mousepath)
 							self.Mouse_coordinates = []
 							self.initDefault()
+							self.DBGV.CheckP_ICAM = 1023
 							for i in range (0,self.ARM_UNIT):
 								self.food1.append(self.Food[i])
 								self.foodtest.append(self.Food[i])
+								self.DBGV.CheckP_ICAM = 1024
 							self.READ_FOOD = True
 							self.timestart = datetime.now() #起始時間
 							self.RouteArrFlag = 0
 							# print("起始時間: " +str(self.timestart))
-
+							self.DBGV.CheckP_ICAM = 1025
 							self.checkSaveDirPath() #檢查所有儲存路徑
+							self.DBGV.CheckP_ICAM = 1026
 							DiseaseTypePath = '%s(%s_%02d_%02d)' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
 							self.SingleFileName = "{}_{}_{}_{}".format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, self.DisGroupType, self.RatID) #固定檔名
 							self.CSVfilePath = './ChiMei_{0}/{2}/{0}.csv'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, DiseaseTypePath)
 							
 							self.RR2C_FirstTime = True #這個是我寫的(測試中，不用管沒關係)
+							self.DBGV.CheckP_ICAM = 1027
 						else:
 							pass 
 						self.time_now = datetime.now()  #當下時間
 						# self.getTimePoint(self.time_now)
 						self.Latency = (self.time_now - self.timestart).seconds
 						self.recordRoute2CSV() #這個是我寫的(測試中，不用管沒關係)
+						self.DBGV.CheckP_ICAM = 1028
 						##############################################進臂##############################################
 						if self.NOW_STATUS == 0:
+							self.DBGV.CheckP_ICAM = 1029
 							self.NOW_STATUS, self.dangchianbi = self.examination(self.NOW_STATUS,self.TargetPos)
 							# print(self.food1)
 							food1max = np.max(self.food1)
+							self.DBGV.CheckP_ICAM = 1030
 							if food1max == 0:
+								self.DBGV.CheckP_ICAM = 1031
 								self.NOW_STATUS = 0 #進臂or出臂
 								self.Route.append(self.dangchianbi)
 								self.Latency = (self.time_now - self.timestart).seconds 
 								self.TotalShortTerm = 0
 								self.TotalLongTerm = 0
+								self.DBGV.CheckP_ICAM = 1032
 								for i in range(0,len(self.ShortTerm)):
+									self.DBGV.CheckP_ICAM = 1033
 									self.TotalShortTerm = self.TotalShortTerm + self.ShortTerm[i]
 								# print(self.TotalShortTerm)
 								for i in range(0,len(self.LongTerm)):
+									self.DBGV.CheckP_ICAM = 1034
 									self.TotalLongTerm = self.TotalLongTerm + self.LongTerm[i]
 								# print(self.TotalLongTerm)
+								self.DBGV.CheckP_ICAM = 1035
 								self.DataRecord()
+								self.DBGV.CheckP_ICAM = 1036
 								winsound.Beep(442,1000)
 								# print(self.Mouse_coordinates)
 								self.MAZE_IS_RUN = False
+								self.DBGV.CheckP_ICAM = 1037
 								for i in range (1,len(self.Mouse_coordinates)):   #畫路徑圖
+									self.DBGV.CheckP_ICAM = 1038
 									# cv2.line(mousepath,convert(self.Mouse_coordinates[i-1]),convert(self.Mouse_coordinates[i]),(20,65,213),1) #白色物體路徑
 									cv2.circle(mousepath, convert(self.Mouse_coordinates[i]), 1, (0,255,0), -1)
 									# print(self.Mouse_coordinates[i])
@@ -489,20 +555,25 @@ class InfraredCAM:
 								IMG_Name = self.SingleFileName + ".jpg"
 								cv2.imencode('.jpg', mousepath)[1].tofile(IMG_Path + IMG_Name)
 								# cv2.imshow("mouse path",mousepath)
+								self.DBGV.CheckP_ICAM = 1039
 
 							else:
 								pass
 						elif self.NOW_STATUS == 1: #出臂
+							self.DBGV.CheckP_ICAM = 1040
 							self.NOW_STATUS, self.dangchianbi = self.leave(self.TargetPos_All[0])
 
 						else:
+							self.DBGV.CheckP_ICAM = 1041
 							pass
 
 						#把[影像擷取過後，開始辨識的東西]放這裡
 					else:
+						self.DBGV.CheckP_ICAM = 1042
 						self.READ_FOOD = False
 						# pass
 				else:
+					self.DBGV.CheckP_ICAM = 1043
 					self.CAM_IS_CONN = False
 					self.TargetPos = (-1, -1)
 
