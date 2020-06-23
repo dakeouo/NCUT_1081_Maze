@@ -418,6 +418,7 @@ class InfraredCAM:
 						if self.DBGV.White_PosShowFinish == True:
 							self.DBGV.White_CenterPos = self.TargetPos_All  			#將所有白色物體"座標"丟給DebugVideo
 							self.DBGV.White_ContourArea = self.White_ContourArea_All	#將所有白色物體"面積"丟給DebugVideo
+							self.DBGV.White_Contours = self.rat_XY 						#將所有白色物體"邊緣"丟給DebugVideo
 						# print(self.White_ContourArea_All)
 						# print(len(self.TargetPos_All))
 						# print(self.TargetPos_All)
