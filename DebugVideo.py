@@ -45,10 +45,20 @@ Exp_StartTime = None				#實驗啟始時間
 # Experiment Data
 Data_TargetPos = [0, 0]		#老鼠座標點
 Data_ArmInOutPosLine = [
-	[[0, 0], [0, 0]], [[0, 0], [0, 0]], [[0, 0], [0, 0]], [[0, 0], [0, 0]], 
-	[[0, 0], [0, 0]], [[0, 0], [0, 0]], [[0, 0], [0, 0]], [[0, 0], [0, 0]], 
-	[[0, 0], [0, 0]]
+	[[-1, -1], [-1, -1]], [[-1, -1], [-1, -1]], [[-1, -1], [-1, -1]], [[-1, -1], [-1, -1]], 
+	[[-1, -1], [-1, -1]], [[-1, -1], [-1, -1]], [[-1, -1], [-1, -1]], [[-1, -1], [-1, -1]], 
+	[[-1, -1], [-1, -1]]
 ] 	#老鼠進出臂線繪製(進1, 進2, 進3, 進4, 進5, 進6, 進7, 進8, 出)
+Data_Old_ArmInOutPosLine = [ #舊的進出臂線
+	[[-1, -1], [-1, -1]], [[-1, -1], [-1, -1]], [[-1, -1], [-1, -1]], [[-1, -1], [-1, -1]], 
+	[[-1, -1], [-1, -1]], [[-1, -1], [-1, -1]], [[-1, -1], [-1, -1]], [[-1, -1], [-1, -1]], 
+	[[-1, -1], [-1, -1]]
+]
+NEW_Data_ArmInOutPosLine = [
+	[[-1, -1], [-1, -1]], [[-1, -1], [-1, -1]], [[-1, -1], [-1, -1]], [[-1, -1], [-1, -1]], 
+	[[-1, -1], [-1, -1]], [[-1, -1], [-1, -1]], [[-1, -1], [-1, -1]], [[-1, -1], [-1, -1]], 
+	[[-1, -1], [-1, -1]]
+]
 Data_ArmInOutLen = [0, 0, 0, 0, 0, 0, 0, 0, 0] 		#老鼠進出臂線長度(進1, 進2, 進3, 進4, 進5, 進6, 進7, 進8, 出)
 Data_ArmInOutDistance = [0, 0, 0, 0, 0, 0, 0, 0, 0]	#老鼠進出臂線距離(進1, 進2, 進3, 進4, 進5, 進6, 進7, 進8, 出)
 Data_Route = [] 			#進臂順序
@@ -57,6 +67,8 @@ Data_ShortTerm = [0, 0, 0, 0, 0, 0, 0, 0] 	#短期工作記憶錯誤
 Data_TotalTerm = [0, 0] 	#總工作記憶錯誤(長期, 短期)
 Data_ArmState = 0 			#進出臂狀態
 Data_CurrentArm = 0			#當前臂
+Data_InLineChange = False	#進臂線有更動
+Data_OutLineChange = False	#出臂線有更動
 
 # Previous Data
 PastData_RatID = ""				#老鼠ID
@@ -65,6 +77,7 @@ PastData_TotalTerm = [0, 0] 	#總工作記憶錯誤(長期, 短期)
 PastData_Latency = 0  			#總時間長度
 
 # 白色物體
+White_TotalItem = 0			#白色物體總數
 White_Contours = []			#白色物體邊緣
 White_ContourArea = []		#白色物體面積大小
 White_CenterPos = []		#白色物體中心座標
@@ -79,6 +92,9 @@ CheckP_IPCAM = "0"	#IPCAM程式檢查點
 
 FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
 logging.basicConfig(level=logging.WARNING, filename='MazeLog.log', filemode='a', format=FORMAT)
+
+def convert(list):
+    return tuple(list)
 
 def makeSingaleColorImage(color): #製造單色圖片(10x10)
 	pixels = []
@@ -104,6 +120,29 @@ def checkVideoDir():
 def Second2Datetime(sec): #秒數轉換成時間
 	return int(sec/3600), int((sec%3600)/60), int((sec%3600)%60)
 
+def checkInOutLine(newLine, oldLine): #檢查檢查臂線是否更動
+	InLineC = False
+	OutLineC = False
+
+	for i in range(len(newLine)):
+		if (newLine[i][0][0] != oldLine[i][0][0] or newLine[i][0][1] != oldLine[i][0][1]) or (newLine[i][1][0] != oldLine[i][1][0] or newLine[i][1][1] != oldLine[i][1][1]):
+			oldLine[i] = [[newLine[i][0][0], newLine[i][0][1]], [newLine[i][1][0], newLine[i][1][1]]]
+			if i == len(newLine) - 1:
+				OutLineC = True
+			else:
+				InLineC = True
+	return InLineC, OutLineC, oldLine
+
+def exchangeArmsLine(InOut, changeLine, nowLine, size): #進出臂線轉換
+	if not InOut:
+		for i in range(len(nowLine)-1):
+			changeLine[i] = [[int((nowLine[i][0][0]/480)*size), int((nowLine[i][0][1]/480)*size)], [int((nowLine[i][1][0]/480)*size), int((nowLine[i][1][1]/480)*size)]]
+	else:
+		i = len(nowLine)-1
+		changeLine[i] = [[int((nowLine[i][0][0]/480)*size), int((nowLine[i][0][1]/480)*size)], [int((nowLine[i][1][0]/480)*size), int((nowLine[i][1][1]/480)*size)]]
+
+	return changeLine
+
 def exchangeContours(Contours, size):
 	new_Contours = []
 	for i in range(len(Contours)):
@@ -127,7 +166,8 @@ def randWhiteData(unit):
 
 def makeFrameView(frame):
 	global IPCAM_NewP1, SAVE_PAST_DATA
-	global Data_TargetPos, White_CenterPos, WOI_Color, White_PosShowFinish, White_Contours
+	global White_CenterPos, WOI_Color, White_PosShowFinish, White_Contours, White_TotalItem
+	global Data_TargetPos, Data_ArmInOutPosLine, NEW_Data_ArmInOutPosLine, Data_InLineChange, Data_OutLineChange, Data_Old_ArmInOutPosLine
 
 	FrameStatus = False
 	FrameSize = [0, 0]
@@ -147,30 +187,42 @@ def makeFrameView(frame):
 		frame = frame[newP1[1]:newP2[1], newP1[0]:newP2[0]]
 
 		newFrameSize = (int(FrameSize[1] * (680/FrameSize[1])), int(FrameSize[1] * (680/FrameSize[1])))
-		
+
+		Data_InLineChange, Data_OutLineChange, Data_Old_ArmInOutPosLine = checkInOutLine(Data_ArmInOutPosLine, Data_Old_ArmInOutPosLine)
+		if Data_InLineChange:
+			NEW_Data_ArmInOutPosLine = exchangeArmsLine(False, NEW_Data_ArmInOutPosLine, Data_ArmInOutPosLine, FrameSize[1])
+		if Data_OutLineChange:
+			NEW_Data_ArmInOutPosLine = exchangeArmsLine(True, NEW_Data_ArmInOutPosLine, Data_ArmInOutPosLine, FrameSize[1])
+
 		newPos = (int(Data_TargetPos[0] * (FrameSize[1]/480)), int(Data_TargetPos[1] * (FrameSize[1]/480)))
 		cv2.circle(frame, newPos, 12, (0,0,255), -1)
 
 		White_PosShowFinish = False
 		NEW_White_Contours = []
-		for i in range(len(White_CenterPos)):
+		NEW_newPos = []
+		White_TotalItem = len(White_CenterPos)
+		for i in range(White_TotalItem):
 			# White_Contours[i] = exchangeContours(White_Contours[i], FrameSize[1])
-			NEW_White_Contours.append(exchangeContours(White_Contours[i], FrameSize[1]))
+			NEW_White_Contours.append(exchangeContours(White_Contours[i], FrameSize[1])) #計算邊緣座標點
+			NEW_newPos.append((int(White_CenterPos[i][0] * (FrameSize[1]/480)), int(White_CenterPos[i][1] * (FrameSize[1]/480))))
+
+
 		for i in range(len(White_CenterPos)):
 			if i < 5:
 				pointColor = WOI_Color[i]
 			else:
 				pointColor = (64,64,64)
-			newPos = (int(White_CenterPos[i][0] * (FrameSize[1]/480)), int(White_CenterPos[i][1] * (FrameSize[1]/480)))
+			# newPos = (int(White_CenterPos[i][0] * (FrameSize[1]/480)), int(White_CenterPos[i][1] * (FrameSize[1]/480)))
 			# print(White_Contours[i])
-
 			# cv2.drawContours(frame, White_Contours[i], -1, pointColor, 3)
 			cv2.polylines(frame, np.array([NEW_White_Contours[i]]), True, pointColor, 2)
 
-			cv2.circle(frame, newPos, 9, (255,255,255), -1)
-			cv2.circle(frame, newPos, 8, pointColor, -1)
-
+			cv2.circle(frame, NEW_newPos[i], 9, (255,255,255), -1)
+			cv2.circle(frame, NEW_newPos[i], 8, pointColor, -1)
 		White_PosShowFinish = True
+
+		for i in range(len(NEW_Data_ArmInOutPosLine)):
+			cv2.line(frame, convert(NEW_Data_ArmInOutPosLine[i][0]), convert(NEW_Data_ArmInOutPosLine[i][1]), (0, 0, 255), 3)
 
 	frame = cv2.resize(frame, newFrameSize, interpolation=cv2.INTER_CUBIC)
 
@@ -183,7 +235,7 @@ def makeDashBoard():
 	global Exp_Disense, Exp_DisGroup, Exp_DisDay, Exp_Food, Exp_RatID, Exp_StartTime
 	global Data_ArmInOutLen, Data_ArmInOutDistance, Data_TargetPos, Data_LongTerm, Data_ShortTerm, Data_TotalTerm, Data_Route, Data_ArmState, Data_CurrentArm, Data_ArmInOutPosLine
 	global PastData_RatID, PastData_TotalTerm, PastData_StartTime, PastData_Latency
-	global White_Contours, White_ContourArea, White_CenterPos, WOI_Count, White_PosShowFinish
+	global White_Contours, White_ContourArea, White_CenterPos, WOI_Count, White_PosShowFinish, White_TotalItem
 	global CheckP_UI, CheckP_ICAM, CheckP_IPCAM
 
 	#欄位初始點
@@ -328,6 +380,7 @@ def makeDashBoard():
 	
 	# White Object Information
 	cv2.putText(result, "=White Object Info=", (BasicPos3, 200), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
+	cv2.putText(result, "Total Item: %d" %(White_TotalItem), (BasicPos3, 220), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	WOI_ColLen = 65
 	# if WOI_Count < 500:
 	# 	WOI_Count = WOI_Count + 1
@@ -337,17 +390,17 @@ def makeDashBoard():
 	White_PosShowFinish = False
 	for i in range(len(WOI_Color)):
 		if i < len(White_ContourArea):
-			cv2.putText(result, "Index: %d" %(i), (BasicPos3, 220 + WOI_ColLen*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, WOI_Color[i], 0, cv2.LINE_AA)
-			cv2.putText(result, "CenterPos: [%d,%d]" %(White_CenterPos[i][0],White_CenterPos[i][1]), (BasicPos3, 240 + WOI_ColLen*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, WOI_Color[i], 0, cv2.LINE_AA)
-			cv2.putText(result, "ContourArea: %d" %(White_ContourArea[i]), (BasicPos3, 260 + WOI_ColLen*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, WOI_Color[i], 0, cv2.LINE_AA)
+			cv2.putText(result, "Index: %d" %(i), (BasicPos3, 240 + WOI_ColLen*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, WOI_Color[i], 0, cv2.LINE_AA)
+			cv2.putText(result, "CenterPos: [%d,%d]" %(White_CenterPos[i][0],White_CenterPos[i][1]), (BasicPos3, 260 + WOI_ColLen*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, WOI_Color[i], 0, cv2.LINE_AA)
+			cv2.putText(result, "ContourArea: %d" %(White_ContourArea[i]), (BasicPos3, 280 + WOI_ColLen*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, WOI_Color[i], 0, cv2.LINE_AA)
 		else:
-			cv2.putText(result, "Index: None", (BasicPos3, 220 + WOI_ColLen*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
-			cv2.putText(result, "CenterPos: [%d,%d]" %(0,0), (BasicPos3, 240 + WOI_ColLen*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
-			cv2.putText(result, "ContourArea: None", (BasicPos3, 260 + WOI_ColLen*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
+			cv2.putText(result, "Index: None", (BasicPos3, 240 + WOI_ColLen*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
+			cv2.putText(result, "CenterPos: [%d,%d]" %(0,0), (BasicPos3, 260 + WOI_ColLen*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
+			cv2.putText(result, "ContourArea: None", (BasicPos3, 280 + WOI_ColLen*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
 	White_PosShowFinish = True
 
 	# Function Check Point
-	checkBasicPos = 550
+	checkBasicPos = 570
 	cv2.putText(result, "=Check Point=", (BasicPos3, checkBasicPos), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
 	cv2.putText(result, "MMT-UI:", (BasicPos3, checkBasicPos + 20), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	cv2.putText(result, "ICAM:", (BasicPos3, checkBasicPos + 40), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
@@ -406,7 +459,12 @@ def DBGV_Main(): #DBGV主程式
 				videoTime = datetime.datetime.now()
 				SET_VIDEO_PATH = True
 
+			# if Maze_StartState:
+			# 	print(Data_ArmInOutPosLine)
 			# print(Data_ArmInOutPosLine)
+
+
+
 			cv2.imshow("DashBoard Video", TotalBoard)
 			cv2.waitKey(1)
 

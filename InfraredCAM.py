@@ -399,6 +399,8 @@ class InfraredCAM:
 				self.ARMS_IN_LINE.append([mask1,mask2])
 				self.DBGV.CheckP_ICAM = 1008
 			# print(self.ARMS_IN_LINE)
+			self.DBGV.Data_ArmInOutPosLine[0:8] = self.ARMS_IN_LINE
+			# print(self.ARMS_IN_LINE)
 			while self.WINDOWS_IS_ACTIVE:
 				#確定要連線時才會跑這個
 				if self.CAM_IS_RUN:
@@ -461,7 +463,6 @@ class InfraredCAM:
 							self.DBGV.White_CenterPos = self.TargetPos_All  			#將所有白色物體"座標"丟給DebugVideo
 							self.DBGV.White_ContourArea = self.White_ContourArea_All	#將所有白色物體"面積"丟給DebugVideo
 							self.DBGV.White_Contours = self.rat_XY 						#將所有白色物體"邊緣"丟給DebugVideo
-							print(self.DBGV.White_Contours)
 							self.DBGV.CheckP_ICAM = 1020
 						# print(self.White_ContourArea_All)
 						# print(len(self.TargetPos_All))
@@ -474,10 +475,12 @@ class InfraredCAM:
 					# pass
 					#把[影像擷取的東西]放這裡	
 					if self.MAZE_IS_RUN: #UI start 後動作
-						shutil.copyfile("IPCAM_INFO.csv", "IPCAM_INFO1.txt") #複製攝影機資訊
-						shutil.move("IPCAM_INFO1.txt", "./ChiMei_{}".format(datetime.now().strftime("%Y%m%d")))
-						shutil.copyfile("ARMS_LINE.csv", "ARMS_LINE1.txt")	#複製八臂32點
-						shutil.move("ARMS_LINE1.txt", "./ChiMei_{}".format(datetime.now().strftime("%Y%m%d")))
+						shutil.copyfile("IPCAM_INFO.csv", "./ChiMei_{}/IPCAM_INFO.txt".format(datetime.now().strftime("%Y%m%d"))) #複製攝影機資訊
+						shutil.copyfile("ARMS_LINE.csv", "./ChiMei_{}/ARMS_LINE.txt".format(datetime.now().strftime("%Y%m%d"))) #複製攝影機資訊
+						# shutil.copyfile("IPCAM_INFO.csv", "IPCAM_INFO1.txt") #複製攝影機資訊
+						# shutil.move("IPCAM_INFO1.txt", "./ChiMei_{}".format(datetime.now().strftime("%Y%m%d")))
+						# shutil.copyfile("ARMS_LINE.csv", "ARMS_LINE1.txt")	#複製八臂32點
+						# shutil.move("ARMS_LINE1.txt", "./ChiMei_{}".format(datetime.now().strftime("%Y%m%d")))
 
 
 						self.DBGV.CheckP_ICAM = 1022
@@ -593,7 +596,6 @@ class InfraredCAM:
 				self.DBGV.Data_TotalTerm = [self.TotalLongTerm, self.TotalShortTerm]
 				self.DBGV.Data_ArmState = self.NOW_STATUS
 				self.DBGV.Data_CurrentArm = self.dangchianbi
-				self.DBGV.Data_ArmInOutPosLine = self.MASK_POS
 
 				self.DBGV.Data_ArmState = self.NOW_STATUS
 				#開視窗查看影像
