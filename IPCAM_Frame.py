@@ -12,6 +12,7 @@ import DebugVideo as DBGV
 
 FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
 logging.basicConfig(level=logging.WARNING, filename='MazeLog.log', filemode='a', format=FORMAT)
+DBGV.CheckP_IPCAM = "1"
 
 WINDOWS_CLOSED = False 		#視窗是否關閉
 CAM_INIT_SUCCESS = False 	#攝相機是否初始化成功
@@ -31,10 +32,11 @@ IPCAM_NowTime = datetime.datetime.now()	#現在時間
 IPCAM_Messenage = ""	#顯示在UI上訊息內容
 IPCAM_MsgColor = 0		#顯示在UI上訊息顏色
 
-def convert(list):
+def convert(list): #轉換資料型態(list -> tuple)
     return tuple(list)
 
-def makeBlackImage(): #製造出全黑圖片(10x10) <= 這個贈品很好用，送你XD
+def makeBlackImage(): #製造出全黑圖片(10x10)
+	DBGV.CheckP_IPCAM = "14"
 	pixels = []
 	for i in range(0,10):
 		row = []
@@ -43,10 +45,11 @@ def makeBlackImage(): #製造出全黑圖片(10x10) <= 這個贈品很好用，�
 		pixels.append(row)
 	array = np.array(pixels, dtype=np.uint8)
 	newBlack = Image.fromarray(array)
-	newBlack = cv2.cvtColor(np.asarray(newBlack),cv2.COLOR_RGB2BGR)  
+	newBlack = cv2.cvtColor(np.asarray(newBlack),cv2.COLOR_RGB2BGR) 
 	return newBlack
 
-def setMessenage(color, messenge):
+def setMessenage(color, messenge): #UI訊息顯示(顏色, 訊息)
+	DBGV.CheckP_IPCAM = "15"
 	global IPCAM_MsgColor, IPCAM_Messenage
 	time.sleep(0.2)
 	IPCAM_MsgColor = color
@@ -59,64 +62,67 @@ def Main():
 
 	try:
 		FIRST_RUN = True
-		newTime = datetime.datetime.now() #啟始時間
-		while WINDOWS_IS_ACTIVE:
-			DBGV.CheckP_IPCAM = "1"
-			if CAM_INIT_SUCCESS:
-				DBGV.CheckP_IPCAM = "2"			
-				if CAM_IS_RUN:
-					DBGV.CheckP_IPCAM = "3"
-					if FIRST_RUN:
-						DBGV.CheckP_IPCAM = "4"
-						IPCAM_Image = []
-						FrameCount = 0
-						rtsp = "rtsp://{0}:{1}@{2}:554/{3}".format(IPCAM_Username, IPCAM_Password, IPCAM_IP, IPCAM_Bar) #1920x1080
+		newTime = datetime.datetime.now() #紀錄啟始時間
+		DBGV.CheckP_IPCAM = "2"
+		while WINDOWS_IS_ACTIVE:	#UI開啟
+			DBGV.CheckP_IPCAM = "3"
+			if CAM_INIT_SUCCESS:	#LOAD按鈕匯入IPCAM資訊
+				DBGV.CheckP_IPCAM = "4"		
+				if CAM_IS_RUN:		#LINK按鈕啟動IPCAM
+					DBGV.CheckP_IPCAM = "5"
+					if FIRST_RUN:	#第一次執行
+						DBGV.CheckP_IPCAM = "6-1"
+						IPCAM_Image = []	#影像儲存變數清空
+						FrameCount = 0		#幀數計數歸零
+						rtsp = "rtsp://{0}:{1}@{2}:554/{3}".format(IPCAM_Username, IPCAM_Password, IPCAM_IP, IPCAM_Bar) #RTSP連結
 
-						DBGV.CheckP_IPCAM = "5"
-						cap = cv2.VideoCapture(rtsp)
+						cap = cv2.VideoCapture(rtsp)	#IPCAM視訊串流
 						FIRST_RUN = False
-						DBGV.CheckP_IPCAM = "6"
+						DBGV.CheckP_IPCAM = "6-2"
 
-					nowTime = datetime.datetime.now()
+					nowTime = datetime.datetime.now()	#紀錄現在時間
+					DBGV.CheckP_IPCAM = "7"
 					if cap.isOpened():
-						DBGV.CheckP_IPCAM = "7"
-						ret,frame = cap.read()
-						DBGV.CheckP_IPCAM = "8"
+						DBGV.CheckP_IPCAM = "8-1"
+						ret,frame = cap.read()			#IPCAM視訊截取(ret->True有圖片/False無圖片 frame->影像圖片)
 						DBGV.IPCAM_Name = IPCAM_Name
 						DBGV.IPCAM_IP = IPCAM_IP
 						DBGV.IPCAM_NewP1 = IPCAM_NewP1
-						DBGV.CheckP_IPCAM = "9"
+						DBGV.CheckP_IPCAM = "8-2"
 					else:
-						DBGV.CheckP_IPCAM = "10"
+						DBGV.CheckP_IPCAM = "9-1"
 						setMessenage(2, "[ERROR] Camera Not Open!!")
-						cap = cv2.VideoCapture(rtsp)
-						DBGV.CheckP_IPCAM = "11"
+						cap = cv2.VideoCapture(rtsp)	#IPCAM視訊截取
+						DBGV.CheckP_IPCAM = "9-2"
 
-					if frame is not None:
-						DBGV.CheckP_IPCAM = "12"
+					if frame is not None:	#如果影像有截取到
+						DBGV.CheckP_IPCAM = "10-1"
 						IPCAM_Image = frame
 						DBGV.IPCAM_Image = frame.copy()
+						DBGV.CheckP_IPCAM = "10-2"
 						FrameCount = FrameCount + 1
 						IPCAM_NowTime = datetime.datetime.now() #影像讀取成功的時間
 						DBGV.IPCAM_NowTime = IPCAM_NowTime
 						if (nowTime - newTime).seconds > 0:
+							DBGV.CheckP_IPCAM = "10-3"
 							IPCAM_FrameCount = FrameCount
 							DBGV.IPCAM_FrameCount = FrameCount
 							FrameCount = 0
 							newTime = datetime.datetime.now() #更新啟始時間
+							DBGV.CheckP_IPCAM = "10-4"
 					else:
-						DBGV.CheckP_IPCAM = "13"
+						DBGV.CheckP_IPCAM = "11-1"
 						setMessenage(2, "[ERROR] Frame is NULL! Reconnecting...")
-						cap = cv2.VideoCapture(rtsp)
-						DBGV.CheckP_IPCAM = "14"
+						cap = cv2.VideoCapture(rtsp)	#IPCAM視訊截取
+						DBGV.CheckP_IPCAM = "11-2"
 				else:
-					DBGV.CheckP_IPCAM = "15"
+					DBGV.CheckP_IPCAM = "13-1"
 					setMessenage(1, "[INFO] CAMERA Unlink")
 					FIRST_RUN = True
 					IPCAM_Image = []
 					DBGV.IPCAM_Image = []
 					FrameCount = 0
-					DBGV.CheckP_IPCAM = "16"
+					DBGV.CheckP_IPCAM = "13-2"
 
 	except Warning as e:
 		detail = e.args[0] #取得詳細內容
