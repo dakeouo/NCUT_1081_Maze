@@ -469,12 +469,14 @@ class InfraredCAM:
 							self.DBGV.CheckP_ICAM = 1020
 					else:
 						self.DBGV.NO_RAT = True #有無白色物體
+						self.TargetPos = [-20,-20]
 						# print(self.White_ContourArea_All)
 						# print(len(self.TargetPos_All))
 						# print(self.TargetPos_All)
 						self.DBGV.Data_TargetPos = self.TargetPos_All[0]   #將座標丟給DebugVideo
 						self.TargetPos = self.TargetPos_All[0]
-						self.Mouse_coordinates.append(self.TargetPos_All[0])
+						if self.DBGV.NO_RAT == False:
+							self.Mouse_coordinates.append(self.TargetPos_All[0])
 						self.DBGV.CheckP_ICAM = 1021
 					#
 					# pass
