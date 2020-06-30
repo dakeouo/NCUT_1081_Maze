@@ -449,8 +449,11 @@ class InfraredCAM:
 
 					cv2.waitKey(1)
 					self.rat_XY,wh = cv2.findContours(frame1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 W=所有座標
+					
+						
 					self.DBGV.CheckP_ICAM = 1017
 					if len(self.rat_XY):
+						self.DBGV.NO_RAT = False #有無白色物體
 						self.TargetPos_All = []
 						self.White_ContourArea_All = []
 						self.DBGV.CheckP_ICAM = 1018
@@ -464,6 +467,8 @@ class InfraredCAM:
 							self.DBGV.White_ContourArea = self.White_ContourArea_All	#將所有白色物體"面積"丟給DebugVideo
 							self.DBGV.White_Contours = self.rat_XY 						#將所有白色物體"邊緣"丟給DebugVideo
 							self.DBGV.CheckP_ICAM = 1020
+					else:
+						self.DBGV.NO_RAT = True #有無白色物體
 						# print(self.White_ContourArea_All)
 						# print(len(self.TargetPos_All))
 						# print(self.TargetPos_All)
