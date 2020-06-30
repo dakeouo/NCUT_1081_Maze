@@ -402,7 +402,6 @@ class InfraredCAM:
 			self.DBGV.Data_ArmInOutPosLine[0:8] = self.ARMS_IN_LINE
 			# print(self.ARMS_IN_LINE)
 			while self.WINDOWS_IS_ACTIVE:
-				XXXXXX = datetime.now()
 				#確定要連線時才會跑這個
 				if self.CAM_IS_RUN:
 					self.DBGV.CheckP_ICAM = 1009
