@@ -22,6 +22,7 @@ Disease_List = []
 
 FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
 logging.basicConfig(level=logging.WARNING, filename='MazeLog.log', filemode='a', format=FORMAT)
+DBGV.CheckP_UI = "1"
 
 def writeData2CSV(fileName, type_, dataRow): #寫入CSV檔
 	with open(fileName, type_, newline='') as csvfile:
@@ -42,7 +43,7 @@ def readCSV2List(fileName): #讀取CSV檔
 
 	return AllData
 
-def LoadCamInfo():
+def LoadCamInfo():	#將[攝相機資訊檔案]匯入[攝相機資訊陣列]
 	global IPCAM_Info
 	#名稱, 帳號, 密碼, IP, RTSP, Ax, Ay
 	IPCAM_Info = readCSV2List(IPCAM_Info_FileName)
@@ -51,18 +52,18 @@ def LoadCamInfo():
 		IPCAM_Info[i][6] = int(IPCAM_Info[i][6])
 	# print(IPCAM_Info)
 
-def LoadDiseaseFile():
+def LoadDiseaseFile(): #將[疾病分組檔案]匯入[疾病分組資訊陣列]
 	global Disease_List, Disease_List_FileName
 	Disease_List = readCSV2List(Disease_List_FileName)
 	# print(Disease_List)
 
-def WriteDiseaseFile(data):
+def WriteDiseaseFile(data):	#將目前[疾病分組資訊陣列]重新寫入[疾病分組檔案]
 	global Disease_List, Disease_List_FileName
 	writeData2CSV(Disease_List_FileName, "w", data[0])
 	for i in range(1, len(data)):
 		writeData2CSV(Disease_List_FileName, "a", data[i])
 
-def findDiseaseArray(arr, Dtype, text):
+def findDiseaseArray(arr, Dtype, text): #找尋目前輸入的內容是否在陣列疾病分組資訊陣列內(有:回傳index/無:回傳-1)
 	# print(Dtype, text)
 	for i in range(0,len(arr)):
 		if arr[i][1] == text and arr[i][0] == Dtype:
@@ -88,20 +89,35 @@ def Second2Datetime(sec): #秒數轉換成時間
 
 class MazeMouseTrack(object):
 	def __init__(self):
+		#=======變數命名規則說明=======
+		# (一) UI變數(它算式UI的物件。因為其他副程式也要用到，所以必須要將物件命名)
+		# self.TK_* => 用在主UI視窗的變數
+		# self.TKS_* => 用在設定UI視窗的變數
+		# self.*Combo => 下拉式選單變數
+		# self.TKC_* => 主UI視窗的Checkbox(核選方塊)變數
+		# (二) 執行緒
+		# self.*Thread => 執行緒變數
+		# (三) 其它
+		# 剩下的自己看啦，我設的變數都有機可循的，英文不會就請自己翻譯
+		#============================
 
+		#紅外線攝相機執行緒
 		self.IPCAM = IPCAM
 		self.CAMThread = threading.Thread(target = self.IPCAM.Main) # 執行該子執行緒
 		self.CAMThread.start()  # 執行該子執行緒
+		DBGV.CheckP_UI = "2"
 
-		#熱影像相機的類別
+		#熱影像相機執行緒
 		self.TCAM = TCAM()
 		self.thread = threading.Thread(target = self.TCAM.CameraMain) # 執行該子執行緒
 		self.thread.start()  # 執行該子執行緒
+		DBGV.CheckP_UI = "3"
 
-		#狀態顯示&錄影程式
+		#狀態顯示&錄影程式執行緒
 		self.DBGV = DBGV
 		self.DBGVThread = threading.Thread(target = self.DBGV.DBGV_Main) # 執行該子執行緒
 		self.DBGVThread.start()  # 執行該子執行緒
+		DBGV.CheckP_UI = "4"
 
 		#變數：迷宮系統相關
 		self.ARM_UNIT = self.TCAM.ARM_UNIT #迷宮臂數
@@ -155,8 +171,9 @@ class MazeMouseTrack(object):
 		self.DiseaseType = "" #老鼠病症組別
 		self.DisGroupType = "" #老鼠病症組別復鍵(含 健康、無復健 等)
 		self.DisDays = [False, -1, -1] #老鼠病症天數(是否手術, 月, 天)
-		self.SETTING_OPEN = False
+		self.SETTING_OPEN = False	#設定視窗是否開啟
 
+		#顯示在設定視窗上的所有數值/文字變數
 		self.TKS_Show_Opera = ""
 		self.TKS_Show_OpDay = ""
 		self.TKS_Show_Disease = ""
@@ -170,18 +187,17 @@ class MazeMouseTrack(object):
 
 		self.CSV_DiseaseFile = [] #存放CSV讀進來的內容
 		self.NOW_DiseaseList = [-1, '', '', ''] #目前編輯條目(index, 分類[疾病/分組], 名稱, 敘述)
-		# self.IPCAM.CAM_INIT_SUCCESS = True
+		DBGV.CheckP_UI = "5"
 
 		self.tkWin = tk.Tk()
 		self.tkWin.title('%d臂迷宮路徑追蹤系統' %(self.ARM_UNIT)) #窗口名字
 		self.tkWin.geometry('%dx%d+20+20' %(self.WinSize[0],self.WinSize[1])) #窗口大小(寬X高+X偏移量+Y偏移量)
 		self.tkWin.resizable(False, False) #禁止變更視窗大小
-		
-		# self.thread = threading.Thread(target = self.TCAM.CameraMain) # 執行該子執行緒
-		# self.thread.start()  # 執行該子執行緒
+		DBGV.CheckP_UI = "6"
 
 		try:
 			self.setEachVariable() #各項變數初始化
+			DBGV.CheckP_UI = "7"
 			self.setupUI() #視窗主程式
 		except Warning as e:
 			detail = e.args[0] #取得詳細內容
@@ -204,6 +220,7 @@ class MazeMouseTrack(object):
 		self.firstMazeRun = True
 
 	def setArmLine(self): #繪製迷宮框
+		DBGV.CheckP_UI = "23"
 		DrawArms = self.ARMS_POS
 		DrawArms.append(DrawArms[0])
 		for i in range(1,len(DrawArms)):
@@ -223,6 +240,7 @@ class MazeMouseTrack(object):
 			self.TK_S_Term.append("0")
 
 	def SetRatID(self): #設定老鼠編號
+		DBGV.CheckP_UI = "24"
 		RAT_ID = self.TK_Rat_ID.get()
 		Unit = countStr(RAT_ID)
 		str1 = "# RatID: {}".format(RAT_ID)
@@ -233,6 +251,7 @@ class MazeMouseTrack(object):
 		# print(len(RAT_ID))
 
 	def setFood(self): #設定食物放在哪個臂
+		DBGV.CheckP_UI = "25"
 		hadFood = []
 		ct = 0
 		for i in range(0,self.ARM_UNIT):
@@ -253,8 +272,9 @@ class MazeMouseTrack(object):
 		self.TK_SHOW_Food.config(text=str1)
 		self.TK_SHOW_Food.place(x=self.WinSize[0]-move,y=250,anchor="ne")
 
-	def ConnectClick(self):
+	def ConnectClick(self): #"Link"按鈕按下時負責處理的副程式
 		if self.CAM_IS_RUN:
+			DBGV.CheckP_UI = "26-1"
 			self.BT_Connect.config(text="Link", bg="DarkOliveGreen2", fg="dark green")
 			self.Link_State.config(text="IPCAM Link: Unlinked", fg="gray35")
 			self.Link_State.place(x=self.WinSize[0]-189)
@@ -279,6 +299,7 @@ class MazeMouseTrack(object):
 				self.BT_Setting.config(state="disabled")
 				self.tkSetting.destroy()
 		else:
+			DBGV.CheckP_UI = "26-2"
 			self.BT_Connect.config(text="Unlink", bg="tomato", fg="brown4")
 			self.Link_State.config(text="IPCAM Link: Linked",fg="green4")
 			self.Link_State.place(x=self.WinSize[0]-203)
@@ -296,11 +317,13 @@ class MazeMouseTrack(object):
 	def MazeStartCheck(self): #執行前檢查
 		HaveError = False
 		if self.MAZE_IS_RUN:
+			DBGV.CheckP_UI = "27-1"
 			self.Maze_State.config(text="Maze State: Preparing...", fg="gray35")
 			self.Maze_State.place(x=self.WinSize[0]-170,y=220,anchor="ne")
 			self.BT_Start.config(text="Start", bg="DarkOliveGreen2")
 			self.MAZE_IS_RUN = False
 		else:
+			DBGV.CheckP_UI = "27-2"
 			ErrMsg = ""
 			if self.OperaType == "":
 				ErrMsg = ErrMsg + "You don't have set Operation Type!!\n"
@@ -314,6 +337,7 @@ class MazeMouseTrack(object):
 				if(self.DisDays[2] == -1):
 					self.DisDays[2] = 0
 
+			DBGV.CheckP_UI = "27-3"
 			if self.DiseaseType == "":
 				ErrMsg = ErrMsg + "You don't have Choose Disease Type!!\n"
 				HaveError = True
@@ -327,6 +351,7 @@ class MazeMouseTrack(object):
 				ErrMsg = ErrMsg + "You don't have click any food!!\n"
 				HaveError = True
 			
+			DBGV.CheckP_UI = "27-4"
 			if HaveError:
 				tk.messagebox.showwarning(title='Warning!!', message=ErrMsg)
 			else:
@@ -348,37 +373,24 @@ class MazeMouseTrack(object):
 
 	def CameraCheck(self): #實體影像檢查
 		if self.OPEN_CAMERA_WINDOW:
+			DBGV.CheckP_UI = "28-1"
 			self.BT_Camera.config(bg="gray85")
 			self.OPEN_CAMERA_WINDOW = False
 		else:
+			DBGV.CheckP_UI = "28-2"
 			self.BT_Camera.config(bg="lemon chiffon")
 			self.OPEN_CAMERA_WINDOW = True
 		self.TCAM.OPEN_CAMERA_WINDOW = self.OPEN_CAMERA_WINDOW
 		self.DBGV.Maze_CameraState = self.OPEN_CAMERA_WINDOW
 
-	def Choose_Dir(self): #選擇CSV檔要存至哪個位置
-		FileDir = filedialog.asksaveasfilename(
-			initialdir = self.FilePath,title = "Select file", 
-			filetypes = (("csv files","*.csv"),("all files","*.*")),
-			defaultextension='.csv'
-		)
-		if str(FileDir) != "":
-			PATH = FileDir.split("/")
-			self.FilePath = ""
-			for i in range(0,len(PATH)-1):
-				self.FilePath = self.FilePath + PATH[i] + "/"
-			self.FileName = PATH[len(PATH)-1]
-		self.TK_File_Dir.set(str(self.FilePath)+str(self.FileName))
-		self.TK_SHOW_FileDir.set("# FileDir: {}{}".format(self.FilePath, self.FileName))
-		# print(self.FilePath)
-		# print(self.FileName)
-
 	def makeBall(self): #變更目標位置
+		DBGV.CheckP_UI = "29"
 		self.TargetPos = self.TCAM.TargetPos
 		self.mazeCanvas.move(self.TBall, int(self.TargetPos[0] - self.nowPos[0]), int(self.TargetPos[1] - self.nowPos[1]))
 		self.nowPos = self.TargetPos
 
 	def updateData(self): #更新各項顯示資訊
+		DBGV.CheckP_UI = "30"
 		self.S_Term = self.TCAM.ShortTerm
 		self.L_Term = self.TCAM.LongTerm
 		self.Route = self.TCAM.Route
@@ -397,20 +409,23 @@ class MazeMouseTrack(object):
 		self.RouteText.delete('0.0','end')
 		self.RouteText.insert('end',self.Route)
 
-	def LockInput(self, state):
+	def LockInput(self, state): #輸入鎖(避免不必要的麻煩)
 		if state:
+			DBGV.CheckP_UI = "31-1"
 			# self.TKE_Dir.config(state="disabled")
 			self.TK_Rat_ID.config(state="disabled")
 			for i in range(0,self.ARM_UNIT):
 				self.TKC_Food[i].config(state="disabled")
 		else:
+			DBGV.CheckP_UI = "31-2"
 			# self.TKE_Dir.config(state="normal")
 			self.TK_Rat_ID.config(state="normal")
 			for i in range(0,self.ARM_UNIT):
 				self.TKC_Food[i].config(state="normal")
 
-	def setIPCAMInfo(self): 
+	def setIPCAMInfo(self): #設定要匯入IPCAM那隻程式的資訊
 		if(self.InfoCombo.current() != 0):
+			DBGV.CheckP_UI = "32-1"
 			IPCAM_ID, IPCAM_Name = self.InfoCombo.current()-1, self.InfoCombo.get()
 
 			IPCAM_Username = IPCAM_Info[IPCAM_ID][1]
@@ -429,6 +444,7 @@ class MazeMouseTrack(object):
 
 			self.IPCAM.CAM_INIT_SUCCESS = self.CAM_INIT_SUCCESS
 
+			DBGV.CheckP_UI = "32-2"
 			self.mazeTitle.config(text="IPCAM: {} ({})".format(IPCAM_Name, IPCAM_IP))
 			# for i in range(1, self.ARM_UNIT+1):
 			# 	self.TKC_Food[i-1].config(state="normal")
@@ -444,8 +460,9 @@ class MazeMouseTrack(object):
 
 	def LoopMain(self): #UI執行後一直跑的迴圈
 		try:
-			
+			DBGV.CheckP_UI = "11"
 			if  self.CAM_INIT_SUCCESS:
+				DBGV.CheckP_UI = "12"
 				self.makeBall()
 				self.CAM_IS_CONN = self.TCAM.CAM_IS_CONN
 				if self.CAM_IS_RUN and self.CAM_IS_CONN:
@@ -456,11 +473,14 @@ class MazeMouseTrack(object):
 					self.BT_Start.config(state="disabled")
 
 				if self.MAZE_IS_RUN:
+					DBGV.CheckP_UI = "13-1"
 					if self.firstMazeRun:
 						self.firstMazeRun = False
 					self.LockInput(True)
+					DBGV.CheckP_UI = "13-2"
 					newMazeStatus = self.TCAM.MAZE_IS_RUN
 					self.updateData()
+					DBGV.CheckP_UI = "13-3"
 					if newMazeStatus == False:
 						self.Maze_State.config(text="Maze State: Preparing...", fg="gray35")
 						self.Maze_State.place(x=self.WinSize[0]-170,y=220,anchor="ne")
@@ -468,6 +488,7 @@ class MazeMouseTrack(object):
 						self.MAZE_IS_RUN = False
 						self.Maze_StartState = False
 				else:
+					DBGV.CheckP_UI = "14"
 					if self.CAM_IS_CONN:
 						self.LockInput(False)
 					else:
@@ -483,6 +504,7 @@ class MazeMouseTrack(object):
 					self.Cam_State.place(x=self.WinSize[0]-160,y=190,anchor="ne")
 					self.BT_Camera.config(state="disabled")
 
+				DBGV.CheckP_UI = "15"
 				IPCAM_MsgColor = self.IPCAM.IPCAM_MsgColor
 				IPCAM_Messenage = self.IPCAM.IPCAM_Messenage
 
@@ -498,8 +520,10 @@ class MazeMouseTrack(object):
 				self.DBGV.Maze_StartState = self.MAZE_IS_RUN
 				self.DBGV.Maze_LinkState = self.CAM_IS_RUN
 				self.DBGV.Maze_CameraState = self.OPEN_CAMERA_WINDOW
+				DBGV.CheckP_UI = "16"
 
 			self.tkWin.after(10,self.LoopMain)
+			DBGV.CheckP_UI = "17"
 
 		except Warning as e:
 			detail = e.args[0] #取得詳細內容
@@ -519,7 +543,8 @@ class MazeMouseTrack(object):
 			funcName = lastCallStack[2] #取得發生的函數名稱
 			logging.error("{} line {}, in '{}': {}".format(cl, lineNum, funcName, detail))
 
-	def windowsClosing(self):
+	def windowsClosing(self): #UI總關閉處
+		DBGV.CheckP_UI = "21"
 		self.TCAM.WINDOWS_IS_ACTIVE = False #傳送視窗關閉狀態
 		self.IPCAM.WINDOWS_IS_ACTIVE = False #傳送視窗關閉狀態
 		self.DBGV.WINDOWS_IS_ACTIVE = False #傳送視窗關閉狀態
@@ -527,7 +552,7 @@ class MazeMouseTrack(object):
 		if self.SETTING_OPEN:
 			self.tkSetting.destroy()
 
-	def PreparingTesting(self):
+	def PreparingTesting(self): #測試按鈕(偷懶用，但現在也沒在用，留著)
 		#=======食物位置設置========
 		hadFood = []
 		ct = 0
@@ -566,7 +591,8 @@ class MazeMouseTrack(object):
 		self.TK_SHOW_Rat_ID.config(text=str1)
 		self.TK_SHOW_Rat_ID.place(x=self.WinSize[0]-move,y=280,anchor="ne")
 
-	def setArmNumber(self):
+	def setArmNumber(self): #設定虛擬視窗上臂的編號
+		DBGV.CheckP_UI = "44"
 		mov = 15
 		for i in range(0, self.ARM_UNIT):
 			textA = self.ARMS_POS[((i+1)*4)-3]
@@ -582,7 +608,8 @@ class MazeMouseTrack(object):
 				textXY[1] = textXY[1] - mov
 			self.mazeCanvas.create_text(textXY[0], textXY[1], fill="gold", font="Arial 14", text=str(i+1))
 
-	def setArmInLine(self):
+	def setArmInLine(self): #設定進臂線
+		DBGV.CheckP_UI = "45"
 		ARMS_IN_LINE = self.TCAM.ARMS_IN_LINE
 		while len(ARMS_IN_LINE) == 0:
 			ARMS_IN_LINE = self.TCAM.ARMS_IN_LINE
@@ -591,15 +618,19 @@ class MazeMouseTrack(object):
 		for i in range(0, self.ARM_UNIT):
 			self.mazeCanvas.create_line(ARMS_IN_LINE[i][0][0], ARMS_IN_LINE[i][0][1], ARMS_IN_LINE[i][1][0], ARMS_IN_LINE[i][1][1], fill="DarkGoldenrod4", width=3)
 
-	def tkSetting_UploadDisease(self, ListType, DList):
+	def tkSetting_UploadDisease(self, ListType, DList): #設定UI視窗更新[疾病分組資訊](疾病/組別, 目前疾病分組陣列)
+		DBGV.CheckP_UI = "33-1"
 		idx = DList[0]
 		if idx == -1:
 			self.CSV_DiseaseFile.append(DList[1:])
 		else:
 			self.CSV_DiseaseFile[idx] = DList[1:]
 		
+		DBGV.CheckP_UI = "33-2"
 		WriteDiseaseFile(self.CSV_DiseaseFile)
+		DBGV.CheckP_UI = "33-3"
 		LoadDiseaseFile()
+		DBGV.CheckP_UI = "33-4"
 		if ListType == "Disease":
 			DiseaseInfo = ['choose Disease...']
 			for i in range(len(self.CSV_DiseaseFile)):
@@ -619,9 +650,11 @@ class MazeMouseTrack(object):
 			self.DisGroupCombo.current(0)
 			self.ModifyDGCM.current(0)
 		
+		DBGV.CheckP_UI = "33-5"
 		self.NOW_DiseaseList = [-1, '', '', '']
 
-	def tkSetting_BtnOpera(self, val):
+	def tkSetting_BtnOpera(self, val): #設定UI視窗點擊[手術前/後]按鈕後處理副程式
+		DBGV.CheckP_UI = "34"
 		if val == 'pre-Op':
 			self.TKS_Btn1_Opera1.config(bg="DarkOliveGreen2")
 			self.TKS_Btn1_Opera2.config(bg="gray90")
@@ -634,17 +667,20 @@ class MazeMouseTrack(object):
 			self.OperaType = 'past'
 		self.TKS_Show_Opera.config(text="Operation Type: %s" %(self.OperaType), fg="black")
 
-	def tkSetting_DiseaseConfirm(self):
+	def tkSetting_DiseaseConfirm(self): #設定UI視窗點擊[確認病因]按鈕後處理副程式
+		DBGV.CheckP_UI = "35"
 		if(self.DiseaseCombo.current() != 0):
 			self.DiseaseType = self.DiseaseCombo.get()
 			self.TKS_Show_Disease.config(text="Disease: %s" %(self.DiseaseType), fg="black")
 
-	def tkSetting_DisGroupConfirm(self):
+	def tkSetting_DisGroupConfirm(self): #設定UI視窗點擊[確認疾病組別]按鈕後處理副程式
+		DBGV.CheckP_UI = "36"
 		if(self.DisGroupCombo.current() != 0):
 			self.DisGroupType = self.DisGroupCombo.get()
 			self.TKS_Show_DisGroup.config(text="Disease Group: %s" %(self.DisGroupType), fg="black")
 	
-	def  tkSetting_ModifyDisease(self, val):
+	def  tkSetting_ModifyDisease(self, val): #設定UI視窗在[修改病因陣列]區域點擊[新增/修改病因]按鈕後處理副程式
+		DBGV.CheckP_UI = "37"
 		if val == 'new':
 			self.TKS_Btn2_DCM1.config(bg="DarkOliveGreen2")
 			self.TKS_Btn2_DCM2.config(bg="gray90")
@@ -673,7 +709,8 @@ class MazeMouseTrack(object):
 				self.TKS_DCM_Confirm.config(state="normal")
 			self.TKS_DCM_Cancel.config(state="normal")
 	
-	def tkSetting_ModifyGroupDisease(self, val):
+	def tkSetting_ModifyGroupDisease(self, val): #設定UI視窗在[修改疾病組別陣列]區域點擊[新增/修改疾病組別陣列]按鈕後處理副程式
+		DBGV.CheckP_UI = "38"
 		if val == 'new':
 			self.TKS_Btn2_DGCM1.config(bg="DarkOliveGreen2")
 			self.TKS_Btn2_DGCM2.config(bg="gray90")
@@ -702,8 +739,8 @@ class MazeMouseTrack(object):
 				self.TKS_DGCM_Confirm.config(state="normal")
 			self.TKS_DGCM_Cancel.config(state="normal")
 
-
-	def tkSetting_DiseaseModify(self):
+	def tkSetting_DiseaseModify(self): #設定UI視窗點擊[修改病因陣列]按鈕後處理副程式
+		DBGV.CheckP_UI = "38"
 		self.DiseaseCombo.current(0)
 		self.DiseaseCombo.config(state="disabled")
 		self.TKS_BT_DisConfirm.config(state="disabled")
@@ -714,7 +751,8 @@ class MazeMouseTrack(object):
 		self.TKS_DCM_Cancel.config(state="normal")
 		self.TKS_title6.config(bg="gray75")
 
-	def tkSetting_ModifyDiseaseConfirm(self):
+	def tkSetting_ModifyDiseaseConfirm(self): #設定UI視窗在[修改病因陣列]區域點擊[確認]按鈕後處理副程式
+		DBGV.CheckP_UI = "39"
 		self.DiseaseCombo.config(state="readonly")
 		self.TKS_BT_DisConfirm.config(state="normal")
 		self.TKS_BT_DisModify.config(state="normal")
@@ -736,7 +774,8 @@ class MazeMouseTrack(object):
 		self.TKS_DCM_Cancel.config(state="disabled")
 		self.TKS_title6.config(bg="gray85")
 
-	def tkSetting_ModifyDiseaseCancel(self):
+	def tkSetting_ModifyDiseaseCancel(self): #設定UI視窗在[修改病因陣列]區域點擊[取消]按鈕後處理副程式
+		DBGV.CheckP_UI = "39"
 		self.DiseaseCombo.config(state="readonly")
 		self.TKS_BT_DisConfirm.config(state="normal")
 		self.TKS_BT_DisModify.config(state="normal")
@@ -754,7 +793,8 @@ class MazeMouseTrack(object):
 		self.TKS_DCM_Cancel.config(state="disabled")
 		self.TKS_title6.config(bg="gray85")
 
-	def tkSetting_DisGroupModify(self):
+	def tkSetting_DisGroupModify(self): #設定UI視窗點擊[修改疾病組別陣列]按鈕後處理副程式
+		DBGV.CheckP_UI = "40"
 		self.DisGroupCombo.current(0)
 		self.DisGroupCombo.config(state="disabled")
 		self.TKS_BT_DisGroupConfirm.config(state="disabled")
@@ -765,7 +805,8 @@ class MazeMouseTrack(object):
 		self.TKS_DGCM_Cancel.config(state="normal")
 		self.TKS_title7.config(bg="gray75")
 
-	def tkSetting_ModifyDisGroupConfirm(self):
+	def tkSetting_ModifyDisGroupConfirm(self): #設定UI視窗在[修改疾病組別陣列]區域點擊[確認]按鈕後處理副程式
+		DBGV.CheckP_UI = "41"
 		self.DisGroupCombo.config(state="readonly")
 		self.TKS_BT_DisGroupConfirm.config(state="normal")
 		self.TKS_BT_DisGroupModify.config(state="normal")
@@ -787,7 +828,8 @@ class MazeMouseTrack(object):
 		self.TKS_DGCM_Cancel.config(state="disabled")
 		self.TKS_title7.config(bg="gray85")
 	
-	def tkSetting_ModifyDisGroupCancel(self):
+	def tkSetting_ModifyDisGroupCancel(self): #設定UI視窗在[修改疾病組別陣列]區域點擊[取消]按鈕後處理副程式
+		DBGV.CheckP_UI = "42"
 		self.DisGroupCombo.config(state="readonly")
 		self.TKS_BT_DisGroupConfirm.config(state="normal")
 		self.TKS_BT_DisGroupModify.config(state="normal")
@@ -805,7 +847,8 @@ class MazeMouseTrack(object):
 		self.TKS_DGCM_Cancel.config(state="disabled")
 		self.TKS_title7.config(bg="gray85")
 
-	def tkSetting_OperaDays(self):
+	def tkSetting_OperaDays(self): #設定UI視窗點擊[確認天數]按鈕後處理副程式
+		DBGV.CheckP_UI = "43"
 		if self.TKS_OpDay_Month.get() == "":
 			self.DisDays[1] = 0
 		else:
@@ -816,14 +859,16 @@ class MazeMouseTrack(object):
 			self.DisDays[2] = int(self.TKS_OpDay_Day.get())
 		self.TKS_Show_OpDay.config(text="Operation Days: %2d Month %2d Day" %(self.DisDays[1], self.DisDays[2]), fg="black")
 
-	def tkSetting_Closing(self):
+	def tkSetting_Closing(self): #設定UI視窗關閉副程式
+		DBGV.CheckP_UI = "22"
 		self.SETTING_OPEN = False
 		self.DBGV.Maze_SetState = False
 		self.BT_Setting.config(state="normal")
 		self.tkSetting.destroy()
 
-	def tkSetting_SetupUI(self):
+	def tkSetting_SetupUI(self): #設定UI視窗主要程式
 		global Disease_List
+		DBGV.CheckP_UI = "18"
 		try:
 			self.DBGV.Maze_SetState = True
 			LoadDiseaseFile()
@@ -965,10 +1010,11 @@ class MazeMouseTrack(object):
 			self.TKS_DGCM_Cancel = tk.Button(self.tkSetting, text='Cancel', width=9, font=('Arial', 10), bg="gray90", state="disabled", command=self.tkSetting_ModifyDisGroupCancel)
 			self.TKS_DGCM_Cancel.place(x=480,y=350,anchor="nw")
 			
-
+			DBGV.CheckP_UI = "19"
 			self.BT_Setting.config(state="disabled")
 			self.tkSetting.protocol("WM_DELETE_WINDOW", self.tkSetting_Closing)
 			self.tkSetting.mainloop()
+			DBGV.CheckP_UI = "20"
 		except Warning as e:
 			detail = e.args[0] #取得詳細內容
 			cl, exc, tb = sys.exc_info() #取得Call Stack
@@ -986,8 +1032,10 @@ class MazeMouseTrack(object):
 			lineNum = lastCallStack[1] #取得發生的行號
 			funcName = lastCallStack[2] #取得發生的函數名稱
 			logging.error("{} line {}, in '{}': {}".format(cl, lineNum, funcName, detail))
-	def setupUI(self):
+	
+	def setupUI(self): #主UI視窗主程式
 		global IPCAM_Info
+		DBGV.CheckP_UI = "8"
 		#========測試用========
 		# tk.Button(self.tkWin, text='Testing', width=10, font=('Arial', 8), command=self.PreparingTesting).place(x=100,y=10,anchor="nw")
 
@@ -1099,12 +1147,16 @@ class MazeMouseTrack(object):
 		self.TK_SHOW_SYS_Msg_Text = tk.Label(self.tkWin,textvariable=self.TK_SHOW_SYS_Msg, font=('Arial', 10))
 		self.TK_SHOW_SYS_Msg_Text.place(x=int(self.WinSize[0]/2),y=self.WinSize[1]-10,anchor="sw")
 		
+		DBGV.CheckP_UI = "9"
+
 		self.tkWin.protocol("WM_DELETE_WINDOW", self.windowsClosing)
 		self.tkWin.after(10,self.LoopMain)
 		self.tkWin.mainloop()
 		self.thread.join() # 等待子執行緒結束
 		self.CAMThread.join()
 		self.DBGVThread.join()
+
+		DBGV.CheckP_UI = "10"
 		
 if __name__ == '__main__':
   MazeMouseTrack()

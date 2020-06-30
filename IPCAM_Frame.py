@@ -73,6 +73,7 @@ def Main():
 					if FIRST_RUN:	#第一次執行
 						DBGV.CheckP_IPCAM = "6-1"
 						IPCAM_Image = []	#影像儲存變數清空
+						frame = []			#frame變數宣告
 						FrameCount = 0		#幀數計數歸零
 						rtsp = "rtsp://{0}:{1}@{2}:554/{3}".format(IPCAM_Username, IPCAM_Password, IPCAM_IP, IPCAM_Bar) #RTSP連結
 
