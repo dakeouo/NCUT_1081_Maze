@@ -477,6 +477,7 @@ class InfraredCAM:
 					if self.MAZE_IS_RUN: #UI start 後動作
 						shutil.copyfile("IPCAM_INFO.csv", "./ChiMei_{}/IPCAM_INFO.txt".format(datetime.now().strftime("%Y%m%d"))) #複製攝影機資訊
 						shutil.copyfile("ARMS_LINE.csv", "./ChiMei_{}/ARMS_LINE.txt".format(datetime.now().strftime("%Y%m%d"))) #複製攝影機資訊
+						shutil.copyfile("DISEASE_LIST.csv", "./ChiMei_{}/DISEASE_LIST.txt".format(datetime.now().strftime("%Y%m%d"))) #複製疾病分組資訊
 						# shutil.copyfile("IPCAM_INFO.csv", "IPCAM_INFO1.txt") #複製攝影機資訊
 						# shutil.move("IPCAM_INFO1.txt", "./ChiMei_{}".format(datetime.now().strftime("%Y%m%d")))
 						# shutil.copyfile("ARMS_LINE.csv", "ARMS_LINE1.txt")	#複製八臂32點
