@@ -90,6 +90,8 @@ CheckP_UI = "0"		#UI程式檢查點
 CheckP_ICAM = "0"		#影像處理程式檢查點
 CheckP_IPCAM = "0"	#IPCAM程式檢查點
 
+NO_RAT = False #是否沒白色物體
+
 FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
 logging.basicConfig(level=logging.WARNING, filename='MazeLog.log', filemode='a', format=FORMAT)
 
@@ -195,7 +197,6 @@ def makeFrameView(frame):
 			NEW_Data_ArmInOutPosLine = exchangeArmsLine(True, NEW_Data_ArmInOutPosLine, Data_ArmInOutPosLine, FrameSize[1])
 
 		newPos = (int(Data_TargetPos[0] * (FrameSize[1]/480)), int(Data_TargetPos[1] * (FrameSize[1]/480)))
-		cv2.circle(frame, newPos, 12, (0,0,255), -1)
 
 		White_PosShowFinish = False
 		NEW_White_Contours = []
@@ -207,18 +208,20 @@ def makeFrameView(frame):
 			NEW_newPos.append((int(White_CenterPos[i][0] * (FrameSize[1]/480)), int(White_CenterPos[i][1] * (FrameSize[1]/480))))
 
 
-		for i in range(len(White_CenterPos)):
-			if i < 5:
-				pointColor = WOI_Color[i]
-			else:
-				pointColor = (64,64,64)
-			# newPos = (int(White_CenterPos[i][0] * (FrameSize[1]/480)), int(White_CenterPos[i][1] * (FrameSize[1]/480)))
-			# print(White_Contours[i])
-			# cv2.drawContours(frame, White_Contours[i], -1, pointColor, 3)
-			cv2.polylines(frame, np.array([NEW_White_Contours[i]]), True, pointColor, 2)
+		if not NO_RAT:
+			cv2.circle(frame, newPos, 12, (0,0,255), -1)
+			for i in range(len(White_CenterPos)):
+				if i < 5:
+					pointColor = WOI_Color[i]
+				else:
+					pointColor = (64,64,64)
+				# newPos = (int(White_CenterPos[i][0] * (FrameSize[1]/480)), int(White_CenterPos[i][1] * (FrameSize[1]/480)))
+				# print(White_Contours[i])
+				# cv2.drawContours(frame, White_Contours[i], -1, pointColor, 3)
+				cv2.polylines(frame, np.array([NEW_White_Contours[i]]), True, pointColor, 2)
 
-			cv2.circle(frame, NEW_newPos[i], 9, (255,255,255), -1)
-			cv2.circle(frame, NEW_newPos[i], 8, pointColor, -1)
+				cv2.circle(frame, NEW_newPos[i], 9, (255,255,255), -1)
+				cv2.circle(frame, NEW_newPos[i], 8, pointColor, -1)
 		White_PosShowFinish = True
 
 		for i in range(len(NEW_Data_ArmInOutPosLine)):
@@ -341,7 +344,7 @@ def makeDashBoard():
 		cv2.putText(result, "%4.2f" %(Data_ArmInOutLen[i]), (TableRowPos[3] + 20, TableColPos + i*TableColLen), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 		cv2.putText(result, "%4.2f" %(Data_ArmInOutDistance[i]), (TableRowPos[4] + 20, TableColPos + i*TableColLen), cv2.FONT_HERSHEY_DUPLEX, 0.5, AIOD_Color, 0, cv2.LINE_AA)
 	cv2.putText(result, "ArmOutLen:", (TableRowPos[0], TableColPos + 8*TableColLen), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
-	cv2.putText(result, "%4.2f" %(Data_ArmInOutDistance[8]), (TableRowPos[0] + 120, TableColPos + 8*TableColLen), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+	cv2.putText(result, "%4.2f" %(Data_ArmInOutLen[8]), (TableRowPos[0] + 120, TableColPos + 8*TableColLen), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	cv2.putText(result, "ArmOutDis:", (TableRowPos[3], TableColPos + 8*TableColLen), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
 	cv2.putText(result, "%4.2f" %(Data_ArmInOutDistance[8]), (TableRowPos[3] + 120, TableColPos + 8*TableColLen), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	
