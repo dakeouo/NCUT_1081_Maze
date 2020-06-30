@@ -378,7 +378,7 @@ class InfraredCAM:
 	def CameraMain(self): #這個副程式是"主程式"呦~~~~~
 		global Inlinepoint_long,dangchianjiuli
 		try:
-
+			
 			#遮罩形成
 			copy = makeBlackImage() #產生黑色的圖
 			copy = cv2.resize(copy,(480,480),interpolation=cv2.INTER_CUBIC) #放大成480x480
@@ -402,6 +402,7 @@ class InfraredCAM:
 			self.DBGV.Data_ArmInOutPosLine[0:8] = self.ARMS_IN_LINE
 			# print(self.ARMS_IN_LINE)
 			while self.WINDOWS_IS_ACTIVE:
+				XXXXXX = datetime.now()
 				#確定要連線時才會跑這個
 				if self.CAM_IS_RUN:
 					self.DBGV.CheckP_ICAM = 1009
@@ -415,8 +416,9 @@ class InfraredCAM:
 						self.CAM_IS_CONN = False
 						self.DBGV.CheckP_ICAM = 1011
 					else:
-						self.WIDTH,self.HEIGHT = (frame.shape[1], frame.shape[0])
-						frame = cv2.resize(frame,(self.WIDTH,self.HEIGHT),interpolation=cv2.INTER_CUBIC) #調整大小1024*576
+						# self.WIDTH,self.HEIGHT = (frame.shape[1], frame.shape[0])
+						# frame = cv2.resize(frame,(self.WIDTH,self.HEIGHT),interpolation=cv2.INTER_CUBIC) #調整大小1024*576
+
 						if IPCAM_LoadTime > 3:
 							self.IPCAM.setMessenage(1, "[WAIT] CAMERA is TIMEOUT!")
 							self.DBGV.CheckP_ICAM = 1012
@@ -425,6 +427,9 @@ class InfraredCAM:
 							self.IPCAM.setMessenage(0, "[GOOD] CAMERA is connecting!")
 							self.DBGV.CheckP_ICAM = 1013
 						self.CAM_IS_CONN = True
+						yyyyyy= datetime.now()
+						aaaaaa = yyyyyy -XXXXXX
+						print(str((aaaaaa).microseconds))
 						# cv2.imshow ("copy",copy)
 					# cv2.rectangle(frame, convert(self.newP1), convert(self.newP2), (0,255,0), 1) #繪製矩形
 					# cv2.imshow("frame",frame)
@@ -447,8 +452,8 @@ class InfraredCAM:
 					
 					# cv2.imshow("frame",frame1)
 
-					cv2.waitKey(1)
-					self.rat_XY,wh = cv2.findContours(frame1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 W=所有座標
+					# cv2.waitKey(1)
+					self.rat_XY,wh = cv2.findContours(frame1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 self.rat_XY=所有座標
 					
 						
 					self.DBGV.CheckP_ICAM = 1017
@@ -532,6 +537,7 @@ class InfraredCAM:
 							# print(self.food1)
 							food1max = np.max(self.food1)
 							self.DBGV.CheckP_ICAM = 1030
+
 							if food1max == 0:
 								self.DBGV.CheckP_ICAM = 1031
 								self.NOW_STATUS = 0 #進臂or出臂
@@ -627,6 +633,7 @@ class InfraredCAM:
 						cv2.destroyWindow("Camera Image")
 				else:
 					cv2.destroyWindow("Camera Image")
+
 
 				# self.CAMThread.join()
 		except Warning as e:
