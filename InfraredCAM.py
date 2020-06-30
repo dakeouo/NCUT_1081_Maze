@@ -452,6 +452,9 @@ class InfraredCAM:
 					
 						
 					self.DBGV.CheckP_ICAM = 1017
+					if len(self.rat_XY) == 0:
+						self.DBGV.NO_RAT = True #有無白色物體
+						self.TargetPos = [-20,-20]
 					if len(self.rat_XY):
 						self.DBGV.NO_RAT = False #有無白色物體
 						self.TargetPos_All = []
@@ -467,9 +470,6 @@ class InfraredCAM:
 							self.DBGV.White_ContourArea = self.White_ContourArea_All	#將所有白色物體"面積"丟給DebugVideo
 							self.DBGV.White_Contours = self.rat_XY 						#將所有白色物體"邊緣"丟給DebugVideo
 							self.DBGV.CheckP_ICAM = 1020
-					else:
-						self.DBGV.NO_RAT = True #有無白色物體
-						self.TargetPos = [-20,-20]
 						# print(self.White_ContourArea_All)
 						# print(len(self.TargetPos_All))
 						# print(self.TargetPos_All)
