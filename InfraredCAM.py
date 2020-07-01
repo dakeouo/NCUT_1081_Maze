@@ -426,9 +426,6 @@ class InfraredCAM:
 							self.IPCAM.setMessenage(0, "[GOOD] CAMERA is connecting!")
 							self.DBGV.CheckP_ICAM = 1013
 						self.CAM_IS_CONN = True
-						yyyyyy= datetime.now()
-						aaaaaa = yyyyyy -XXXXXX
-						print(str((aaaaaa).microseconds))
 						# cv2.imshow ("copy",copy)
 					# cv2.rectangle(frame, convert(self.newP1), convert(self.newP2), (0,255,0), 1) #繪製矩形
 					# cv2.imshow("frame",frame)

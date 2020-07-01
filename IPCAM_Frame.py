@@ -51,7 +51,7 @@ def makeBlackImage(): #製造出全黑圖片(10x10)
 def setMessenage(color, messenge): #UI訊息顯示(顏色, 訊息)
 	DBGV.CheckP_IPCAM = "15"
 	global IPCAM_MsgColor, IPCAM_Messenage
-	time.sleep(0.1)
+	time.sleep(0.01)
 	IPCAM_MsgColor = color
 	IPCAM_Messenage = messenge
 
