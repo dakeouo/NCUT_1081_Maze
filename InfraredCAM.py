@@ -143,7 +143,7 @@ class InfraredCAM:
 		self.TotalShortTerm = 0 #總短期記憶
 		self.TotalLongTerm = 0 #總長期記憶
 		#然後其他你有需要的變數就再自己加
-		self.WIDTH = 1920
+		self.WIDTH = 640
 		self.HEIGHT = int(self.WIDTH*(9/16))  #1080
 		self.MID_POS = [520, 540]
 		self.SegRate = (4/11)
@@ -415,8 +415,8 @@ class InfraredCAM:
 						self.CAM_IS_CONN = False
 						self.DBGV.CheckP_ICAM = 1011
 					else:
-						# self.WIDTH,self.HEIGHT = (frame.shape[1], frame.shape[0])
-						# frame = cv2.resize(frame,(self.WIDTH,self.HEIGHT),interpolation=cv2.INTER_CUBIC) #調整大小1024*576
+						self.WIDTH,self.HEIGHT = (frame.shape[1], frame.shape[0])
+						frame = cv2.resize(frame,(self.WIDTH,self.HEIGHT),interpolation=cv2.INTER_CUBIC) #調整大小1024*576
 
 						if IPCAM_LoadTime > 3:
 							self.IPCAM.setMessenage(1, "[WAIT] CAMERA is TIMEOUT!")
