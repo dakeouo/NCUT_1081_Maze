@@ -230,6 +230,8 @@ class InfraredCAM:
 
 	def initDefault(self): #初始化
 		self.DBGV.CheckP_ICAM = 1054
+		self.NOW_STATUS = 0
+		self.dangchianbi = 0
 		self.foodtest = []
 		self.Latency = 0
 		self.food1 = []
