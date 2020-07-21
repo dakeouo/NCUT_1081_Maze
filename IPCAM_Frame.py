@@ -27,6 +27,7 @@ IPCAM_Name = ""			#攝相機名稱
 IPCAM_Bar = ""			#RTSP參數
 IPCAM_Image = []		#攝相機影像
 IPCAM_NewP1 = [0, 0]	#矩形框左上座標點
+IPCAM_Port = 0			#攝影機port
 IPCAM_NowTime = datetime.datetime.now()	#現在時間
 
 IPCAM_Messenage = ""	#顯示在UI上訊息內容
@@ -57,7 +58,7 @@ def setMessenage(color, messenge): #UI訊息顯示(顏色, 訊息)
 
 def Main():
 	global IPCAM_Image, IPCAM_FrameCount
-	global IPCAM_Username, IPCAM_Password, IPCAM_Name, IPCAM_IP, IPCAM_Frame, IPCAM_NewP1, IPCAM_NowTime
+	global IPCAM_Username, IPCAM_Password, IPCAM_Name, IPCAM_IP, IPCAM_Frame, IPCAM_NewP1, IPCAM_NowTime,IPCAM_Port
 	global CAM_INIT_SUCCESS, CAM_IS_RUN, DBGV
 
 	try:
@@ -75,7 +76,7 @@ def Main():
 						IPCAM_Image = []	#影像儲存變數清空
 						frame = []			#frame變數宣告
 						FrameCount = 0		#幀數計數歸零
-						rtsp = "rtsp://{0}:{1}@{2}:554/{3}".format(IPCAM_Username, IPCAM_Password, IPCAM_IP, IPCAM_Bar) #RTSP連結
+						rtsp = "rtsp://{0}:{1}@{2}:{4}/{3}".format(IPCAM_Username, IPCAM_Password, IPCAM_IP, IPCAM_Bar,IPCAM_Port) #RTSP連結
 
 						cap = cv2.VideoCapture(rtsp)	#IPCAM視訊串流
 						FIRST_RUN = False

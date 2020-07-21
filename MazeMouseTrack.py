@@ -50,6 +50,7 @@ def LoadCamInfo():	#將[攝相機資訊檔案]匯入[攝相機資訊陣列]
 	for i in range(len(IPCAM_Info)):
 		IPCAM_Info[i][5] = int(IPCAM_Info[i][5])
 		IPCAM_Info[i][6] = int(IPCAM_Info[i][6])
+		IPCAM_Info[i][7] = int(IPCAM_Info[i][7])
 	# print(IPCAM_Info)
 
 def LoadDiseaseFile(): #將[疾病分組檔案]匯入[疾病分組資訊陣列]
@@ -433,6 +434,8 @@ class MazeMouseTrack(object):
 			IPCAM_IP = IPCAM_Info[IPCAM_ID][3]
 			IPCAM_Bar = IPCAM_Info[IPCAM_ID][4]
 			IPCAM_NewP1 = [IPCAM_Info[IPCAM_ID][5], IPCAM_Info[IPCAM_ID][6]]
+			IPCAM_Port = IPCAM_Info[IPCAM_ID][7]
+
 			self.CAM_INIT_SUCCESS = True
 
 			self.IPCAM.IPCAM_Username = IPCAM_Username
@@ -441,6 +444,7 @@ class MazeMouseTrack(object):
 			self.IPCAM.IPCAM_Name = IPCAM_Name
 			self.IPCAM.IPCAM_Bar = IPCAM_Bar
 			self.IPCAM.IPCAM_NewP1 = [IPCAM_NewP1[0], IPCAM_NewP1[1]]
+			self.IPCAM.IPCAM_Port = IPCAM_Port
 
 			self.IPCAM.CAM_INIT_SUCCESS = self.CAM_INIT_SUCCESS
 
