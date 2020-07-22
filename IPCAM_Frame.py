@@ -28,6 +28,7 @@ IPCAM_Bar = ""			#RTSP參數
 IPCAM_Image = []		#攝相機影像
 IPCAM_NewP1 = [0, 0]	#矩形框左上座標點
 IPCAM_Port = 0			#攝影機port
+IPCAM_RecSize = 0		#矩形框大小
 IPCAM_NowTime = datetime.datetime.now()	#現在時間
 
 IPCAM_Messenage = ""	#顯示在UI上訊息內容

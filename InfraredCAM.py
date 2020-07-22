@@ -434,7 +434,7 @@ class InfraredCAM:
 					# print(rtsp)
 					self.DBGV.CheckP_ICAM = 1014
 					self.newP1 = [IPCAM.IPCAM_NewP1[0], IPCAM.IPCAM_NewP1[1]]
-					self.newP2 = [self.newP1[0] + self.HEIGHT, self.newP1[1] + self.HEIGHT]
+					self.newP2 = [self.newP1[0] + IPCAM.IPCAM_RecSize, self.newP1[1] + IPCAM.IPCAM_RecSize]
 					self.DBGV.CheckP_ICAM = 1015
 					frame = frame[self.newP1[1]:self.newP2[1], self.newP1[0]:self.newP2[0]] #擷取兩個點的範圍
 					# cv2.polylines(frame, [self.MASK_POS], True, (0, 255, 255), 2)  #加上3臂輔助線
