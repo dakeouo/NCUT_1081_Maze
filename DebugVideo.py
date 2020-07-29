@@ -469,7 +469,7 @@ def DBGV_Main(): #DBGV主程式
 
 
 
-			cv2.imshow("DashBoard Video", TotalBoard)
+			# cv2.imshow("DashBoard Video", TotalBoard)
 			cv2.waitKey(1)
 
 	except Warning as e:
