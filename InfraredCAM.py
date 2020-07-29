@@ -211,6 +211,8 @@ class InfraredCAM:
 			else:
 				# print(self.RR2C)
 				self.DBGV.CheckP_ICAM = 1050
+				self.Mouse_coordinates.append(self.RR2C)
+				print(self.Mouse_coordinates[0])
 				writeData2CSV(CSV_Path + CSV_Name, "a", self.RR2C)
 				self.DBGV.CheckP_ICAM = 1051
 				self.RR2C = []
@@ -478,8 +480,6 @@ class InfraredCAM:
 						# print(self.TargetPos_All)
 						self.DBGV.Data_TargetPos = self.TargetPos_All[0]   #將座標丟給DebugVideo
 						self.TargetPos = self.TargetPos_All[0]
-						if self.DBGV.NO_RAT == False:
-							self.Mouse_coordinates.append(self.TargetPos_All[0])
 						self.DBGV.CheckP_ICAM = 1021
 					#
 					# pass
@@ -559,11 +559,16 @@ class InfraredCAM:
 								# print(self.Mouse_coordinates)
 								self.MAZE_IS_RUN = False
 								self.DBGV.CheckP_ICAM = 1037
-								for i in range (1,len(self.Mouse_coordinates)):   #畫路徑圖
-									self.DBGV.CheckP_ICAM = 1038
-									# cv2.line(mousepath,convert(self.Mouse_coordinates[i-1]),convert(self.Mouse_coordinates[i]),(20,65,213),1) #白色物體路徑
-									cv2.circle(mousepath, convert(self.Mouse_coordinates[i]), 1, (0,255,0), -1)
-									# print(self.Mouse_coordinates[i])
+								for i in range (0,len(self.Mouse_coordinates)):
+									for j in range (0,len(self.Mouse_coordinates[i])):
+										self.DBGV.CheckP_ICAM = 1038
+										cv2.circle(mousepath, convert(self.Mouse_coordinates[i][j]), 1, (0,255,0), -1)
+								# print(self.RR2C)
+
+								# for i in range (1,len(self.Mouse_coordinates)):   #畫路徑圖
+								# 	self.DBGV.CheckP_ICAM = 1038
+								# 	# cv2.line(mousepath,convert(self.Mouse_coordinates[i-1]),convert(self.Mouse_coordinates[i]),(20,65,213),1) #白色物體路徑
+								# 	cv2.circle(mousepath, convert(self.Mouse_coordinates[i]), 1, (0,255,0), -1)
 								# cv2.imwrite(self.RatID,mousepath)	#儲存路徑圖
 								DiseaseTypePath = '%s(%s_%02d_%02d)' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
 								IMG_Path = './ChiMei_{0}/{2}/IMG_{1}({0})/'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, DiseaseTypePath)
