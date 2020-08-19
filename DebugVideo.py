@@ -24,6 +24,7 @@ IPCAM_NewP1 = [0, 0]	#矩形框左上座標點
 IPCAM_Image = []		#攝相機影像
 IPCAM_FrameSize = [0, 0]#攝相機影像大小
 IPCAM_Status = False	#攝相機連上狀態
+IPCAM_RecSize = 0		#矩形框大小
 IPCAM_NowTime = datetime.datetime.now()	#IPCAM時間
 Maze_DateTime = datetime.datetime.now() #現在時間
 
@@ -185,18 +186,18 @@ def makeFrameView(frame):
 		FrameStatus = True
 		FrameSize = [frame.shape[1], frame.shape[0]]
 		newP1 = IPCAM_NewP1
-		newP2 = [newP1[0] + FrameSize[1], newP1[1] + FrameSize[1]]
+		newP2 = [newP1[0] + IPCAM_RecSize, newP1[1] + IPCAM_RecSize]
 		frame = frame[newP1[1]:newP2[1], newP1[0]:newP2[0]]
 
-		newFrameSize = (int(FrameSize[1] * (680/FrameSize[1])), int(FrameSize[1] * (680/FrameSize[1])))
+		newFrameSize = (int(IPCAM_RecSize * (680/IPCAM_RecSize)), int(IPCAM_RecSize * (680/IPCAM_RecSize)))
 
 		Data_InLineChange, Data_OutLineChange, Data_Old_ArmInOutPosLine = checkInOutLine(Data_ArmInOutPosLine, Data_Old_ArmInOutPosLine)
 		if Data_InLineChange:
-			NEW_Data_ArmInOutPosLine = exchangeArmsLine(False, NEW_Data_ArmInOutPosLine, Data_ArmInOutPosLine, FrameSize[1])
+			NEW_Data_ArmInOutPosLine = exchangeArmsLine(False, NEW_Data_ArmInOutPosLine, Data_ArmInOutPosLine, IPCAM_RecSize)
 		if Data_OutLineChange:
-			NEW_Data_ArmInOutPosLine = exchangeArmsLine(True, NEW_Data_ArmInOutPosLine, Data_ArmInOutPosLine, FrameSize[1])
+			NEW_Data_ArmInOutPosLine = exchangeArmsLine(True, NEW_Data_ArmInOutPosLine, Data_ArmInOutPosLine, IPCAM_RecSize)
 
-		newPos = (int(Data_TargetPos[0] * (FrameSize[1]/480)), int(Data_TargetPos[1] * (FrameSize[1]/480)))
+		newPos = (int(Data_TargetPos[0] * (IPCAM_RecSize/480)), int(Data_TargetPos[1] * (IPCAM_RecSize/480)))
 
 		White_PosShowFinish = False
 		NEW_White_Contours = []
@@ -204,8 +205,8 @@ def makeFrameView(frame):
 		White_TotalItem = len(White_CenterPos)
 		for i in range(White_TotalItem):
 			# White_Contours[i] = exchangeContours(White_Contours[i], FrameSize[1])
-			NEW_White_Contours.append(exchangeContours(White_Contours[i], FrameSize[1])) #計算邊緣座標點
-			NEW_newPos.append((int(White_CenterPos[i][0] * (FrameSize[1]/480)), int(White_CenterPos[i][1] * (FrameSize[1]/480))))
+			NEW_White_Contours.append(exchangeContours(White_Contours[i], IPCAM_RecSize)) #計算邊緣座標點
+			NEW_newPos.append((int(White_CenterPos[i][0] * (IPCAM_RecSize/480)), int(White_CenterPos[i][1] * (IPCAM_RecSize/480))))
 
 
 		if not NO_RAT:
