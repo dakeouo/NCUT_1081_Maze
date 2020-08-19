@@ -107,12 +107,14 @@ class MazeMouseTrack(object):
 		self.IPCAM = IPCAM
 		self.CAMThread = threading.Thread(target = self.IPCAM.Main) # 執行該子執行緒
 		self.CAMThread.start()  # 執行該子執行緒
+
 		DBGV.CheckP_UI = "2"
 
 		#熱影像相機執行緒
 		self.TCAM = TCAM()
 		self.thread = threading.Thread(target = self.TCAM.CameraMain) # 執行該子執行緒
 		self.thread.start()  # 執行該子執行緒
+
 		DBGV.CheckP_UI = "3"
 
 		#狀態顯示&錄影程式執行緒

@@ -89,6 +89,8 @@ class InfraredCAM:
 		self.IPCAM = IPCAM
 		self.DBGV = DBGV
 
+		self.RecordRoute2CSV_Thread = threading.Thread(target = self.recordRoute2CSV)
+
 		self.myTime = datetime.now()
 		# self.myTimeMsec = int(self.myTime.strftime("%S"))
 		self.myTimeMsec = int(self.myTime.strftime("%f")[:2])
@@ -194,29 +196,51 @@ class InfraredCAM:
 			os.mkdir(nowDatePath + DiseaseTypePath + CSV_Path)
 		if not os.path.exists(nowDatePath + DiseaseTypePath + IMG_Path):
 			os.mkdir(nowDatePath + DiseaseTypePath + IMG_Path)
-
-	def recordRoute2CSV(self):
-		self.DBGV.CheckP_ICAM = 1046
-		TimeDiff = (datetime.now() - self.RR2C_Time).seconds
+	def recordRoute2CSV(self): #測試 每秒紀錄做邊點的頻率固定
+		# self.DBGV.CheckP_ICAM = 1046
 		DiseaseTypePath = '%s(%s_%02d_%02d)' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
 		CSV_Path = './ChiMei_{0}/{2}/CSV_{1}({0})/'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, DiseaseTypePath)
 		CSV_Name = self.SingleFileName + ".csv"
-		self.RR2C.append([int(self.TargetPos[0]), int(self.TargetPos[1])])
-		self.DBGV.CheckP_ICAM = 1047
-		if TimeDiff >= 1:
-			self.DBGV.CheckP_ICAM = 1048
-			if self.RR2C_FirstTime:
-				self.DBGV.CheckP_ICAM = 1049
-				self.RR2C_FirstTime = False
-			else:
-				# print(self.RR2C)
-				self.DBGV.CheckP_ICAM = 1050
-				self.Mouse_coordinates.append(self.RR2C)
-				print(self.Mouse_coordinates[0])
-				writeData2CSV(CSV_Path + CSV_Name, "a", self.RR2C)
-				self.DBGV.CheckP_ICAM = 1051
-				self.RR2C = []
+		while self.MAZE_IS_RUN:
+			TimeDiff = (datetime.now() - self.RR2C_Time).microseconds
+			# self.DBGV.CheckP_ICAM = 1047
+			if TimeDiff >= 100:
+				# self.DBGV.CheckP_ICAM = 1050
+				self.RR2C.append([int(self.TargetPos[0]), int(self.TargetPos[1])])
+				self.Mouse_coordinates.append([int(self.TargetPos[0]), int(self.TargetPos[1])])
+				# print(self.Mouse_coordinates)
+				if len(self.RR2C) == 20 :
+					writeData2CSV(CSV_Path + CSV_Name, "a", self.RR2C)
+				# self.DBGV.CheckP_ICAM = 1051
+					self.RR2C = []
 				self.RR2C_Time = datetime.now()
+
+
+
+	# def recordRoute2CSV(self):
+	# 	self.DBGV.CheckP_ICAM = 1046
+	# 	TimeDiff = (datetime.now() - self.RR2C_Time).seconds
+	# 	DiseaseTypePath = '%s(%s_%02d_%02d)' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
+	# 	CSV_Path = './ChiMei_{0}/{2}/CSV_{1}({0})/'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, DiseaseTypePath)
+	# 	CSV_Name = self.SingleFileName + ".csv"
+	# 	self.RR2C.append([int(self.TargetPos[0]), int(self.TargetPos[1])])
+	# 	self.DBGV.CheckP_ICAM = 1047
+	# 	if TimeDiff >= 1:
+	# 		self.DBGV.CheckP_ICAM = 1048
+	# 		if self.RR2C_FirstTime:
+	# 			self.DBGV.CheckP_ICAM = 1049
+	# 			self.RR2C_FirstTime = False
+	# 		else:
+	# 			# print(self.RR2C)
+	# 			self.DBGV.CheckP_ICAM = 1050
+	# 			self.Mouse_coordinates.append(self.RR2C)
+	# 			print(self.Mouse_coordinates[0])
+	# 			writeData2CSV(CSV_Path + CSV_Name, "a", self.RR2C)
+	# 			self.DBGV.CheckP_ICAM = 1051
+	# 			self.RR2C = []
+	# 			self.RR2C_Time = datetime.now()
+
+
 
 
 	def coordinate(self,rat_XY):  #白色物體座標
@@ -381,8 +405,10 @@ class InfraredCAM:
 
 	def CameraMain(self): #這個副程式是"主程式"呦~~~~~
 		global Inlinepoint_long,dangchianjiuli
+		Load_Once_For_Maze_Run = True
 		try:
-			
+			# RecordRoute2CSV_Thread = threading.Thread(target = recordRoute2CSV)
+			# RecordRoute2CSV_Thread.start()
 			#遮罩形成
 			copy = makeBlackImage() #產生黑色的圖
 			copy = cv2.resize(copy,(480,480),interpolation=cv2.INTER_CUBIC) #放大成480x480
@@ -481,7 +507,7 @@ class InfraredCAM:
 						self.DBGV.Data_TargetPos = self.TargetPos_All[0]   #將座標丟給DebugVideo
 						self.TargetPos = self.TargetPos_All[0]
 						self.DBGV.CheckP_ICAM = 1021
-					#
+					
 					# pass
 					#把[影像擷取的東西]放這裡	
 					if self.MAZE_IS_RUN: #UI start 後動作
@@ -492,6 +518,10 @@ class InfraredCAM:
 						# shutil.move("IPCAM_INFO1.txt", "./ChiMei_{}".format(datetime.now().strftime("%Y%m%d")))
 						# shutil.copyfile("ARMS_LINE.csv", "ARMS_LINE1.txt")	#複製八臂32點
 						# shutil.move("ARMS_LINE1.txt", "./ChiMei_{}".format(datetime.now().strftime("%Y%m%d")))
+
+						if Load_Once_For_Maze_Run:
+							self.RecordRoute2CSV_Thread.start()
+							Load_Once_For_Maze_Run = False
 
 
 						self.DBGV.CheckP_ICAM = 1022
@@ -511,7 +541,7 @@ class InfraredCAM:
 							self.READ_FOOD = True
 							self.timestart = datetime.now() #起始時間
 							self.RouteArrFlag = 0
-							# print("起始時間: " +str(self.timestart))
+							print("起始時間: " +str(self.timestart))
 							self.DBGV.CheckP_ICAM = 1025
 							self.checkSaveDirPath() #檢查所有儲存路徑
 							self.DBGV.CheckP_ICAM = 1026
@@ -521,12 +551,13 @@ class InfraredCAM:
 							
 							self.RR2C_FirstTime = True #這個是我寫的(測試中，不用管沒關係)
 							self.DBGV.CheckP_ICAM = 1027
+
 						else:
 							pass 
 						self.time_now = datetime.now()  #當下時間
 						# self.getTimePoint(self.time_now)
 						self.Latency = (self.time_now - self.timestart).seconds
-						self.recordRoute2CSV() #這個是我寫的(測試中，不用管沒關係)
+						# self.recordRoute2CSV() #這個是我寫的(測試中，不用管沒關係)
 						self.DBGV.CheckP_ICAM = 1028
 						##############################################進臂##############################################
 						if self.NOW_STATUS == 0:
@@ -560,9 +591,9 @@ class InfraredCAM:
 								self.MAZE_IS_RUN = False
 								self.DBGV.CheckP_ICAM = 1037
 								for i in range (0,len(self.Mouse_coordinates)):
-									for j in range (0,len(self.Mouse_coordinates[i])):
-										self.DBGV.CheckP_ICAM = 1038
-										cv2.circle(mousepath, convert(self.Mouse_coordinates[i][j]), 1, (0,255,0), -1)
+									# for j in range (0,len(self.Mouse_coordinates[i])):
+									self.DBGV.CheckP_ICAM = 1038
+									cv2.circle(mousepath, convert(self.Mouse_coordinates[i]), 1, (0,255,0), -1)
 								# print(self.RR2C)
 
 								# for i in range (1,len(self.Mouse_coordinates)):   #畫路徑圖
