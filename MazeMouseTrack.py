@@ -339,10 +339,10 @@ class MazeMouseTrack(object):
 
 			DBGV.CheckP_UI = "27-3"
 			if self.DiseaseType == "":
-				ErrMsg = ErrMsg + "You don't have Choose Disease Type!!\n"
+				ErrMsg = ErrMsg + "You don't have Choose Model Type!!\n"
 				HaveError = True
 			if self.DisGroupType == "":
-				ErrMsg = ErrMsg + "You don't have Choose Disease Rehabilitation Type!!\n"
+				ErrMsg = ErrMsg + "You don't have Choose Model Rehabilitation Type!!\n"
 				HaveError = True
 			if self.Rat_ID == "":
 				ErrMsg = ErrMsg + "Rat ID not filled!!\n"
@@ -677,7 +677,7 @@ class MazeMouseTrack(object):
 		DBGV.CheckP_UI = "36"
 		if(self.DisGroupCombo.current() != 0):
 			self.DisGroupType = self.DisGroupCombo.get()
-			self.TKS_Show_DisGroup.config(text="Disease Group: %s" %(self.DisGroupType), fg="black")
+			self.TKS_Show_DisGroup.config(text="Group: %s" %(self.DisGroupType), fg="black")
 	
 	def  tkSetting_ModifyDisease(self, val): #設定UI視窗在[修改病因陣列]區域點擊[新增/修改病因]按鈕後處理副程式
 		DBGV.CheckP_UI = "37"
@@ -904,11 +904,11 @@ class MazeMouseTrack(object):
 			self.TKS_BT_OpDayConfirm.place(x=320,y=53,anchor="nw")
 
 			#疾病資訊選擇(下拉選單)
-			DiseaseInfo = ['choose Disease...']
-			self.TKS_title3 = tk.Label(self.tkSetting, text="Disease", font=('Arial', 12), bg="gray75")
+			DiseaseInfo = ['choose Model...']
+			self.TKS_title3 = tk.Label(self.tkSetting, text="Model", font=('Arial', 12), bg="gray75")
 			self.TKS_title3.place(x=20,y=90,anchor="nw")
 			for i in range(len(self.CSV_DiseaseFile)):
-				if self.CSV_DiseaseFile[i][0] == 'Disease':
+				if self.CSV_DiseaseFile[i][0] == 'Model':
 					DiseaseInfo.append(self.CSV_DiseaseFile[i][1])
 			self.DiseaseCombo = ttk.Combobox(self.tkSetting, values=DiseaseInfo, state="readonly")
 			self.DiseaseCombo.place(x=92,y=93,anchor="nw")
@@ -945,17 +945,17 @@ class MazeMouseTrack(object):
 			if self.DisDays[1] != -1 and self.DisDays[2] != -1:
 				self.TKS_Show_OpDay = tk.Label(self.tkSetting, text="Operation Days: %2d Month %2d Day" %(self.DisDays[1], self.DisDays[2]), font=('Arial', 13), fg="black")
 			else:
-				self.TKS_Show_OpDay = tk.Label(self.tkSetting, text="Operation Type: (not set)", font=('Arial', 13), fg="gray35")
+				self.TKS_Show_OpDay = tk.Label(self.tkSetting, text="Operation Days: (not set)", font=('Arial', 13), fg="gray35")
 			self.TKS_Show_OpDay.place(x=450,y=80,anchor="nw")
 			if self.DiseaseType != "":
 				self.TKS_Show_Disease = tk.Label(self.tkSetting, text="Operation Type: {}".format(self.DiseaseType), font=('Arial', 13), fg="black")
 			else:
-				self.TKS_Show_Disease = tk.Label(self.tkSetting, text="Disease: (not set)", font=('Arial', 13), fg="gray35")
+				self.TKS_Show_Disease = tk.Label(self.tkSetting, text="Model: (not set)", font=('Arial', 13), fg="gray35")
 			self.TKS_Show_Disease.place(x=450,y=110,anchor="nw")
 			if self.DisGroupType != "":
-				self.TKS_Show_DisGroup = tk.Label(self.tkSetting, text="Disease Group: {}".format(self.DisGroupType), font=('Arial', 13), fg="black")
+				self.TKS_Show_DisGroup = tk.Label(self.tkSetting, text="Group: {}".format(self.DisGroupType), font=('Arial', 13), fg="black")
 			else:
-				self.TKS_Show_DisGroup = tk.Label(self.tkSetting, text="Disease Group: (not set)", font=('Arial', 13), fg="gray35")
+				self.TKS_Show_DisGroup = tk.Label(self.tkSetting, text="Group: (not set)", font=('Arial', 13), fg="gray35")
 			self.TKS_Show_DisGroup.place(x=450,y=140,anchor="nw")
 
 			# 修改病因區域
@@ -963,7 +963,7 @@ class MazeMouseTrack(object):
 			self.TKS_DCM_Description_val = tk.StringVar()
 			# self.TKS_DCM_Name_val = "111"
 			# self.TKS_DCM_Description_val = "111"
-			self.TKS_title6 = tk.Label(self.tkSetting, text="Disease Combobox Modify", font=('Arial', 12), bg="gray85")
+			self.TKS_title6 = tk.Label(self.tkSetting, text="Model Combobox Modify", font=('Arial', 12), bg="gray85")
 			self.TKS_title6.place(x=20,y=180,anchor="nw")
 			self.ModifyDCM = ttk.Combobox(self.tkSetting, values=DiseaseInfo, state="disabled")
 			self.ModifyDCM.place(x=20,y=214,anchor="nw")
@@ -972,10 +972,10 @@ class MazeMouseTrack(object):
 			self.TKS_Btn2_DCM1.place(x=273,y=210,anchor="nw")
 			self.TKS_Btn2_DCM2 = tk.Button(self.tkSetting, text='Edit Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyDisease('edit'))
 			self.TKS_Btn2_DCM2.place(x=190,y=210,anchor="nw")
-			tk.Label(self.tkSetting, text="Disease Name", font=('Arial', 9)).place(x=20,y=240,anchor="nw")
+			tk.Label(self.tkSetting, text="Model Name", font=('Arial', 9)).place(x=20,y=240,anchor="nw")
 			self.TKS_DCM_Name = tk.Entry(self.tkSetting, font=('Arial', 12), textvariable=self.TKS_DCM_Name_val, state="disabled")
 			self.TKS_DCM_Name.place(x=20,y=257,anchor="nw")
-			tk.Label(self.tkSetting, text="Disease Description (Optional)", font=('Arial', 9)).place(x=20,y=285,anchor="nw")
+			tk.Label(self.tkSetting, text="Model Description (Optional)", font=('Arial', 9)).place(x=20,y=285,anchor="nw")
 			self.TKS_DCM_Description = tk.Entry(self.tkSetting, font=('Arial', 12), textvariable=self.TKS_DCM_Description_val, width=35, state="disabled")
 			self.TKS_DCM_Description.place(x=20,y=303,anchor="nw")
 			tk.Label(self.tkSetting, text="※請敘述一下疾病中文名稱", font=('Arial', 9)).place(x=20,y=325,anchor="nw")
@@ -989,7 +989,7 @@ class MazeMouseTrack(object):
 			self.TKS_DGCM_Description_val = tk.StringVar()
 			# self.TKS_DGCM_Name_val = ""
 			# self.TKS_DGCM_Description_val = ""
-			self.TKS_title7 = tk.Label(self.tkSetting,text="Disease Group Combobox Modify", font=('Arial', 12), bg="gray85")
+			self.TKS_title7 = tk.Label(self.tkSetting,text="Group Combobox Modify", font=('Arial', 12), bg="gray85")
 			self.TKS_title7.place(x=390,y=180,anchor="nw")
 			self.ModifyDGCM = ttk.Combobox(self.tkSetting, values=DisGroupInfo, state="disabled")
 			self.ModifyDGCM.place(x=390,y=214,anchor="nw")
@@ -998,10 +998,10 @@ class MazeMouseTrack(object):
 			self.TKS_Btn2_DGCM1.place(x=643,y=210,anchor="nw")
 			self.TKS_Btn2_DGCM2 = tk.Button(self.tkSetting, text='Edit Item', width=9, state="disabled", font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_ModifyGroupDisease('edit'))
 			self.TKS_Btn2_DGCM2.place(x=560,y=210,anchor="nw")
-			tk.Label(self.tkSetting, text="Disease Group Name", font=('Arial', 9)).place(x=390,y=240,anchor="nw")
+			tk.Label(self.tkSetting, text="Group Name", font=('Arial', 9)).place(x=390,y=240,anchor="nw")
 			self.TKS_DGCM_Name = tk.Entry(self.tkSetting, font=('Arial', 12), textvariable=self.TKS_DGCM_Name_val, state="disabled")
 			self.TKS_DGCM_Name.place(x=390,y=257,anchor="nw")
-			tk.Label(self.tkSetting, text="Disease Group Description (Optional)", font=('Arial', 9)).place(x=390,y=285,anchor="nw")
+			tk.Label(self.tkSetting, text="Group Description (Optional)", font=('Arial', 9)).place(x=390,y=285,anchor="nw")
 			self.TKS_DGCM_Description = tk.Entry(self.tkSetting, font=('Arial', 12), width=35, textvariable=self.TKS_DGCM_Description_val, state="disabled")
 			self.TKS_DGCM_Description.place(x=390,y=303,anchor="nw")
 			tk.Label(self.tkSetting, text="※請敘述一下疾病復健組別內容", font=('Arial', 9)).place(x=390,y=325,anchor="nw")
