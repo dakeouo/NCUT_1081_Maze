@@ -170,6 +170,7 @@ class InfraredCAM:
 		self.RR2C_FirstTime = True
 
 		#實驗設定變數統整
+		self.Rec_UserName = "" #操作系統的使用者名稱
 		self.OperaType = "" #目前使用模式(訓練期/正式實驗期)
 		self.DiseaseType = "" #老鼠病症組別
 		self.DisGroupType = "" #老鼠病症組別復鍵(含 健康、無復健 等)
@@ -182,24 +183,27 @@ class InfraredCAM:
 	def checkSaveDirPath(self): #檢查儲存路徑
 		self.DBGV.CheckP_ICAM = 1044
 		nowDatePath = './ChiMei_{}/'.format(datetime.now().strftime("%Y%m%d"))
+		RecNamePath = "{}/".format(self.Rec_UserName)
 		DiseaseTypePath = '%s(%s_%02d_%02d)/' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
 		CSV_Path = 'CSV_{}({})/'.format(self.DiseaseType, datetime.now().strftime("%Y%m%d"))
 		IMG_Path = 'IMG_{}({})/'.format(self.DiseaseType, datetime.now().strftime("%Y%m%d"))
 		self.DBGV.CheckP_ICAM = 1045
 		if not os.path.exists(nowDatePath):
 			os.mkdir(nowDatePath)
-		if not os.path.exists(nowDatePath + DiseaseTypePath):
-			os.mkdir(nowDatePath + DiseaseTypePath)
-		if not os.path.exists(nowDatePath + DiseaseTypePath + CSV_Path):
-			os.mkdir(nowDatePath + DiseaseTypePath + CSV_Path)
-		if not os.path.exists(nowDatePath + DiseaseTypePath + IMG_Path):
-			os.mkdir(nowDatePath + DiseaseTypePath + IMG_Path)
+		if not os.path.exists(nowDatePath + RecNamePath):
+			os.mkdir(nowDatePath + RecNamePath)	
+		if not os.path.exists(nowDatePath + RecNamePath + DiseaseTypePath):
+			os.mkdir(nowDatePath + RecNamePath + DiseaseTypePath)
+		if not os.path.exists(nowDatePath + RecNamePath + DiseaseTypePath + CSV_Path):
+			os.mkdir(nowDatePath + RecNamePath + DiseaseTypePath + CSV_Path)
+		if not os.path.exists(nowDatePath + RecNamePath + DiseaseTypePath + IMG_Path):
+			os.mkdir(nowDatePath + RecNamePath + DiseaseTypePath + IMG_Path)
 
 	def recordRoute2CSV(self):
 		self.DBGV.CheckP_ICAM = 1046
 		TimeDiff = (datetime.now() - self.RR2C_Time).seconds
 		DiseaseTypePath = '%s(%s_%02d_%02d)' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
-		CSV_Path = './ChiMei_{0}/{2}/CSV_{1}({0})/'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, DiseaseTypePath)
+		CSV_Path = './ChiMei_{0}/{3}/{2}/CSV_{1}({0})/'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, DiseaseTypePath, self.Rec_UserName)
 		CSV_Name = self.SingleFileName + ".csv"
 		self.RR2C.append([int(self.TargetPos[0]), int(self.TargetPos[1])])
 		self.DBGV.CheckP_ICAM = 1047
@@ -517,7 +521,7 @@ class InfraredCAM:
 							self.DBGV.CheckP_ICAM = 1026
 							DiseaseTypePath = '%s(%s_%02d_%02d)' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
 							self.SingleFileName = "{}_{}_{}_{}".format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, self.DisGroupType, self.RatID) #固定檔名
-							self.CSVfilePath = './ChiMei_{0}/{2}/{0}.csv'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, DiseaseTypePath)
+							self.CSVfilePath = './ChiMei_{0}/{3}/{2}/{0}.csv'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, DiseaseTypePath, self.Rec_UserName)
 							
 							self.RR2C_FirstTime = True #這個是我寫的(測試中，不用管沒關係)
 							self.DBGV.CheckP_ICAM = 1027
@@ -566,7 +570,7 @@ class InfraredCAM:
 									# print(self.Mouse_coordinates[i])
 								# cv2.imwrite(self.RatID,mousepath)	#儲存路徑圖
 								DiseaseTypePath = '%s(%s_%02d_%02d)' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
-								IMG_Path = './ChiMei_{0}/{2}/IMG_{1}({0})/'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, DiseaseTypePath)
+								IMG_Path = './ChiMei_{0}/{3}/{2}/IMG_{1}({0})/'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, DiseaseTypePath, self.Rec_UserName)
 								IMG_Name = self.SingleFileName + ".jpg"
 								cv2.imencode('.jpg', mousepath)[1].tofile(IMG_Path + IMG_Name)
 								# cv2.imshow("mouse path",mousepath)
@@ -608,6 +612,7 @@ class InfraredCAM:
 				self.DBGV.Data_TotalTerm = [self.TotalLongTerm, self.TotalShortTerm]
 				self.DBGV.Data_ArmState = self.NOW_STATUS
 				self.DBGV.Data_CurrentArm = self.dangchianbi
+				# self.DBGV.Rec_UserName = self.Rec_UserName
 
 				self.DBGV.Data_ArmState = self.NOW_STATUS
 				#開視窗查看影像

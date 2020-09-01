@@ -90,6 +90,33 @@ def countStr(Str): #算出字串中大小寫字母與數字及其他符號的個
 def Second2Datetime(sec): #秒數轉換成時間
 	return int(sec/3600), int((sec%3600)/60), int((sec%3600)%60) 	
 
+def CreateModelRTStr(OpType, OpM, OpD, Model, Group, RatID):
+	if OpType != "":
+		OpTypeStr = "%sOp" %(OpType)
+	else:
+		OpTypeStr = ""
+	if OpM != -1:
+		OpMStr = "%02dM" %(OpM)
+	else:
+		OpMStr = ""
+	if OpD != -1:
+		OpDStr = "%02dD" %(OpD)
+	else:
+		OpDStr = ""
+	if Model != "":
+		ModelStr = Model
+	else:
+		ModelStr = ""
+	if Group != "":
+		GroupStr = "(%s)" %(Group)
+	else:
+		GroupStr = ""
+	if str(RatID) != "":
+		RatIDStr = "ID%s" %(str(RatID))
+	else:
+		RatIDStr = ""
+	return "%s %s%s %s%s %s" %(OpTypeStr, OpMStr, OpDStr, ModelStr, GroupStr, RatIDStr)
+
 class MazeMouseTrack(object):
 	def __init__(self):
 		#=======變數命名規則說明=======
@@ -138,7 +165,7 @@ class MazeMouseTrack(object):
 		self.Latency = 0 #總時間長度
 
 		#變數：視窗相關
-		self.WinSize = (1152, 600) #UI介面顯示大小
+		self.WinSize = (1152, 560) #UI介面顯示大小
 		self.BALL_SIZE = 20
 		self.ViewSize = self.TCAM.ViewSize #虛擬視窗顯示大小
 		self.MAZE_IS_RUN = False #當前系統是否在執行
@@ -248,24 +275,20 @@ class MazeMouseTrack(object):
 		RAT_ID = self.TK_Rat_ID.get()
 		Unit = countStr(RAT_ID)
 		str1 = "# RatID: {}".format(RAT_ID)
-		move = 288 - (Unit[0]*11 + (Unit[1] + Unit[2] + Unit[3])*9)
+		# move = 288 - (Unit[0]*11 + (Unit[1] + Unit[2] + Unit[3])*9)
 		self.TK_SHOW_Rat_ID.config(text=str1)
-		self.TK_SHOW_Rat_ID.place(x=self.WinSize[0]-move,y=280,anchor="ne")
+		self.TK_SHOW_Rat_ID.place(x=800,y=290,anchor="nw")
 		self.Rat_ID = RAT_ID
+		self.DBGV.Data_ModelRT_Str = CreateModelRTStr(self.OperaType, self.DisDays[1], self.DisDays[2], self.DiseaseType, self.DisGroupType, self.Rat_ID)
 		# print(len(RAT_ID))
 
 	def SetUserName(self):
 		DBGV.CheckP_UI = "24-1"
 		Rec_UserName = self.TK_User_Name.get()
-		if Rec_UserName != "":
-			self.ResName_Def.config(text="")
-			self.ResName_Def.place(x=0, y=70-55,anchor="nw")
-		else:
-			self.ResName_Def.config(text="(Not Set. English Recommend)")
-			self.ResName_Def.place(x=296+45, y=70-55,anchor="nw")
-		self.ResName.config(text="User: %s" %(Rec_UserName))
-		self.ResName.place(x=296, y=70-55,anchor="nw")
+		self.ResName.config(text="# User: %s" %(Rec_UserName))
+		self.ResName.place(x=800, y=230,anchor="nw")
 		self.Rec_UserName = Rec_UserName
+		self.DBGV.Rec_UserName = Rec_UserName
 
 	def setFood(self): #設定食物放在哪個臂
 		DBGV.CheckP_UI = "25"
@@ -281,20 +304,19 @@ class MazeMouseTrack(object):
 		self.TotalFood = ct
 		if(ct == 0):
 			str1 = "# Food: "
-			move = 290
+			# move = 290
 		else:
 			str1 = "# Food: {}".format(hadFood)
-			move = 290 - ct*17
+			# move = 290 - ct*17
 
 		self.TK_SHOW_Food.config(text=str1)
-		self.TK_SHOW_Food.place(x=self.WinSize[0]-move,y=250,anchor="ne")
+		self.TK_SHOW_Food.place(x=800, y=260,anchor="nw")
 
 	def ConnectClick(self): #"Link"按鈕按下時負責處理的副程式
 		if self.CAM_IS_RUN:
 			DBGV.CheckP_UI = "26-1"
 			self.BT_Connect.config(text="Link", bg="DarkOliveGreen2", fg="dark green")
 			self.Link_State.config(text="IPCAM Link: Unlinked", fg="gray35")
-			self.Link_State.place(x=self.WinSize[0]-189)
 			self.CAM_IS_RUN = False
 			self.BT_Start.config(bg="gray85", state="disabled")
 			self.BT_Camera.config(state="disabled")
@@ -321,7 +343,6 @@ class MazeMouseTrack(object):
 			DBGV.CheckP_UI = "26-2"
 			self.BT_Connect.config(text="Unlink", bg="tomato", fg="brown4")
 			self.Link_State.config(text="IPCAM Link: Linked",fg="green4")
-			self.Link_State.place(x=self.WinSize[0]-203)
 			self.CAM_IS_RUN = True
 			self.BT_Start.config(bg="DarkOliveGreen2", state="normal")
 			self.BT_Camera.config(state="normal")
@@ -340,7 +361,7 @@ class MazeMouseTrack(object):
 		if self.MAZE_IS_RUN:
 			DBGV.CheckP_UI = "27-1"
 			self.Maze_State.config(text="Maze State: Preparing...", fg="gray35")
-			self.Maze_State.place(x=self.WinSize[0]-170,y=220,anchor="ne")
+			self.Maze_State.place(x=800, y=200,anchor="nw")
 			self.BT_Start.config(text="Start", bg="DarkOliveGreen2")
 			self.MAZE_IS_RUN = False
 		else:
@@ -350,7 +371,7 @@ class MazeMouseTrack(object):
 				ErrMsg = ErrMsg + "You don't have set Operation Type!!\n"
 				HaveError = True
 			if self.DisDays[1] == -1 and self.DisDays[2] == -1:
-				ErrMsg = ErrMsg + "You don't set Operation Days!!\n"
+				ErrMsg = ErrMsg + "You don't set Operation TimePoint!!\n"
 				HaveError = True
 			else:
 				if(self.DisDays[1] == -1):
@@ -360,10 +381,10 @@ class MazeMouseTrack(object):
 
 			DBGV.CheckP_UI = "27-3"
 			if self.DiseaseType == "":
-				ErrMsg = ErrMsg + "You don't have Choose Model Type!!\n"
+				ErrMsg = ErrMsg + "You don't set Model Type!!\n"
 				HaveError = True
 			if self.DisGroupType == "":
-				ErrMsg = ErrMsg + "You don't have Choose Model Rehabilitation Type!!\n"
+				ErrMsg = ErrMsg + "You don't set Model Group Type!!\n"
 				HaveError = True
 			if self.Rat_ID == "":
 				ErrMsg = ErrMsg + "Rat ID not filled!!\n"
@@ -382,6 +403,7 @@ class MazeMouseTrack(object):
 				self.TCAM.TotalFood = self.TotalFood
 				self.TCAM.Food = self.Food
 				self.TCAM.RatID = self.Rat_ID
+				self.TCAM.Rec_UserName = self.Rec_UserName
 				# self.TCAM.filePath = (str(self.FilePath)+str(self.FileName))
 
 				self.TCAM.OperaType = self.OperaType
@@ -390,8 +412,9 @@ class MazeMouseTrack(object):
 				self.TCAM.DisDays = self.DisDays
 
 				self.Maze_State.config(text="Maze State: Recording...", fg="green4")
-				self.Maze_State.place(x=self.WinSize[0]-167,y=220,anchor="ne")
+				self.Maze_State.place(x=800, y=200, anchor="nw")
 				self.BT_Start.config(text="Stop", bg="IndianRed1")
+
 				self.MAZE_IS_RUN = True
 		self.TCAM.MAZE_IS_RUN = self.MAZE_IS_RUN
 
@@ -439,6 +462,22 @@ class MazeMouseTrack(object):
 			# self.TKE_Dir.config(state="disabled")
 			self.TK_Rat_ID.config(state="disabled")
 			self.TK_User_Name.config(state="disabled")
+			self.BT_Rat_ID.config(state="disabled")
+			self.BT_User_Name.config(state="disabled")
+			if self.MAZE_IS_RUN:
+				self.BT_Connect.config(state="disabled")
+
+			if self.DBGV.Maze_SetState:
+				self.TKS_Btn1_Opera1.config(state="disabled")
+				self.TKS_Btn1_Opera2.config(state="disabled")
+				self.TKS_OpDay_Month.config(state="disabled")
+				self.TKS_OpDay_Day.config(state="disabled")
+				self.TKS_Disease.config(state="disabled")
+				self.TKS_DisGroup.config(state="disabled")
+				self.TKS_BT_OpDayConfirm.config(state="disabled")
+				self.TKS_BT_DisConfirm.config(state="disabled")
+				self.TKS_BT_DisGroupConfirm.config(state="disabled")
+				
 			for i in range(0,self.ARM_UNIT):
 				self.TKC_Food[i].config(state="disabled")
 		else:
@@ -446,6 +485,21 @@ class MazeMouseTrack(object):
 			# self.TKE_Dir.config(state="normal")
 			self.TK_Rat_ID.config(state="normal")
 			self.TK_User_Name.config(state="normal")
+			self.BT_Rat_ID.config(state="normal")
+			self.BT_User_Name.config(state="normal")
+			self.BT_Connect.config(state="normal")
+
+			if self.DBGV.Maze_SetState:
+				self.TKS_Btn1_Opera1.config(state="normal")
+				self.TKS_Btn1_Opera2.config(state="normal")
+				self.TKS_OpDay_Month.config(state="normal")
+				self.TKS_OpDay_Day.config(state="normal")
+				self.TKS_Disease.config(state="normal")
+				self.TKS_DisGroup.config(state="normal")
+				self.TKS_BT_OpDayConfirm.config(state="normal")
+				self.TKS_BT_DisConfirm.config(state="normal")
+				self.TKS_BT_DisGroupConfirm.config(state="normal")
+
 			for i in range(0,self.ARM_UNIT):
 				self.TKC_Food[i].config(state="normal")
 
@@ -509,7 +563,7 @@ class MazeMouseTrack(object):
 					DBGV.CheckP_UI = "13-3"
 					if newMazeStatus == False:
 						self.Maze_State.config(text="Maze State: Preparing...", fg="gray35")
-						self.Maze_State.place(x=self.WinSize[0]-170,y=220,anchor="ne")
+						self.Maze_State.place(x=800, y=200,anchor="nw")
 						self.BT_Start.config(text="Start", bg="DarkOliveGreen2")
 						self.MAZE_IS_RUN = False
 						self.Maze_StartState = False
@@ -523,11 +577,11 @@ class MazeMouseTrack(object):
 					
 				if self.CAM_IS_CONN:
 					self.Cam_State.config(text="Camera State: Connecting...", fg="green4")
-					self.Cam_State.place(x=self.WinSize[0]-140,y=190,anchor="ne")
+					self.Cam_State.place(x=800, y=170, anchor="nw")
 					self.BT_Camera.config(state="normal")
 				else:
 					self.Cam_State.config(text="Camera State: Unconnect", fg="gray35")
-					self.Cam_State.place(x=self.WinSize[0]-160,y=190,anchor="ne")
+					self.Cam_State.place(x=800, y=170, anchor="nw")
 					self.BT_Camera.config(state="disabled")
 
 				DBGV.CheckP_UI = "15"
@@ -660,27 +714,32 @@ class MazeMouseTrack(object):
 			self.DisDays[0] = True
 			self.OperaType = 'past'
 		self.TKS_Show_Opera.config(text="Operation Type: %s-Op  " %(self.OperaType), fg="black")
+		self.DBGV.Data_ModelRT_Str = CreateModelRTStr(self.OperaType, self.DisDays[1], self.DisDays[2], self.DiseaseType, self.DisGroupType, self.Rat_ID)
 
 	def tkSetting_DiseaseConfirm(self): #設定UI視窗點擊[確認病因]按鈕後處理副程式
 		DBGV.CheckP_UI = "35"
+		self.DBGV.Data_SettingClick[1] = self.DBGV.Data_SettingClick[1] + 1
 		newSpace = ""
 		for i in range(15):
 			newSpace = newSpace + " "
 		if self.TKS_Disease.get() != "":
 			self.DiseaseType = self.TKS_Disease.get()
 			self.TKS_Show_Disease.config(text="Model: %s%s" %(self.DiseaseType,newSpace), fg="black")
+			self.DBGV.Data_ModelRT_Str = CreateModelRTStr(self.OperaType, self.DisDays[1], self.DisDays[2], self.DiseaseType, self.DisGroupType, self.Rat_ID)
 		# if(self.DiseaseCombo.current() != 0):
 		# 	self.DiseaseType = self.DiseaseCombo.get()
 		# 	self.TKS_Show_Disease.config(text="Model: %s" %(self.DiseaseType), fg="black")
 
 	def tkSetting_DisGroupConfirm(self): #設定UI視窗點擊[確認疾病組別]按鈕後處理副程式
 		DBGV.CheckP_UI = "36"
+		self.DBGV.Data_SettingClick[2] = self.DBGV.Data_SettingClick[2] + 1
 		newSpace = ""
 		for i in range(15):
 			newSpace = newSpace + " "
 		if self.TKS_DisGroup.get() != "":
 			self.DisGroupType = self.TKS_DisGroup.get()
 			self.TKS_Show_DisGroup.config(text="Group: %s%s" %(self.DisGroupType,newSpace), fg="black")
+			self.DBGV.Data_ModelRT_Str = CreateModelRTStr(self.OperaType, self.DisDays[1], self.DisDays[2], self.DiseaseType, self.DisGroupType, self.Rat_ID)
 		# if(self.DisGroupCombo.current() != 0):
 		# 	self.DisGroupType = self.DisGroupCombo.get()
 		# 	self.TKS_Show_DisGroup.config(text="Group: %s" %(self.DisGroupType), fg="black")
@@ -853,8 +912,10 @@ class MazeMouseTrack(object):
 		self.TKS_DGCM_Cancel.config(state="disabled")
 		self.TKS_title7.config(bg="gray85")
 
+	
 	def tkSetting_OperaDays(self): #設定UI視窗點擊[確認天數]按鈕後處理副程式
 		DBGV.CheckP_UI = "43"
+		self.DBGV.Data_SettingClick[0] = self.DBGV.Data_SettingClick[0] + 1
 		if self.TKS_OpDay_Month.get() == "":
 			self.DisDays[1] = 0
 		else:
@@ -864,6 +925,7 @@ class MazeMouseTrack(object):
 		else:
 			self.DisDays[2] = int(self.TKS_OpDay_Day.get())
 		self.TKS_Show_OpDay.config(text="TimePoint: %2d Month %2d Day     " %(self.DisDays[1], self.DisDays[2]), fg="black")
+		self.DBGV.Data_ModelRT_Str = CreateModelRTStr(self.OperaType, self.DisDays[1], self.DisDays[2], self.DiseaseType, self.DisGroupType, self.Rat_ID)
 
 	def tkSetting_Closing(self): #設定UI視窗關閉副程式
 		DBGV.CheckP_UI = "22"
@@ -1184,7 +1246,7 @@ class MazeMouseTrack(object):
 			self.TK_L_Term[i-1].set(str(self.L_Term[i-1]))
 			self.TK_S_Term[i-1].set(str(self.S_Term[i-1]))
 			self.TKC_Food.append(0)
-			posY = (recFoodTY + 35) + 42*(i-1)
+			posY = (recFoodTY + 35) + 38*(i-1)
 			tk.Label(self.tkWin,text="Arm "+str(i), font=('Arial', 12)).place(x=recFoodTX,y=posY,anchor="nw")
 			self.TKC_Food[i-1] = tk.Checkbutton(self.tkWin, variable=self.TK_Food[i-1], onvalue = 1, offvalue = 0, command=self.setFood, state="disabled")
 			self.TKC_Food[i-1].place(x=recFoodTX + 60,y=posY,anchor="nw")
@@ -1200,13 +1262,9 @@ class MazeMouseTrack(object):
 		self.setArmInLine()
 
 		pViewX = 296 #虛擬視窗左上定位點X
-		pViewY = 70 #虛擬視窗左上定位點Y
+		pViewY = 40 #虛擬視窗左上定位點Y
 		self.setArmLine()
 		self.mazeCanvas.place(x=pViewX, y=pViewY,anchor="nw")
-		self.ResName = tk.Label(self.tkWin,text="User:", font=('Arial', 12))
-		self.ResName.place(x=pViewX, y=pViewY-55,anchor="nw")
-		self.ResName_Def = tk.Label(self.tkWin,text="(Not Set. English Recommend)", font=('Arial', 12), fg="gray35")
-		self.ResName_Def.place(x=pViewX+45, y=pViewY-55,anchor="nw")
 		self.mazeTitle = tk.Label(self.tkWin,text="IPCAM:", font=('Arial', 12))
 		self.mazeTitle.place(x=pViewX, y=pViewY-27,anchor="nw")
 
@@ -1222,18 +1280,22 @@ class MazeMouseTrack(object):
 		self.BT_Connect.place(x=self.WinSize[0]-190,y=20,anchor="ne")
 
 		#========右側：狀態顯示========
-		tk.Label(self.tkWin,text="Status", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-300,y=130,anchor="ne")
+		StatusCateX = 800
+		StatusCateY = 195
+		tk.Label(self.tkWin,text="Status", font=('Arial', 12), bg="gray75").place(x=StatusCateX, y=110,anchor="nw")
 		self.Link_State = tk.Label(self.tkWin,text="IPCAM Link: Unlinked", font=('Arial', 13), fg="gray35")
-		self.Link_State.place(x=self.WinSize[0]-189,y=160,anchor="ne")
+		self.Link_State.place(x=StatusCateX, y=140,anchor="nw")
 		self.Cam_State = tk.Label(self.tkWin,text="Camera State: Unconnect", font=('Arial', 13), fg="gray35")
-		self.Cam_State.place(x=self.WinSize[0]-160,y=190,anchor="ne")
+		self.Cam_State.place(x=StatusCateX, y=170,anchor="nw")
 		self.Maze_State = tk.Label(self.tkWin,text="Maze State: Preparing...", font=('Arial', 13), fg="gray35")
-		self.Maze_State.place(x=self.WinSize[0]-170,y=220,anchor="ne")
+		self.Maze_State.place(x=StatusCateX, y=200,anchor="nw")
 
+		self.ResName = tk.Label(self.tkWin,text="# User: ", font=('Arial', 12))
+		self.ResName.place(x=StatusCateX, y=230,anchor="nw")
 		self.TK_SHOW_Food = tk.Label(self.tkWin,text="# Food: ", font=('Arial', 12))
-		self.TK_SHOW_Food.place(x=self.WinSize[0]-290,y=250,anchor="ne")
+		self.TK_SHOW_Food.place(x=StatusCateX, y=260,anchor="nw")
 		self.TK_SHOW_Rat_ID = tk.Label(self.tkWin,text="# RatID: ", font=('Arial', 12))
-		self.TK_SHOW_Rat_ID.place(x=self.WinSize[0]-288,y=280,anchor="ne")
+		self.TK_SHOW_Rat_ID.place(x=StatusCateX, y=290,anchor="nw")
 
 		#========右側：設定使用者名稱========
 		tk.Label(self.tkWin,text="User", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-302,y=325,anchor="ne")
@@ -1243,18 +1305,18 @@ class MazeMouseTrack(object):
 		self.BT_User_Name.place(x=self.WinSize[0]-20,y=325,anchor="ne")
 
 		#========右側：設定老鼠編號========
-		tk.Label(self.tkWin,text="Rat ID", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-302,y=365,anchor="ne")
+		tk.Label(self.tkWin,text="Rat ID", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-302,y=357,anchor="ne")
 		self.TK_Rat_ID = tk.Entry(self.tkWin, font=('Arial', 12), width=20, state="disabled")
-		self.TK_Rat_ID.place(x=self.WinSize[0]-107,y=367,anchor="ne")
+		self.TK_Rat_ID.place(x=self.WinSize[0]-107,y=359,anchor="ne")
 		self.BT_Rat_ID = tk.Button(self.tkWin, text='Set ID', width=10,command=self.SetRatID, state="disabled")
-		self.BT_Rat_ID.place(x=self.WinSize[0]-20,y=365,anchor="ne")
+		self.BT_Rat_ID.place(x=self.WinSize[0]-20,y=357,anchor="ne")
 
 		#========右側：顯示進出臂路徑========
-		tk.Label(self.tkWin,text="Rat Route", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-277,y=400,anchor="ne")
+		tk.Label(self.tkWin,text="Rat Route", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-277,y=390,anchor="ne")
 		self.RouteScroll = tk.Scrollbar(self.tkWin)
-		self.RouteScroll.place(x=self.WinSize[0]-20,y=430,anchor="ne", height=125)
-		self.RouteText = tk.Text(self.tkWin, font=('Arial', 11), width=39, height=7, yscrollcommand=self.RouteScroll.set)
-		self.RouteText.place(x=self.WinSize[0]-37,y=430,anchor="ne")
+		self.RouteScroll.place(x=self.WinSize[0]-20,y=420,anchor="ne", height=107)
+		self.RouteText = tk.Text(self.tkWin, font=('Arial', 11), width=39, height=6, yscrollcommand=self.RouteScroll.set)
+		self.RouteText.place(x=self.WinSize[0]-37,y=420,anchor="ne")
 		self.RouteScroll.config(command=self.RouteText.yview)
 
 		#========下方：顯示各項資訊========
@@ -1264,7 +1326,7 @@ class MazeMouseTrack(object):
 		self.TK_SHOW_SYS_Msg.set("Messenage: " + str(self.SYS_MSG))
 		# tk.Label(self.tkWin,textvariable=self.TK_SHOW_FileDir, font=('Arial', 10)).place(x=20,y=self.WinSize[1]-10,anchor="sw")
 		self.TK_SHOW_SYS_Msg_Text = tk.Label(self.tkWin,textvariable=self.TK_SHOW_SYS_Msg, font=('Arial', 10))
-		self.TK_SHOW_SYS_Msg_Text.place(x=int(self.WinSize[0]/2),y=self.WinSize[1]-10,anchor="sw")
+		self.TK_SHOW_SYS_Msg_Text.place(x=int(self.WinSize[0]/2),y=self.WinSize[1]-7,anchor="sw")
 
 		DBGV.CheckP_UI = "9"
 

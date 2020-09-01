@@ -16,6 +16,8 @@ SET_VIDEO_PATH = False #是否已設定影片路徑
 nowDatePath = './ChiMei_{}/'.format(datetime.datetime.now().strftime("%Y%m%d"))
 VideoDir = 'Video_{}/'.format(datetime.datetime.now().strftime("%Y%m%d"))
 
+Rec_UserName = "" #操作系統的使用者名稱
+
 # IPCAM Information
 IPCAM_Name = ""			#攝相機名稱
 IPCAM_IP = ""			#攝相機IP
@@ -69,6 +71,8 @@ Data_ArmState = 0 			#進出臂狀態
 Data_CurrentArm = 0			#當前臂
 Data_InLineChange = False	#進臂線有更動
 Data_OutLineChange = False	#出臂線有更動
+Data_ModelRT_Str = "" #Model/Group即時字串
+Data_SettingClick = [0, 0, 0] #TimePoint/Model/Group 按鈕點擊次數
 
 # Previous Data
 PastData_RatID = ""				#老鼠ID
@@ -239,7 +243,7 @@ def makeDashBoard():
 	global Data_ArmInOutLen, Data_ArmInOutDistance, Data_TargetPos, Data_LongTerm, Data_ShortTerm, Data_TotalTerm, Data_Route, Data_ArmState, Data_CurrentArm, Data_ArmInOutPosLine
 	global PastData_RatID, PastData_TotalTerm, PastData_StartTime, PastData_Latency
 	global White_Contours, White_ContourArea, White_CenterPos, WOI_Count, White_PosShowFinish, White_TotalItem
-	global CheckP_UI, CheckP_ICAM, CheckP_IPCAM
+	global CheckP_UI, CheckP_ICAM, CheckP_IPCAM, Rec_UserName, Data_ModelRT_Str
 
 	#欄位初始點
 	BasicPos1 = 10 	#第一欄
@@ -253,6 +257,8 @@ def makeDashBoard():
 	result = cv2.resize(result, (720, 680), interpolation=cv2.INTER_CUBIC)
 	cv2.putText(result, "DateTime: {}".format(Maze_DateTime.strftime("%Y%m%d %H:%M:%S")), (BasicPos1, 20), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	cv2.putText(result, IPCAM_Name, (BasicPos1, 40), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+	cv2.putText(result, "-Users: {}".format(Rec_UserName), (BasicPos2+30, 20), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+	cv2.putText(result, Data_ModelRT_Str, (BasicPos2, 40), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	
 	# IPCAM Information
 	cv2.putText(result, "=IPCAM Info=", (BasicPos1, 60), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
@@ -290,8 +296,8 @@ def makeDashBoard():
 	cv2.putText(result, "-TargetPos: {}".format(Data_TargetPos), (BasicPos2, 200), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	if Maze_StartState:
 		cv2.putText(result, "-Food: {}".format(Exp_Food), (BasicPos1, 220), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
-		cv2.putText(result, "-Disence: {}".format(Exp_Disense), (BasicPos1, 240), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
-		cv2.putText(result, "-DisGroup: {}".format(Exp_DisGroup), (BasicPos2, 240), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+		cv2.putText(result, "-Model: {}".format(Exp_Disense), (BasicPos1, 240), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+		cv2.putText(result, "-Group: {}".format(Exp_DisGroup), (BasicPos2, 240), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 		cv2.putText(result, "-ArmState:", (BasicPos1, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 		if Data_ArmState == 0:
 			cv2.putText(result, "Not Entry", (BasicPos1 + 100, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,0,255), 0, cv2.LINE_AA)
@@ -305,7 +311,7 @@ def makeDashBoard():
 			cv2.putText(result, "-DisType: PastOP", (BasicPos1, 260), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 		else:
 			cv2.putText(result, "-DisType: PreOP" , (BasicPos1, 260), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
-		cv2.putText(result, "-DisDay: %02dM %02dD" %(Exp_DisDay[1], Exp_DisDay[2]), (BasicPos2, 260), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+		cv2.putText(result, "-TimePoint: %02dM %02dD" %(Exp_DisDay[1], Exp_DisDay[2]), (BasicPos2, 260), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 
 		nowLatency = Second2Datetime((Maze_DateTime - Exp_StartTime).seconds)
 		cv2.putText(result, "-Latency: %02d:%02d:%02d" %(nowLatency), (BasicPos2, 300), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
@@ -316,13 +322,13 @@ def makeDashBoard():
 			cv2.putText(result, "Arm%d" %(Data_CurrentArm), (BasicPos2 + 120, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
 	else:
 		cv2.putText(result, "-Food: None", (BasicPos1, 220), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
-		cv2.putText(result, "-Disence: None", (BasicPos1, 240), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
+		cv2.putText(result, "-Model: None", (BasicPos1, 240), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
 		cv2.putText(result, "-DisType: None", (BasicPos1, 260), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
 		cv2.putText(result, "-ArmState: None", (BasicPos1, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
 		cv2.putText(result, "-RatID: None", (BasicPos1, 300), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
 
-		cv2.putText(result, "-DisGroup: None", (BasicPos2, 240), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
-		cv2.putText(result, "-DisDay: None", (BasicPos2, 260), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
+		cv2.putText(result, "-Group: None", (BasicPos2, 240), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
+		cv2.putText(result, "-TimePoint: None", (BasicPos2, 260), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
 		cv2.putText(result, "-CurrentArm: None", (BasicPos2, 280), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
 		cv2.putText(result, "-Latency: None", (BasicPos2, 300), cv2.FONT_HERSHEY_DUPLEX, 0.5, unSetFontColor, 0, cv2.LINE_AA)
 
@@ -412,6 +418,8 @@ def makeDashBoard():
 	cv2.putText(result, str(CheckP_ICAM), (BasicPos3 + 70, checkBasicPos + 40), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	cv2.putText(result, str(CheckP_IPCAM), (BasicPos3 + 70, checkBasicPos + 60), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 
+	cv2.putText(result, "Click(TP-M-G): %0d-%0d-%0d" %(Data_SettingClick[0],Data_SettingClick[1],Data_SettingClick[2]), (BasicPos3 - 30, checkBasicPos + 100), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+
 	return result
 
 def DBGV_Main(): #DBGV主程式
@@ -468,7 +476,7 @@ def DBGV_Main(): #DBGV主程式
 
 
 
-			cv2.imshow("DashBoard Video", TotalBoard)
+			# cv2.imshow("DashBoard Video", TotalBoard)
 			cv2.waitKey(1)
 
 	except Warning as e:
