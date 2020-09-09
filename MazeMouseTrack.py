@@ -172,6 +172,7 @@ class MazeMouseTrack(object):
 		self.CAM_IS_RUN = False #當前相機程式是否在執行
 		self.CAM_INIT_SUCCESS = False #CAM是否初始化成功
 		self.CAM_IS_CONN = self.TCAM.CAM_IS_CONN #當前鏡頭是否連線
+		self.EXP_DATA_MODE = "NONE" #當前實驗模式
 		self.TK_Food = [] #勾選放食物的臂
 		self.TK_S_Term = [] #顯示各臂短期記憶錯誤
 		self.TK_L_Term = [] #顯示各臂長期記憶錯誤
@@ -180,6 +181,7 @@ class MazeMouseTrack(object):
 		self.TK_File_Dir = "" #顯示存入的檔案(含路徑)
 		self.TK_Rat_ID = "" #顯示老鼠編號
 		self.Rat_ID = "" #顯示老鼠編號
+		self.OldTrain_Rat_ID = "" #舊訓練用老鼠編號
 		self.SYS_MSG = "" #顯示錯誤訊息
 		self.TK_Latency = 0 #顯示總時間長度
 		self.Rec_UserName = "" #顯示使用者名稱
@@ -274,10 +276,12 @@ class MazeMouseTrack(object):
 		DBGV.CheckP_UI = "24"
 		RAT_ID = self.TK_Rat_ID.get()
 		Unit = countStr(RAT_ID)
-		str1 = "# RatID: {}".format(RAT_ID)
+		# str1 = "# RatID: {}".format(RAT_ID)
 		# move = 288 - (Unit[0]*11 + (Unit[1] + Unit[2] + Unit[3])*9)
-		self.TK_SHOW_Rat_ID.config(text=str1)
-		self.TK_SHOW_Rat_ID.place(x=800,y=290,anchor="nw")
+		if RAT_ID != "":
+			self.TKS_Show_Rat_ID.config(text="RatID: {}".format(RAT_ID), fg="black")
+		else:
+			self.TKS_Show_Rat_ID.config(text="RatID: (not set)", fg="gray35")
 		self.Rat_ID = RAT_ID
 		self.DBGV.Data_ModelRT_Str = CreateModelRTStr(self.OperaType, self.DisDays[1], self.DisDays[2], self.DiseaseType, self.DisGroupType, self.Rat_ID)
 		# print(len(RAT_ID))
@@ -285,8 +289,10 @@ class MazeMouseTrack(object):
 	def SetUserName(self):
 		DBGV.CheckP_UI = "24-1"
 		Rec_UserName = self.TK_User_Name.get()
-		self.ResName.config(text="# User: %s" %(Rec_UserName))
-		self.ResName.place(x=800, y=230,anchor="nw")
+		if Rec_UserName != "":
+			self.TKS_Show_UserName.config(text="Users: %s" %(Rec_UserName), fg="black")
+		else:
+			self.TKS_Show_UserName.config(text="Users: (not set)", fg="gray35")
 		self.Rec_UserName = Rec_UserName
 		self.DBGV.Rec_UserName = Rec_UserName
 
@@ -302,15 +308,18 @@ class MazeMouseTrack(object):
 			else:
 				self.Food[i] = 0
 		self.TotalFood = ct
-		if(ct == 0):
-			str1 = "# Food: "
-			# move = 290
-		else:
-			str1 = "# Food: {}".format(hadFood)
-			# move = 290 - ct*17
+		# if(ct == 0):
+		# 	str1 = "# Food: "
+		# 	# move = 290
+		# else:
+		# 	str1 = "# Food: {}".format(hadFood)
+		# 	# move = 290 - ct*17
 
-		self.TK_SHOW_Food.config(text=str1)
-		self.TK_SHOW_Food.place(x=800, y=260,anchor="nw")
+		if ct == 0:
+			self.TK_SHOW_Food.config(text="Food: (not set)", fg="gray35")
+		else:
+			self.TK_SHOW_Food.config(text="Food: {}".format(hadFood), fg="black")
+		# self.TK_SHOW_Food.place(x=800, y=260,anchor="nw")
 
 	def ConnectClick(self): #"Link"按鈕按下時負責處理的副程式
 		if self.CAM_IS_RUN:
@@ -323,10 +332,10 @@ class MazeMouseTrack(object):
 			self.BT_Setting.config(state="disabled")
 			for i in range(1, self.ARM_UNIT+1):
 				self.TKC_Food[i-1].config(state="disabled")
-			self.BT_Rat_ID.config(state="disabled")
-			self.TK_Rat_ID.config(state="disabled")
-			self.BT_User_Name.config(state="disabled")
-			self.TK_User_Name.config(state="disabled")
+			# self.BT_Rat_ID.config(state="disabled")
+			# self.TK_Rat_ID.config(state="disabled")
+			# self.BT_User_Name.config(state="disabled")
+			# self.TK_User_Name.config(state="disabled")
 			self.TCAM.CAM_IS_RUN = False
 			self.TCAM.CAM_IS_CONN = False
 			self.IPCAM.CAM_IS_RUN = False
@@ -349,10 +358,10 @@ class MazeMouseTrack(object):
 			self.BT_Setting.config(state="normal")
 			for i in range(1, self.ARM_UNIT+1):
 				self.TKC_Food[i-1].config(state="normal")
-			self.BT_Rat_ID.config(state="normal")
-			self.TK_Rat_ID.config(state="normal")
-			self.BT_User_Name.config(state="normal")
-			self.TK_User_Name.config(state="normal")
+			# self.BT_Rat_ID.config(state="normal")
+			# self.TK_Rat_ID.config(state="normal")
+			# self.BT_User_Name.config(state="normal")
+			# self.TK_User_Name.config(state="normal")
 			self.TCAM.CAM_IS_RUN = True
 			self.IPCAM.CAM_IS_RUN = True
 
@@ -416,6 +425,8 @@ class MazeMouseTrack(object):
 				self.BT_Start.config(text="Stop", bg="IndianRed1")
 
 				self.MAZE_IS_RUN = True
+				if self.EXP_DATA_MODE == "TRAINING":
+					self.OldTrain_Rat_ID = self.Rat_ID
 		self.TCAM.MAZE_IS_RUN = self.MAZE_IS_RUN
 
 	def CameraCheck(self): #實體影像檢查
@@ -460,45 +471,48 @@ class MazeMouseTrack(object):
 		if state:
 			DBGV.CheckP_UI = "31-1"
 			# self.TKE_Dir.config(state="disabled")
-			self.TK_Rat_ID.config(state="disabled")
-			self.TK_User_Name.config(state="disabled")
-			self.BT_Rat_ID.config(state="disabled")
-			self.BT_User_Name.config(state="disabled")
 			if self.MAZE_IS_RUN:
 				self.BT_Connect.config(state="disabled")
 
-			if self.DBGV.Maze_SetState:
-				self.TKS_Btn1_Opera1.config(state="disabled")
-				self.TKS_Btn1_Opera2.config(state="disabled")
-				self.TKS_OpDay_Month.config(state="disabled")
-				self.TKS_OpDay_Day.config(state="disabled")
+			if self.DBGV.Maze_SetState and self.EXP_DATA_MODE != "NONE":
 				self.TKS_Disease.config(state="disabled")
-				self.TKS_DisGroup.config(state="disabled")
-				self.TKS_BT_OpDayConfirm.config(state="disabled")
+				self.TK_User_Name.config(state="disabled")
+				self.BT_User_Name.config(state="disabled")
 				self.TKS_BT_DisConfirm.config(state="disabled")
-				self.TKS_BT_DisGroupConfirm.config(state="disabled")
+				if self.EXP_DATA_MODE == "EXPERIMENT":
+					self.TKS_Btn1_Opera1.config(state="disabled")
+					self.TKS_Btn1_Opera2.config(state="disabled")
+					self.TKS_OpDay_Month.config(state="disabled")
+					self.TKS_OpDay_Day.config(state="disabled")
+					self.TKS_DisGroup.config(state="disabled")
+					self.TKS_BT_OpDayConfirm.config(state="disabled")
+					self.TKS_BT_DisGroupConfirm.config(state="disabled")
+					self.TK_Rat_ID.config(state="disabled")
+					self.BT_Rat_ID.config(state="disabled")
+				
 				
 			for i in range(0,self.ARM_UNIT):
 				self.TKC_Food[i].config(state="disabled")
 		else:
 			DBGV.CheckP_UI = "31-2"
 			# self.TKE_Dir.config(state="normal")
-			self.TK_Rat_ID.config(state="normal")
-			self.TK_User_Name.config(state="normal")
-			self.BT_Rat_ID.config(state="normal")
-			self.BT_User_Name.config(state="normal")
 			self.BT_Connect.config(state="normal")
 
-			if self.DBGV.Maze_SetState:
-				self.TKS_Btn1_Opera1.config(state="normal")
-				self.TKS_Btn1_Opera2.config(state="normal")
-				self.TKS_OpDay_Month.config(state="normal")
-				self.TKS_OpDay_Day.config(state="normal")
+			if self.DBGV.Maze_SetState and self.EXP_DATA_MODE != "NONE":
 				self.TKS_Disease.config(state="normal")
-				self.TKS_DisGroup.config(state="normal")
-				self.TKS_BT_OpDayConfirm.config(state="normal")
 				self.TKS_BT_DisConfirm.config(state="normal")
-				self.TKS_BT_DisGroupConfirm.config(state="normal")
+				self.TK_User_Name.config(state="normal")
+				self.BT_User_Name.config(state="normal")
+				if self.EXP_DATA_MODE == "EXPERIMENT":
+					self.TKS_Btn1_Opera1.config(state="normal")
+					self.TKS_Btn1_Opera2.config(state="normal")
+					self.TKS_OpDay_Month.config(state="normal")
+					self.TKS_OpDay_Day.config(state="normal")
+					self.TKS_DisGroup.config(state="normal")
+					self.TKS_BT_OpDayConfirm.config(state="normal")
+					self.TKS_BT_DisGroupConfirm.config(state="normal")
+					self.TK_Rat_ID.config(state="normal")
+					self.BT_Rat_ID.config(state="normal")
 
 			for i in range(0,self.ARM_UNIT):
 				self.TKC_Food[i].config(state="normal")
@@ -571,6 +585,9 @@ class MazeMouseTrack(object):
 					DBGV.CheckP_UI = "14"
 					if self.CAM_IS_CONN:
 						self.LockInput(False)
+						if (self.EXP_DATA_MODE == "TRAINING") and (self.OldTrain_Rat_ID == self.Rat_ID):
+							self.Rat_ID = datetime.datetime.now().strftime("T%H%M%S")
+							self.TKS_Show_Rat_ID.config(text="RatID: %s" %(self.Rat_ID), fg="black")
 					else:
 						self.LockInput(True)
 					self.firstMazeRun = True
@@ -1101,12 +1118,123 @@ class MazeMouseTrack(object):
 			funcName = lastCallStack[2] #取得發生的函數名稱
 			logging.error("{} line {}, in '{}': {}".format(cl, lineNum, funcName, detail))
 	
+	def InitExpMode(self, mode):
+		if mode == "EXPERIMENT":
+			self.TK_Rat_ID.config(state="normal")
+			self.BT_Rat_ID.config(state="normal")
+			self.TKS_Btn1_Opera1.config(state="normal")
+			self.TKS_Btn1_Opera2.config(state="normal")
+			self.TKS_OpDay_Month.config(state="normal")
+			self.TKS_OpDay_Day.config(state="normal")
+			self.TKS_DisGroup.config(state="normal")
+			self.TKS_BT_OpDayConfirm.config(state="normal")
+			self.TKS_BT_DisGroupConfirm.config(state="normal")
+		elif mode == "TRAINING":
+			self.DisGroupType = "Training"
+			self.DisDays = [self.DisDays[0], 99, 99]
+			self.OperaType = "Training"
+			self.Rat_ID = datetime.datetime.now().strftime("T%H%M%S")
+
+			self.TKS_Show_DisGroup.config(text="Group: %s" %(self.DisGroupType), fg="black")
+			self.TKS_Show_OpDay.config(text="TimePoint: %2d Month %2d Day" %(self.DisDays[1], self.DisDays[2]), fg="black")
+			self.TKS_Show_Opera.config(text="Operation Type: %s" %(self.OperaType), fg="black")
+			self.TKS_Show_Rat_ID.config(text="RatID: %s" %(self.Rat_ID), fg="black")
+
+		self.TK_User_Name.config(state="normal")
+		self.BT_User_Name.config(state="normal")
+		self.TKS_Disease.config(state="normal")
+		self.TKS_BT_DisConfirm.config(state="normal")
+
+	def SystemModeSet(self, mode):
+		self.EXP_DATA_MODE = mode
+		self.InitExpMode(mode)
+		if mode == "EXPERIMENT":
+			self.TKS_Btn0_Mode2.config(bg="DarkOliveGreen2")
+		elif mode == "TRAINING":
+			self.TKS_Btn0_Mode1.config(bg="DarkOliveGreen2")
+		self.TKS_Btn0_Mode1.config(state="disabled")
+		self.TKS_Btn0_Mode2.config(state="disabled")
+		self.TKS_title1_0.config(fg="gray35", bg="gray85")
+		self.TKS_title1_1.config(fg="black", bg="gray75")
+
 	def drawSetting(self):
 		SettingShowX = self.WinSize[0] + 10
-		tk.Label(self.tkWin, text="Model/Group Configuration", font=('Arial', 14)).place(x=SettingShowX + 180,y=20,anchor="n")
+		tk.Label(self.tkWin, text="Model/Group Configuration", font=('Arial', 14), bg="gray75").place(x=SettingShowX + 180,y=20,anchor="n")
+
+		# 選擇訓練中還是行為測試
+		SettingShowY = 60
+		self.TKS_title1_0 = tk.Label(self.tkWin, text="Step1. 請選擇使用目的", font=('微軟正黑體', 12, "bold"), bg="gray75")
+		self.TKS_title1_0.place(x=SettingShowX+180,y=SettingShowY,anchor="n")
+		if self.EXP_DATA_MODE == "TRAINING":
+			self.TKS_Btn0_Mode1 = tk.Button(self.tkWin, text='大鼠訓練', width=14, font=('微軟正黑體', 14, "bold"), bg="DarkOliveGreen2", command=lambda: self.SystemModeSet('TRAINING'))
+		else:
+			self.TKS_Btn0_Mode1 = tk.Button(self.tkWin, text='大鼠訓練', width=14, font=('微軟正黑體', 14, "bold"), bg="gray90", command=lambda: self.SystemModeSet('TRAINING'))
+		self.TKS_Btn0_Mode1.place(x=SettingShowX + 10, y=SettingShowY + 30, anchor="nw")
+
+		if self.EXP_DATA_MODE == "EXPERIMENT":
+			self.TKS_Btn0_Mode2 = tk.Button(self.tkWin, text='行為測試', width=14, font=('微軟正黑體', 14, "bold"), bg="DarkOliveGreen2", command=lambda: self.SystemModeSet('EXPERIMENT'))
+		else:
+			self.TKS_Btn0_Mode2 = tk.Button(self.tkWin, text='行為測試', width=14, font=('微軟正黑體', 14, "bold"), bg="gray90", command=lambda: self.SystemModeSet('EXPERIMENT'))
+		self.TKS_Btn0_Mode2.place(x=SettingShowX + 190, y=SettingShowY + 30, anchor="nw")
+
+		if self.EXP_DATA_MODE != "NONE":
+			self.TKS_Btn0_Mode1.config(state="disabled")
+			self.TKS_Btn0_Mode2.config(state="disabled")
+			self.TKS_title1_0.config(fg="gray35", bg="gray85")
+
+		SettingShowY = 150
+		self.TKS_title1_1 = tk.Label(self.tkWin, text="Step2. 請輸入以下資訊", font=('微軟正黑體', 12, "bold"))
+		self.TKS_title1_1.place(x=SettingShowX+180,y=SettingShowY,anchor="n")
+		if self.EXP_DATA_MODE == "NONE":
+			self.TKS_title1_1.config(fg="gray35", bg="gray85")
+		else:
+			self.TKS_title1_1.config(fg="black", bg="gray75")
+		# 設定使用者名稱
+		SettingShowY = 190
+		Rec_UserName_Def = tk.StringVar()
+		tk.Label(self.tkWin,text="User", font=('Arial', 12), bg="gray75").place(x=SettingShowX, y=SettingShowY,anchor="nw")
+		self.TK_User_Name = tk.Entry(self.tkWin, font=('Arial', 12), width=15, textvariable=Rec_UserName_Def)
+		self.TK_User_Name.place(x=SettingShowX+56,y=SettingShowY+1,anchor="nw")
+		if self.Rec_UserName != "":
+			Rec_UserName_Def.set(self.Rec_UserName)
+		self.BT_User_Name = tk.Button(self.tkWin, text='Set User', width=9, font=('Arial', 10), bg="gray90", command=self.SetUserName)
+		self.BT_User_Name.place(x=SettingShowX+200,y=SettingShowY-3,anchor="nw")
+		if self.EXP_DATA_MODE == "NONE":
+			self.TK_User_Name.config(state="disabled")
+			self.BT_User_Name.config(state="disabled")
+
+		#疾病模組資訊
+		SettingShowY = 230
+		Disease_Def = tk.StringVar()
+		self.TKS_title3 = tk.Label(self.tkWin, text="Model", font=('Arial', 12), bg="gray75")
+		self.TKS_title3.place(x=SettingShowX,y=SettingShowY,anchor="nw")
+		self.TKS_Disease = tk.Entry(self.tkWin, font=('Arial', 12), width=15, textvariable=Disease_Def)
+		self.TKS_Disease.place(x=SettingShowX+57,y=SettingShowY+1,anchor="nw")
+		if self.DiseaseType != "":
+			Disease_Def.set(self.DiseaseType)
+		self.TKS_BT_DisConfirm = tk.Button(self.tkWin, text='Confirm', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DiseaseConfirm)
+		self.TKS_BT_DisConfirm.place(x=SettingShowX+205,y=SettingShowY-3,anchor="nw")
+		if self.EXP_DATA_MODE == "NONE":
+			self.TKS_Disease.config(state="disabled")
+			self.TKS_BT_DisConfirm.config(state="disabled")
+
+		#復健分組資訊
+		SettingShowY = 270
+		DisGroup_Def = tk.StringVar()
+		self.TKS_title3 = tk.Label(self.tkWin, text="Group", font=('Arial', 12), bg="gray75")
+		self.TKS_title3.place(x=SettingShowX,y=SettingShowY,anchor="nw")
+		self.TKS_DisGroup = tk.Entry(self.tkWin, font=('Arial', 12), width=15, textvariable=DisGroup_Def)
+		self.TKS_DisGroup.place(x=SettingShowX+57,y=SettingShowY+1,anchor="nw")
+		if self.DisGroupType != "":
+			DisGroup_Def.set(self.DisGroupType)
+		self.TKS_BT_DisGroupConfirm = tk.Button(self.tkWin, text='Confirm', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DisGroupConfirm)
+		self.TKS_BT_DisGroupConfirm.place(x=SettingShowX+205,y=SettingShowY-3,anchor="nw")
+		if (self.EXP_DATA_MODE == "NONE") or (self.EXP_DATA_MODE == "TRAINING"):
+			self.TKS_DisGroup.config(state="disabled")
+			self.TKS_BT_DisGroupConfirm.config(state="disabled")
 
 		# 選擇狀態是手術前後
-		SettingShowY = 65
+		SettingShowY = 310
 		self.TKS_title1 = tk.Label(self.tkWin, text="Operation", font=('Arial', 12), bg="gray75")
 		self.TKS_title1.place(x=SettingShowX,y=SettingShowY,anchor="nw")
 		if self.OperaType == 'pre':
@@ -1119,9 +1247,12 @@ class MazeMouseTrack(object):
 		else:
 			self.TKS_Btn1_Opera2 = tk.Button(self.tkWin, text='past-Op (手術後)', width=14, font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_BtnOpera('past-Op'))
 		self.TKS_Btn1_Opera2.place(x=SettingShowX + 205, y=SettingShowY - 2, anchor="nw")
+		if (self.EXP_DATA_MODE == "NONE") or (self.EXP_DATA_MODE == "TRAINING"):
+			self.TKS_Btn1_Opera1.config(state="disabled")
+			self.TKS_Btn1_Opera2.config(state="disabled")
 
 		# 設定天數
-		SettingShowY = 100
+		SettingShowY = 350
 		OpDayM_Def = tk.StringVar()
 		OpDayD_Def = tk.StringVar()
 		self.TKS_title2 = tk.Label(self.tkWin, text="TimePoint", font=('Arial', 12), bg="gray75")
@@ -1138,56 +1269,24 @@ class MazeMouseTrack(object):
 			OpDayD_Def.set(self.DisDays[2])
 		self.TKS_BT_OpDayConfirm = tk.Button(self.tkWin, text='Confirm', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_OperaDays)
 		self.TKS_BT_OpDayConfirm.place(x=SettingShowX+270,y=SettingShowY,anchor="nw")
+		if (self.EXP_DATA_MODE == "NONE") or (self.EXP_DATA_MODE == "TRAINING"):
+			self.TKS_OpDay_Month.config(state="disabled")
+			self.TKS_OpDay_Day.config(state="disabled")
+			self.TKS_BT_OpDayConfirm.config(state="disabled")
 
-		#疾病模組資訊
-		SettingShowY = 140
-		Disease_Def = tk.StringVar()
-		self.TKS_title3 = tk.Label(self.tkWin, text="Model", font=('Arial', 12), bg="gray75")
-		self.TKS_title3.place(x=SettingShowX,y=SettingShowY,anchor="nw")
-		self.TKS_Disease = tk.Entry(self.tkWin, font=('Arial', 12), width=15, textvariable=Disease_Def)
-		self.TKS_Disease.place(x=SettingShowX+57,y=SettingShowY+1,anchor="nw")
-		if self.DiseaseType != "":
-			Disease_Def.set(self.DiseaseType)
-		self.TKS_BT_DisConfirm = tk.Button(self.tkWin, text='Confirm', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DiseaseConfirm)
-		self.TKS_BT_DisConfirm.place(x=SettingShowX+205,y=SettingShowY-3,anchor="nw")
-
-		#復健分組資訊
-		SettingShowY = 180
-		DisGroup_Def = tk.StringVar()
-		self.TKS_title3 = tk.Label(self.tkWin, text="Group", font=('Arial', 12), bg="gray75")
-		self.TKS_title3.place(x=SettingShowX,y=SettingShowY,anchor="nw")
-		self.TKS_DisGroup = tk.Entry(self.tkWin, font=('Arial', 12), width=15, textvariable=DisGroup_Def)
-		self.TKS_DisGroup.place(x=SettingShowX+57,y=SettingShowY+1,anchor="nw")
-		if self.DisGroupType != "":
-			DisGroup_Def.set(self.DisGroupType)
-		self.TKS_BT_DisGroupConfirm = tk.Button(self.tkWin, text='Confirm', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DisGroupConfirm)
-		self.TKS_BT_DisGroupConfirm.place(x=SettingShowX+205,y=SettingShowY-3,anchor="nw")
-
-		# 顯示變數區域
-		SettingShowY = 250
-		self.TKS_title5 = tk.Label(self.tkWin, text="Setting Status", font=('Arial', 12), bg="gray75")
-		self.TKS_title5.place(x=SettingShowX,y=SettingShowY + 20,anchor="nw")
-		if self.OperaType != "":
-			self.TKS_Show_Opera = tk.Label(self.tkWin, text="Operation Type: %s-Op" %(self.OperaType), font=('Arial', 13), fg="black")
-		else:
-			self.TKS_Show_Opera = tk.Label(self.tkWin, text="Operation Type: (not set)", font=('Arial', 13), fg="gray35")
-		self.TKS_Show_Opera.place(x=SettingShowX,y=SettingShowY + 50,anchor="nw")
-		
-		if self.DisDays[1] != -1 and self.DisDays[2] != -1:
-			self.TKS_Show_OpDay = tk.Label(self.tkWin, text="TimePoint: %2d Month %2d Day" %(self.DisDays[1], self.DisDays[2]), font=('Arial', 13), fg="black")
-		else:
-			self.TKS_Show_OpDay = tk.Label(self.tkWin, text="TimePoint: (not set)", font=('Arial', 13), fg="gray35")
-		self.TKS_Show_OpDay.place(x=SettingShowX,y=SettingShowY + 80,anchor="nw")
-		if self.DiseaseType != "":
-			self.TKS_Show_Disease = tk.Label(self.tkWin, text="Model: {}".format(self.DiseaseType), font=('Arial', 13), fg="black")
-		else:
-			self.TKS_Show_Disease = tk.Label(self.tkWin, text="Model: (not set)", font=('Arial', 13), fg="gray35")
-		self.TKS_Show_Disease.place(x=SettingShowX,y=SettingShowY + 110,anchor="nw")
-		if self.DisGroupType != "":
-			self.TKS_Show_DisGroup = tk.Label(self.tkWin, text="Group: {}".format(self.DisGroupType), font=('Arial', 13), fg="black")
-		else:
-			self.TKS_Show_DisGroup = tk.Label(self.tkWin, text="Group: (not set)", font=('Arial', 13), fg="gray35")
-		self.TKS_Show_DisGroup.place(x=SettingShowX,y=SettingShowY + 140,anchor="nw")
+		# 設定老鼠編號
+		SettingShowY = 390
+		RatID_Def = tk.StringVar()
+		tk.Label(self.tkWin,text="Rat ID", font=('Arial', 12), bg="gray75").place(x=SettingShowX,y=SettingShowY,anchor="nw")
+		self.TK_Rat_ID = tk.Entry(self.tkWin, font=('Arial', 12), width=10, textvariable=RatID_Def)
+		self.TK_Rat_ID.place(x=SettingShowX+60,y=SettingShowY+1,anchor="nw")
+		if self.Rat_ID != "":
+			RatID_Def.set(self.Rat_ID)
+		self.BT_Rat_ID = tk.Button(self.tkWin, text='Set ID', width=9, font=('Arial', 10), bg="gray90", command=self.SetRatID)
+		self.BT_Rat_ID.place(x=SettingShowX+160,y=SettingShowY-3,anchor="nw")
+		if (self.EXP_DATA_MODE == "NONE") or (self.EXP_DATA_MODE == "TRAINING"):
+			self.TK_Rat_ID.config(state="disabled")
+			self.BT_Rat_ID.config(state="disabled")
 
 	def OpenSetting(self):
 		if not self.DBGV.Maze_SetState:
@@ -1281,7 +1380,8 @@ class MazeMouseTrack(object):
 
 		#========右側：狀態顯示========
 		StatusCateX = 800
-		StatusCateY = 195
+		StatusCateY = 140
+		StatusLineRange = 28
 		tk.Label(self.tkWin,text="Status", font=('Arial', 12), bg="gray75").place(x=StatusCateX, y=110,anchor="nw")
 		self.Link_State = tk.Label(self.tkWin,text="IPCAM Link: Unlinked", font=('Arial', 13), fg="gray35")
 		self.Link_State.place(x=StatusCateX, y=140,anchor="nw")
@@ -1290,33 +1390,60 @@ class MazeMouseTrack(object):
 		self.Maze_State = tk.Label(self.tkWin,text="Maze State: Preparing...", font=('Arial', 13), fg="gray35")
 		self.Maze_State.place(x=StatusCateX, y=200,anchor="nw")
 
-		self.ResName = tk.Label(self.tkWin,text="# User: ", font=('Arial', 12))
-		self.ResName.place(x=StatusCateX, y=230,anchor="nw")
-		self.TK_SHOW_Food = tk.Label(self.tkWin,text="# Food: ", font=('Arial', 12))
-		self.TK_SHOW_Food.place(x=StatusCateX, y=260,anchor="nw")
-		self.TK_SHOW_Rat_ID = tk.Label(self.tkWin,text="# RatID: ", font=('Arial', 12))
-		self.TK_SHOW_Rat_ID.place(x=StatusCateX, y=290,anchor="nw")
+		# 顯示變數區域
+		SettingShowX = 800
+		SettingShowY = 220
+		SettingLineRange = 28
+		self.TKS_title5 = tk.Label(self.tkWin, text="Setting Status", font=('Arial', 12), bg="gray75")
+		self.TKS_title5.place(x=SettingShowX,y=SettingShowY + 20,anchor="nw")
+		
+		self.TK_SHOW_Food = tk.Label(self.tkWin,text="Food: (not set)", font=('Arial', 12), fg="gray35")
+		self.TK_SHOW_Food.place(x=SettingShowX, y=SettingShowY + (50 + SettingLineRange*0),anchor="nw")
 
-		#========右側：設定使用者名稱========
-		tk.Label(self.tkWin,text="User", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-302,y=325,anchor="ne")
-		self.TK_User_Name = tk.Entry(self.tkWin, font=('Arial', 12), width=20, state="disabled")
-		self.TK_User_Name.place(x=self.WinSize[0]-107,y=327,anchor="ne")
-		self.BT_User_Name = tk.Button(self.tkWin, text='Set User', width=10,command=self.SetUserName, state="disabled")
-		self.BT_User_Name.place(x=self.WinSize[0]-20,y=325,anchor="ne")
+		if self.Rec_UserName != "":
+			self.TKS_Show_UserName = tk.Label(self.tkWin, text="Users: %s" %(self.Rec_UserName), font=('Arial', 13), fg="black")
+		else:
+			self.TKS_Show_UserName = tk.Label(self.tkWin, text="Users: (not set)", font=('Arial', 13), fg="gray35")
+		self.TKS_Show_UserName.place(x=SettingShowX,y=SettingShowY + (50 + SettingLineRange*1),anchor="nw")
 
-		#========右側：設定老鼠編號========
-		tk.Label(self.tkWin,text="Rat ID", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-302,y=357,anchor="ne")
-		self.TK_Rat_ID = tk.Entry(self.tkWin, font=('Arial', 12), width=20, state="disabled")
-		self.TK_Rat_ID.place(x=self.WinSize[0]-107,y=359,anchor="ne")
-		self.BT_Rat_ID = tk.Button(self.tkWin, text='Set ID', width=10,command=self.SetRatID, state="disabled")
-		self.BT_Rat_ID.place(x=self.WinSize[0]-20,y=357,anchor="ne")
+		if self.DiseaseType != "":
+			self.TKS_Show_Disease = tk.Label(self.tkWin, text="Model: {}".format(self.DiseaseType), font=('Arial', 13), fg="black")
+		else:
+			self.TKS_Show_Disease = tk.Label(self.tkWin, text="Model: (not set)", font=('Arial', 13), fg="gray35")
+		self.TKS_Show_Disease.place(x=SettingShowX,y=SettingShowY + (50 + SettingLineRange*2),anchor="nw")
+
+		if self.DisGroupType != "":
+			self.TKS_Show_DisGroup = tk.Label(self.tkWin, text="Group: {}".format(self.DisGroupType), font=('Arial', 13), fg="black")
+		else:
+			self.TKS_Show_DisGroup = tk.Label(self.tkWin, text="Group: (not set)", font=('Arial', 13), fg="gray35")
+		self.TKS_Show_DisGroup.place(x=SettingShowX,y=SettingShowY + (50 + SettingLineRange*3),anchor="nw")
+
+		if self.OperaType != "":
+			self.TKS_Show_Opera = tk.Label(self.tkWin, text="Operation Type: %s-Op" %(self.OperaType), font=('Arial', 13), fg="black")
+		else:
+			self.TKS_Show_Opera = tk.Label(self.tkWin, text="Operation Type: (not set)", font=('Arial', 13), fg="gray35")
+		self.TKS_Show_Opera.place(x=SettingShowX,y=SettingShowY + (50 + SettingLineRange*4),anchor="nw")
+		
+		if self.DisDays[1] != -1 and self.DisDays[2] != -1:
+			self.TKS_Show_OpDay = tk.Label(self.tkWin, text="TimePoint: %2d Month %2d Day" %(self.DisDays[1], self.DisDays[2]), font=('Arial', 13), fg="black")
+		else:
+			self.TKS_Show_OpDay = tk.Label(self.tkWin, text="TimePoint: (not set)", font=('Arial', 13), fg="gray35")
+		self.TKS_Show_OpDay.place(x=SettingShowX,y=SettingShowY + (50 + SettingLineRange*5),anchor="nw")
 
 		#========右側：顯示進出臂路徑========
-		tk.Label(self.tkWin,text="Rat Route", font=('Arial', 12), bg="gray75").place(x=self.WinSize[0]-277,y=390,anchor="ne")
+		RouteShowX = 800
+		RouteShowY = 440
+		if self.Rat_ID != "":
+			self.TKS_Show_Rat_ID = tk.Label(self.tkWin, text="RatID: %s" %(self.Rat_ID), font=('Arial', 13), fg="black")
+		else:
+			self.TKS_Show_Rat_ID = tk.Label(self.tkWin, text="RatID: (not set)", font=('Arial', 13), fg="gray35")
+		self.TKS_Show_Rat_ID.place(x=RouteShowX+90,y=RouteShowY,anchor="nw")
+
+		tk.Label(self.tkWin,text="Rat Route", font=('Arial', 12), bg="gray75").place(x=RouteShowX,y=RouteShowY,anchor="nw")
 		self.RouteScroll = tk.Scrollbar(self.tkWin)
-		self.RouteScroll.place(x=self.WinSize[0]-20,y=420,anchor="ne", height=107)
-		self.RouteText = tk.Text(self.tkWin, font=('Arial', 11), width=39, height=6, yscrollcommand=self.RouteScroll.set)
-		self.RouteText.place(x=self.WinSize[0]-37,y=420,anchor="ne")
+		self.RouteScroll.place(x=RouteShowX+317,y=RouteShowY+30,anchor="nw", height=57)
+		self.RouteText = tk.Text(self.tkWin, font=('Arial', 11), width=39, height=3, yscrollcommand=self.RouteScroll.set)
+		self.RouteText.place(x=RouteShowX,y=RouteShowY+30,anchor="nw")
 		self.RouteScroll.config(command=self.RouteText.yview)
 
 		#========下方：顯示各項資訊========
