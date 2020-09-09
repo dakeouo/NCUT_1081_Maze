@@ -276,8 +276,6 @@ class MazeMouseTrack(object):
 		DBGV.CheckP_UI = "24"
 		RAT_ID = self.TK_Rat_ID.get()
 		Unit = countStr(RAT_ID)
-		# str1 = "# RatID: {}".format(RAT_ID)
-		# move = 288 - (Unit[0]*11 + (Unit[1] + Unit[2] + Unit[3])*9)
 		if RAT_ID != "":
 			self.TKS_Show_Rat_ID.config(text="RatID: {}".format(RAT_ID), fg="black")
 		else:
@@ -308,12 +306,6 @@ class MazeMouseTrack(object):
 			else:
 				self.Food[i] = 0
 		self.TotalFood = ct
-		# if(ct == 0):
-		# 	str1 = "# Food: "
-		# 	# move = 290
-		# else:
-		# 	str1 = "# Food: {}".format(hadFood)
-		# 	# move = 290 - ct*17
 
 		if ct == 0:
 			self.TK_SHOW_Food.config(text="Food: (not set)", fg="gray35")
@@ -332,10 +324,6 @@ class MazeMouseTrack(object):
 			self.BT_Setting.config(state="disabled")
 			for i in range(1, self.ARM_UNIT+1):
 				self.TKC_Food[i-1].config(state="disabled")
-			# self.BT_Rat_ID.config(state="disabled")
-			# self.TK_Rat_ID.config(state="disabled")
-			# self.BT_User_Name.config(state="disabled")
-			# self.TK_User_Name.config(state="disabled")
 			self.TCAM.CAM_IS_RUN = False
 			self.TCAM.CAM_IS_CONN = False
 			self.IPCAM.CAM_IS_RUN = False
@@ -358,10 +346,6 @@ class MazeMouseTrack(object):
 			self.BT_Setting.config(state="normal")
 			for i in range(1, self.ARM_UNIT+1):
 				self.TKC_Food[i-1].config(state="normal")
-			# self.BT_Rat_ID.config(state="normal")
-			# self.TK_Rat_ID.config(state="normal")
-			# self.BT_User_Name.config(state="normal")
-			# self.TK_User_Name.config(state="normal")
 			self.TCAM.CAM_IS_RUN = True
 			self.IPCAM.CAM_IS_RUN = True
 
@@ -743,9 +727,6 @@ class MazeMouseTrack(object):
 			self.DiseaseType = self.TKS_Disease.get()
 			self.TKS_Show_Disease.config(text="Model: %s%s" %(self.DiseaseType,newSpace), fg="black")
 			self.DBGV.Data_ModelRT_Str = CreateModelRTStr(self.OperaType, self.DisDays[1], self.DisDays[2], self.DiseaseType, self.DisGroupType, self.Rat_ID)
-		# if(self.DiseaseCombo.current() != 0):
-		# 	self.DiseaseType = self.DiseaseCombo.get()
-		# 	self.TKS_Show_Disease.config(text="Model: %s" %(self.DiseaseType), fg="black")
 
 	def tkSetting_DisGroupConfirm(self): #設定UI視窗點擊[確認疾病組別]按鈕後處理副程式
 		DBGV.CheckP_UI = "36"
@@ -757,178 +738,6 @@ class MazeMouseTrack(object):
 			self.DisGroupType = self.TKS_DisGroup.get()
 			self.TKS_Show_DisGroup.config(text="Group: %s%s" %(self.DisGroupType,newSpace), fg="black")
 			self.DBGV.Data_ModelRT_Str = CreateModelRTStr(self.OperaType, self.DisDays[1], self.DisDays[2], self.DiseaseType, self.DisGroupType, self.Rat_ID)
-		# if(self.DisGroupCombo.current() != 0):
-		# 	self.DisGroupType = self.DisGroupCombo.get()
-		# 	self.TKS_Show_DisGroup.config(text="Group: %s" %(self.DisGroupType), fg="black")
-	
-	def tkSetting_ModifyDisease(self, val): #設定UI視窗在[修改病因陣列]區域點擊[新增/修改病因]按鈕後處理副程式
-		DBGV.CheckP_UI = "37"
-		if val == 'new':
-			self.TKS_Btn2_DCM1.config(bg="DarkOliveGreen2")
-			self.TKS_Btn2_DCM2.config(bg="gray90")
-			self.TKS_DCM_Name.config(state="normal")
-			self.TKS_DCM_Description.config(state="normal")
-			self.ModifyDCM.config(state="disabled")
-			self.TKS_Btn2_DCM1.config(state="disabled")
-			self.TKS_Btn2_DCM2.config(state="disabled")
-			self.NOW_DiseaseList[0] = -1
-			self.TKS_DCM_Confirm.config(state="normal")
-			self.TKS_DCM_Cancel.config(state="normal")
-		elif val == 'edit':
-			if(self.ModifyDCM.current() != 0):
-				self.TKS_Btn2_DCM1.config(bg="gray90")
-				self.TKS_Btn2_DCM2.config(bg="DarkOliveGreen2")
-				self.TKS_DCM_Name.config(state="normal")
-				self.TKS_DCM_Description.config(state="normal")
-				idx = findDiseaseArray(self.CSV_DiseaseFile, 'Disease', self.ModifyDCM.get())
-				if idx != -1:
-					self.TKS_DCM_Name.insert(0, self.CSV_DiseaseFile[idx][1])
-					self.TKS_DCM_Description.insert(0, self.CSV_DiseaseFile[idx][2])
-					self.NOW_DiseaseList = [idx, 'Disease', self.CSV_DiseaseFile[idx][1], self.CSV_DiseaseFile[idx][2]]
-				self.ModifyDCM.config(state="disabled")
-				self.TKS_Btn2_DCM1.config(state="disabled")
-				self.TKS_Btn2_DCM2.config(state="disabled")
-				self.TKS_DCM_Confirm.config(state="normal")
-			self.TKS_DCM_Cancel.config(state="normal")
-	
-	def tkSetting_ModifyGroupDisease(self, val): #設定UI視窗在[修改疾病組別陣列]區域點擊[新增/修改疾病組別陣列]按鈕後處理副程式
-		DBGV.CheckP_UI = "38"
-		if val == 'new':
-			self.TKS_Btn2_DGCM1.config(bg="DarkOliveGreen2")
-			self.TKS_Btn2_DGCM2.config(bg="gray90")
-			self.TKS_DGCM_Name.config(state="normal")
-			self.TKS_DGCM_Description.config(state="normal")
-			self.ModifyDGCM.config(state="disabled")
-			self.TKS_Btn2_DGCM1.config(state="disabled")
-			self.TKS_Btn2_DGCM2.config(state="disabled")
-			self.NOW_DiseaseList[0] = -1
-			self.TKS_DGCM_Confirm.config(state="normal")
-			self.TKS_DGCM_Cancel.config(state="normal")
-		elif val == 'edit':
-			if(self.ModifyDGCM.current() != 0):
-				self.TKS_Btn2_DGCM1.config(bg="gray90")
-				self.TKS_Btn2_DGCM2.config(bg="DarkOliveGreen2")
-				self.TKS_DGCM_Name.config(state="normal")
-				self.TKS_DGCM_Description.config(state="normal")
-				idx = findDiseaseArray(self.CSV_DiseaseFile, 'DisGroup', self.ModifyDGCM.get())
-				if idx != -1:
-					self.TKS_DGCM_Name.insert(0, self.CSV_DiseaseFile[idx][1])
-					self.TKS_DGCM_Description.insert(0, self.CSV_DiseaseFile[idx][2])
-					self.NOW_DiseaseList = [idx, 'DisGroup', self.CSV_DiseaseFile[idx][1], self.CSV_DiseaseFile[idx][2]]
-				self.ModifyDGCM.config(state="disabled")
-				self.TKS_Btn2_DGCM1.config(state="disabled")
-				self.TKS_Btn2_DGCM2.config(state="disabled")
-				self.TKS_DGCM_Confirm.config(state="normal")
-			self.TKS_DGCM_Cancel.config(state="normal")
-
-	def tkSetting_DiseaseModify(self): #設定UI視窗點擊[修改病因陣列]按鈕後處理副程式
-		DBGV.CheckP_UI = "38"
-		self.DiseaseCombo.current(0)
-		self.DiseaseCombo.config(state="disabled")
-		self.TKS_BT_DisConfirm.config(state="disabled")
-		self.TKS_BT_DisModify.config(state="disabled")
-		self.TKS_Btn2_DCM1.config(state="normal")
-		self.TKS_Btn2_DCM2.config(state="normal")
-		self.ModifyDCM.config(state="readonly")
-		self.TKS_DCM_Cancel.config(state="normal")
-		self.TKS_title6.config(bg="gray75")
-
-	def tkSetting_ModifyDiseaseConfirm(self): #設定UI視窗在[修改病因陣列]區域點擊[確認]按鈕後處理副程式
-		DBGV.CheckP_UI = "39"
-		self.DiseaseCombo.config(state="readonly")
-		self.TKS_BT_DisConfirm.config(state="normal")
-		self.TKS_BT_DisModify.config(state="normal")
-		self.TKS_Btn2_DCM1.config(state="disabled")
-		self.TKS_Btn2_DCM2.config(state="disabled")
-		self.TKS_Btn2_DCM1.config(bg="gray90")
-		self.TKS_Btn2_DCM2.config(bg="gray90")
-
-		self.NOW_DiseaseList[1:] = ['Disease', self.TKS_DCM_Name.get(), self.TKS_DCM_Description.get()]
-		self.tkSetting_UploadDisease('Disease', self.NOW_DiseaseList)
-
-		self.TKS_DCM_Name.delete(first=0,last=50)
-		self.TKS_DCM_Description.delete(first=0,last=50)
-		self.TKS_DCM_Name.config(state="disabled")
-		self.TKS_DCM_Description.config(state="disabled")
-
-		self.ModifyDCM.config(state="disabled")
-		self.TKS_DCM_Confirm.config(state="disabled")
-		self.TKS_DCM_Cancel.config(state="disabled")
-		self.TKS_title6.config(bg="gray85")
-
-	def tkSetting_ModifyDiseaseCancel(self): #設定UI視窗在[修改病因陣列]區域點擊[取消]按鈕後處理副程式
-		DBGV.CheckP_UI = "39"
-		self.DiseaseCombo.config(state="readonly")
-		self.TKS_BT_DisConfirm.config(state="normal")
-		self.TKS_BT_DisModify.config(state="normal")
-		self.TKS_Btn2_DCM1.config(state="disabled")
-		self.TKS_Btn2_DCM2.config(state="disabled")
-		self.TKS_Btn2_DCM1.config(bg="gray90")
-		self.TKS_Btn2_DCM2.config(bg="gray90")
-		self.TKS_DCM_Name.delete(first=0,last=50)
-		self.TKS_DCM_Description.delete(first=0,last=50)
-		self.TKS_DCM_Name.config(state="disabled")
-		self.TKS_DCM_Description.config(state="disabled")
-		self.ModifyDCM.current(0)
-		self.ModifyDCM.config(state="disabled")
-		self.TKS_DCM_Confirm.config(state="disabled")
-		self.TKS_DCM_Cancel.config(state="disabled")
-		self.TKS_title6.config(bg="gray85")
-
-	def tkSetting_DisGroupModify(self): #設定UI視窗點擊[修改疾病組別陣列]按鈕後處理副程式
-		DBGV.CheckP_UI = "40"
-		self.DisGroupCombo.current(0)
-		self.DisGroupCombo.config(state="disabled")
-		self.TKS_BT_DisGroupConfirm.config(state="disabled")
-		self.TKS_BT_DisGroupModify.config(state="disabled")
-		self.TKS_Btn2_DGCM1.config(state="normal")
-		self.TKS_Btn2_DGCM2.config(state="normal")
-		self.ModifyDGCM.config(state="readonly")
-		self.TKS_DGCM_Cancel.config(state="normal")
-		self.TKS_title7.config(bg="gray75")
-
-	def tkSetting_ModifyDisGroupConfirm(self): #設定UI視窗在[修改疾病組別陣列]區域點擊[確認]按鈕後處理副程式
-		DBGV.CheckP_UI = "41"
-		self.DisGroupCombo.config(state="readonly")
-		self.TKS_BT_DisGroupConfirm.config(state="normal")
-		self.TKS_BT_DisGroupModify.config(state="normal")
-		self.TKS_Btn2_DGCM1.config(state="disabled")
-		self.TKS_Btn2_DGCM2.config(state="disabled")
-		self.TKS_Btn2_DGCM1.config(bg="gray90")
-		self.TKS_Btn2_DGCM2.config(bg="gray90")
-
-		self.NOW_DiseaseList[1:] = ['DisGroup', self.TKS_DGCM_Name.get(), self.TKS_DGCM_Description.get()]
-		self.tkSetting_UploadDisease('DisGroup', self.NOW_DiseaseList)
-
-		self.TKS_DGCM_Name.delete(first=0,last=50)
-		self.TKS_DGCM_Description.delete(first=0,last=50)
-		self.TKS_DGCM_Name.config(state="disabled")
-		self.TKS_DGCM_Description.config(state="disabled")
-
-		self.ModifyDGCM.config(state="disabled")
-		self.TKS_DGCM_Confirm.config(state="disabled")
-		self.TKS_DGCM_Cancel.config(state="disabled")
-		self.TKS_title7.config(bg="gray85")
-	
-	def tkSetting_ModifyDisGroupCancel(self): #設定UI視窗在[修改疾病組別陣列]區域點擊[取消]按鈕後處理副程式
-		DBGV.CheckP_UI = "42"
-		self.DisGroupCombo.config(state="readonly")
-		self.TKS_BT_DisGroupConfirm.config(state="normal")
-		self.TKS_BT_DisGroupModify.config(state="normal")
-		self.TKS_Btn2_DGCM1.config(state="disabled")
-		self.TKS_Btn2_DGCM2.config(state="disabled")
-		self.TKS_Btn2_DGCM1.config(bg="gray90")
-		self.TKS_Btn2_DGCM2.config(bg="gray90")
-		self.TKS_DGCM_Name.delete(first=0,last=50)
-		self.TKS_DGCM_Description.delete(first=0,last=50)
-		self.TKS_DGCM_Name.config(state="disabled")
-		self.TKS_DGCM_Description.config(state="disabled")
-		self.ModifyDGCM.current(0)
-		self.ModifyDGCM.config(state="disabled")
-		self.TKS_DGCM_Confirm.config(state="disabled")
-		self.TKS_DGCM_Cancel.config(state="disabled")
-		self.TKS_title7.config(bg="gray85")
-
 	
 	def tkSetting_OperaDays(self): #設定UI視窗點擊[確認天數]按鈕後處理副程式
 		DBGV.CheckP_UI = "43"
