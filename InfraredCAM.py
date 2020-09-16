@@ -211,6 +211,7 @@ class InfraredCAM:
 			self.DBGV.CheckP_ICAM = 1048
 			if self.RR2C_FirstTime:
 				self.DBGV.CheckP_ICAM = 1049
+				writeData2CSV(CSV_Path + CSV_Name, "w", self.RR2C)
 				self.RR2C_FirstTime = False
 			else:
 				# print(self.RR2C)
@@ -489,9 +490,10 @@ class InfraredCAM:
 					# pass
 					#把[影像擷取的東西]放這裡	
 					if self.MAZE_IS_RUN: #UI start 後動作
-						shutil.copyfile("IPCAM_INFO.csv", "./ChiMei_{}/IPCAM_INFO.txt".format(datetime.now().strftime("%Y%m%d"))) #複製攝影機資訊
-						shutil.copyfile("ARMS_LINE.csv", "./ChiMei_{}/ARMS_LINE.txt".format(datetime.now().strftime("%Y%m%d"))) #複製攝影機資訊
-						shutil.copyfile("DISEASE_LIST.csv", "./ChiMei_{}/DISEASE_LIST.txt".format(datetime.now().strftime("%Y%m%d"))) #複製疾病分組資訊
+						shutil.copyfile("IPCAM_INFO.csv", "./ChiMei_{}/IPCAM_INFO.csv".format(datetime.now().strftime("%Y%m%d"))) #複製攝影機資訊
+						shutil.copyfile("ARMS_LINE.csv", "./ChiMei_{}/ARMS_LINE.csv".format(datetime.now().strftime("%Y%m%d"))) #複製攝影機資訊
+						shutil.copyfile("MazeLog.log", "./ChiMei_{}/MazeLog.log".format(datetime.now().strftime("%Y%m%d"))) #複製LOG檔資訊
+						# shutil.copyfile("DISEASE_LIST.csv", "./ChiMei_{}/DISEASE_LIST.txt".format(datetime.now().strftime("%Y%m%d"))) #複製疾病分組資訊
 						# shutil.copyfile("IPCAM_INFO.csv", "IPCAM_INFO1.txt") #複製攝影機資訊
 						# shutil.move("IPCAM_INFO1.txt", "./ChiMei_{}".format(datetime.now().strftime("%Y%m%d")))
 						# shutil.copyfile("ARMS_LINE.csv", "ARMS_LINE1.txt")	#複製八臂32點
@@ -523,14 +525,14 @@ class InfraredCAM:
 							self.SingleFileName = "{}_{}_{}_{}".format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, self.DisGroupType, self.RatID) #固定檔名
 							self.CSVfilePath = './ChiMei_{0}/{3}/{2}/{0}.csv'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, DiseaseTypePath, self.Rec_UserName)
 							
-							self.RR2C_FirstTime = True #這個是我寫的(測試中，不用管沒關係)
+							self.RR2C_FirstTime = True #這個是我寫的
 							self.DBGV.CheckP_ICAM = 1027
 						else:
 							pass 
 						self.time_now = datetime.now()  #當下時間
 						# self.getTimePoint(self.time_now)
 						self.Latency = (self.time_now - self.timestart).seconds
-						self.recordRoute2CSV() #這個是我寫的(測試中，不用管沒關係)
+						self.recordRoute2CSV() #這個是我寫的
 						self.DBGV.CheckP_ICAM = 1028
 						##############################################進臂##############################################
 						if self.NOW_STATUS == 0:
