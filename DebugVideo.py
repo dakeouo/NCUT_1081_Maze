@@ -10,6 +10,7 @@ import traceback
 import random as rand
 import DebugVideo as DBGV
 
+SYSTEM_VER = "1.14.1" #版本號
 WINDOWS_IS_ACTIVE = True	#UI是否在執行中
 SAVE_PAST_DATA = True #儲存上次記錄
 SET_VIDEO_PATH = False #是否已設定影片路徑
@@ -243,7 +244,7 @@ def makeDashBoard():
 	global Data_ArmInOutLen, Data_ArmInOutDistance, Data_TargetPos, Data_LongTerm, Data_ShortTerm, Data_TotalTerm, Data_Route, Data_ArmState, Data_CurrentArm, Data_ArmInOutPosLine
 	global PastData_RatID, PastData_TotalTerm, PastData_StartTime, PastData_Latency
 	global White_Contours, White_ContourArea, White_CenterPos, WOI_Count, White_PosShowFinish, White_TotalItem
-	global CheckP_UI, CheckP_ICAM, CheckP_IPCAM, Rec_UserName, Data_ModelRT_Str
+	global CheckP_UI, CheckP_ICAM, CheckP_IPCAM, Rec_UserName, Data_ModelRT_Str, SYSTEM_VER
 
 	#欄位初始點
 	BasicPos1 = 10 	#第一欄
@@ -259,6 +260,7 @@ def makeDashBoard():
 	cv2.putText(result, IPCAM_Name, (BasicPos1, 40), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	cv2.putText(result, "-Users: {}".format(Rec_UserName), (BasicPos2+30, 20), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	cv2.putText(result, Data_ModelRT_Str, (BasicPos2, 40), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+	cv2.putText(result, "-Ver: {}".format(SYSTEM_VER), (BasicPos3, 20), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	
 	# IPCAM Information
 	cv2.putText(result, "=IPCAM Info=", (BasicPos1, 60), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
@@ -476,7 +478,7 @@ def DBGV_Main(): #DBGV主程式
 
 
 
-			# cv2.imshow("DashBoard Video", TotalBoard)
+			cv2.imshow("DashBoard Video", TotalBoard)
 			cv2.waitKey(1)
 
 	except Warning as e:

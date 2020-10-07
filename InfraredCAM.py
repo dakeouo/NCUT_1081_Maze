@@ -111,7 +111,7 @@ class InfraredCAM:
 
 		#變數：迷宮相關變數(這些[都要傳到UI端]讓它知道的)
 		self.ARM_UNIT = 8 #迷宮臂數
-		self.ARM_LINE_DISTANCE = 65/20  #老鼠進臂線距離
+		self.ARM_LINE_DISTANCE = 65/51  #老鼠進臂線距離
 		self.ARMS_IN_LINE = []
 		self.ViewSize = (480, 480) #虛擬視窗顯示大小
 		self.TargetPos = [-1, -1] #目標變數

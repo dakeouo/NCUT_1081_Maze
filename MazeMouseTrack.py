@@ -223,7 +223,7 @@ class MazeMouseTrack(object):
 		DBGV.CheckP_UI = "5"
 
 		self.tkWin = tk.Tk()
-		self.tkWin.title('%d臂迷宮路徑追蹤系統' %(self.ARM_UNIT)) #窗口名字
+		self.tkWin.title('%d臂迷宮路徑追蹤系統 (Ver %s)' %(self.ARM_UNIT, self.DBGV.SYSTEM_VER)) #窗口名字
 		self.tkWin.geometry('%dx%d+20+20' %(self.WinSize[0],self.WinSize[1])) #窗口大小(寬X高+X偏移量+Y偏移量)
 		self.tkWin.resizable(False, False) #禁止變更視窗大小
 		DBGV.CheckP_UI = "6"
