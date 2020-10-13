@@ -16,7 +16,6 @@ import sys
 import traceback
 import shutil
 
-
 FORMAT = '%(asctime)s [%(filename)s] %(levelname)s: %(message)s'
 logging.basicConfig(level=logging.WARNING, filename='MazeLog.log', filemode='a', format=FORMAT)
 fistimeinline = True #第一次跑進臂線判斷
@@ -163,6 +162,7 @@ class InfraredCAM:
 		self.frequency = []  #進臂次數
 		self.NOW_STATUS = 0 #進臂or出臂
 		self.dangchianbi = 0
+		self.rat_XY = [] #放至白色物體外圍座標點
 		self.timestart = datetime.now() #起始時間
 
 		self.RR2C = []
@@ -201,26 +201,29 @@ class InfraredCAM:
 
 	def recordRoute2CSV(self):
 		self.DBGV.CheckP_ICAM = 1046
-		TimeDiff = (datetime.now() - self.RR2C_Time).seconds
 		DiseaseTypePath = '%s(%s_%02d_%02d)' %(self.DiseaseType, self.OperaType, self.DisDays[1], self.DisDays[2])
 		CSV_Path = './ChiMei_{0}/{3}/{2}/CSV_{1}({0})/'.format(datetime.now().strftime("%Y%m%d"), self.DiseaseType, DiseaseTypePath, self.Rec_UserName)
 		CSV_Name = self.SingleFileName + ".csv"
-		self.RR2C.append([int(self.TargetPos[0]), int(self.TargetPos[1])])
 		self.DBGV.CheckP_ICAM = 1047
-		if TimeDiff >= 1:
+		if self.RR2C_FirstTime:
 			self.DBGV.CheckP_ICAM = 1048
-			if self.RR2C_FirstTime:
-				self.DBGV.CheckP_ICAM = 1049
-				writeData2CSV(CSV_Path + CSV_Name, "w", self.RR2C)
-				self.RR2C_FirstTime = False
-			else:
-				# print(self.RR2C)
-				self.DBGV.CheckP_ICAM = 1050
-				writeData2CSV(CSV_Path + CSV_Name, "a", self.RR2C)
-				self.DBGV.CheckP_ICAM = 1051
-				self.RR2C = []
-				self.RR2C_Time = datetime.now()
+			writeData2CSV(CSV_Path + CSV_Name, "w", self.RR2C)
+			self.RR2C_FirstTime = False
+			self.DBGV.CheckP_ICAM = 1049
+		else:
+			# print(self.RR2C)
+			self.DBGV.CheckP_ICAM = 1050
+			writeData2CSV(CSV_Path + CSV_Name, "a", self.RR2C)
+			self.DBGV.CheckP_ICAM = 1051
 
+	def saveCoodinate2Arr(self):
+		if self.MAZE_IS_RUN:
+			self.Mouse_coordinates.append([int(self.TargetPos[0]), int(self.TargetPos[1])])
+			if len(self.RR2C) < 20:
+				self.RR2C.append([int(self.TargetPos[0]), int(self.TargetPos[1])])
+			else:
+				self.recordRoute2CSV()
+				self.RR2C = []
 
 	def coordinate(self,rat_XY):  #白色物體座標
 		self.DBGV.CheckP_ICAM = 1052
@@ -458,18 +461,17 @@ class InfraredCAM:
 					# cv2.waitKey(1)
 					self.rat_XY,wh = cv2.findContours(frame1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 self.rat_XY=所有座標
 					
-						
 					self.DBGV.CheckP_ICAM = 1017
 					if len(self.rat_XY) == 0:
 						self.DBGV.NO_RAT = True #有無白色物體
 						self.TargetPos = [-20,-20]
-					if len(self.rat_XY):
+					else:
 						self.DBGV.NO_RAT = False #有無白色物體
 						self.TargetPos_All = []
 						self.White_ContourArea_All = []
 						self.DBGV.CheckP_ICAM = 1018
-						for i in range(0,len(self.rat_XY)):
-							self.TargetPos,x,y,area = self.coordinate(self.rat_XY[i])
+						for row in self.rat_XY:
+							self.TargetPos, x, y, area = self.coordinate(row)
 							self.White_ContourArea_All.append(int(area))	#面積寫入
 							self.TargetPos_All.append(self.TargetPos)
 							self.DBGV.CheckP_ICAM = 1019
@@ -478,14 +480,36 @@ class InfraredCAM:
 							self.DBGV.White_ContourArea = self.White_ContourArea_All	#將所有白色物體"面積"丟給DebugVideo
 							self.DBGV.White_Contours = self.rat_XY 						#將所有白色物體"邊緣"丟給DebugVideo
 							self.DBGV.CheckP_ICAM = 1020
-						# print(self.White_ContourArea_All)
-						# print(len(self.TargetPos_All))
-						# print(self.TargetPos_All)
-						self.DBGV.Data_TargetPos = self.TargetPos_All[0]   #將座標丟給DebugVideo
 						self.TargetPos = self.TargetPos_All[0]
-						if self.DBGV.NO_RAT == False:
-							self.Mouse_coordinates.append(self.TargetPos_All[0])
 						self.DBGV.CheckP_ICAM = 1021
+
+					# self.DBGV.CheckP_ICAM = 1017
+					# if len(self.rat_XY) == 0:
+					# 	self.DBGV.NO_RAT = True #有無白色物體
+					# 	self.TargetPos = [-20,-20]
+					# if len(self.rat_XY):
+					# 	self.DBGV.NO_RAT = False #有無白色物體
+					# 	self.TargetPos_All = []
+					# 	self.White_ContourArea_All = []
+					# 	self.DBGV.CheckP_ICAM = 1018
+					# 	for i in range(0,len(self.rat_XY)):
+					# 		self.TargetPos,x,y,area = self.coordinate(self.rat_XY[i])
+					# 		self.White_ContourArea_All.append(int(area))	#面積寫入
+					# 		self.TargetPos_All.append(self.TargetPos)
+					# 		self.DBGV.CheckP_ICAM = 1019
+					# 	if self.DBGV.White_PosShowFinish == True:
+					# 		self.DBGV.White_CenterPos = self.TargetPos_All  			#將所有白色物體"座標"丟給DebugVideo
+					# 		self.DBGV.White_ContourArea = self.White_ContourArea_All	#將所有白色物體"面積"丟給DebugVideo
+					# 		self.DBGV.White_Contours = self.rat_XY 						#將所有白色物體"邊緣"丟給DebugVideo
+					# 		self.DBGV.CheckP_ICAM = 1020
+					# 	# print(self.White_ContourArea_All)
+					# 	# print(len(self.TargetPos_All))
+					# 	# print(self.TargetPos_All)
+					# 	self.DBGV.Data_TargetPos = self.TargetPos_All[0]   #將座標丟給DebugVideo
+					# 	self.TargetPos = self.TargetPos_All[0]
+					# 	if self.DBGV.NO_RAT == False:
+					# 		self.Mouse_coordinates.append(self.TargetPos_All[0])
+					# 	self.DBGV.CheckP_ICAM = 1021
 					#
 					# pass
 					#把[影像擷取的東西]放這裡	
@@ -532,7 +556,7 @@ class InfraredCAM:
 						self.time_now = datetime.now()  #當下時間
 						# self.getTimePoint(self.time_now)
 						self.Latency = (self.time_now - self.timestart).seconds
-						self.recordRoute2CSV() #這個是我寫的
+						# self.recordRoute2CSV() #這個是我寫的
 						self.DBGV.CheckP_ICAM = 1028
 						##############################################進臂##############################################
 						if self.NOW_STATUS == 0:
