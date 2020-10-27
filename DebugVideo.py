@@ -214,7 +214,7 @@ def makeFrameView(frame):
 
 
 		if not NO_RAT:
-			cv2.circle(frame, newPos, 12, (0,0,255), -1)
+			cv2.circle(frame, newPos, 15, (0,0,255), -1)
 			for i in range(len(White_CenterPos)):
 				if i < 5:
 					pointColor = WOI_Color[i]

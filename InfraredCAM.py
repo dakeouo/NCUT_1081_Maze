@@ -79,6 +79,68 @@ def makeBlackImage(): #製造出全黑圖片(10x10) <= 這個贈品很好用，�
 	newBlack = cv2.cvtColor(np.asarray(newBlack),cv2.COLOR_RGB2BGR)  
 	return newBlack
 
+def contoursPorcess(contours): # 轉換成[中心點, 左上點, 右下點, 面積, 邊緣]
+	leftTopP = np.min(contours, axis=0)
+	leftTopP = [int(leftTopP[0][0]), int(leftTopP[0][1])]
+	rightBottomP = np.max(contours, axis=0)
+	rightBottomP = [int(rightBottomP[0][0]), int(rightBottomP[0][1])]
+	centerP = [int(((rightBottomP[0] - leftTopP[0])/2) + leftTopP[0]), int(((rightBottomP[1] - leftTopP[1])/2) + leftTopP[1])]
+	area = cv2.contourArea(contours)
+
+	return centerP, leftTopP, rightBottomP, area, contours
+
+def compareFrameItem(item1, item2): #比較只在迷宮內的白色物體
+	pointList = []
+	areaList = []
+	contourList = []
+	maxArea = [[-20, -20], 0]
+	for row1 in item1:
+		# print(row1)
+		for row2 in item2:
+			if row1[0] == row2[0]:
+				if row1[3] == row2[3]:
+					pointList.append(row1[0])
+					areaList.append(row1[3])
+					contourList.append(row1[4])
+					if row1[3] > maxArea[1]:
+						maxArea[0] = [row1[0][0], row1[0][1]]
+						maxArea[1] = row1[3]
+	return maxArea[0], pointList, areaList, contourList
+
+def morphologyFrame(frame): #統一型態學開/閉運算
+	frame = cv2.morphologyEx(frame, cv2.MORPH_OPEN, np.ones([7,7]))
+	frame = cv2.morphologyEx(frame, cv2.MORPH_CLOSE, np.ones([3,3]))
+	return frame
+
+def getOnyRatBinary(grayImg, MASK_POS): #取得只在迷宮內的白色物體
+	# 產生遮罩至二值化
+	MaskImg = cv2.resize(makeBlackImage(),(480,480),interpolation=cv2.INTER_CUBIC)
+	cv2.fillPoly(MaskImg, [MASK_POS],  (255, 255, 255))  #加上八臂輔助線
+	MaskImg = cv2.cvtColor(MaskImg, cv2.COLOR_BGR2GRAY)  #灰階
+	B0, MaskImg = cv2.threshold(MaskImg, 127,255,cv2.THRESH_BINARY) #二值化
+
+	# 產生兩張圖(二值化)：蓋遮罩前(frame1)/蓋遮罩後(frame2)
+	B1, frame1 = cv2.threshold(grayImg, 123,255,cv2.THRESH_BINARY)
+	framePr = cv2.bitwise_and(grayImg, grayImg, mask=MaskImg) #遮罩覆蓋到影像上
+	B2, frame2 = cv2.threshold(framePr, 123,255,cv2.THRESH_BINARY)
+	frame1 = morphologyFrame(frame1)
+	frame2 = morphologyFrame(frame2)
+
+	white1, wh1 = cv2.findContours(frame1, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 self.rat_XY=所有座標
+	white2, wh2 = cv2.findContours(frame2, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 self.rat_XY=所有座標
+	# print(white2)
+	frame1Item = []
+	frame2Item = []
+
+	for row in white1: # 轉換成[中心點, 左上點, 右下點, 面積, 邊緣]
+		frame1Item.append(contoursPorcess(row))
+	for row in white2:
+		frame2Item.append(contoursPorcess(row))
+	# 比較兩個圖片中留在迷宮內白色物體
+	targetPos, posList, areaList, contourList = compareFrameItem(frame1Item, frame2Item)
+
+	return targetPos, posList, areaList, contourList
+
 #其他跟迷宮程式沒相關的都可以擺在這裡
 
 #========主要類別撰寫區========
@@ -383,7 +445,6 @@ class InfraredCAM:
 			self.DBGV.CheckP_ICAM = 1074
 			writeData2CSV(self.CSVfilePath, "w", csvTitle)
 		writeData2CSV(self.CSVfilePath, "a", MazeData)
-	
 
 	def CameraMain(self): #這個副程式是"主程式"呦~~~~~
 		global Inlinepoint_long,dangchianjiuli
@@ -447,53 +508,47 @@ class InfraredCAM:
 					frame = frame[self.newP1[1]:self.newP2[1], self.newP1[0]:self.newP2[0]] #擷取兩個點的範圍
 					# cv2.polylines(frame, [self.MASK_POS], True, (0, 255, 255), 2)  #加上3臂輔助線
 					frame = cv2.resize(frame,(480,480),interpolation=cv2.INTER_CUBIC) #放大成480x480
-					frame1 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)	
-					B2,frame1 = cv2.threshold(frame1, 127,255,cv2.THRESH_BINARY)
-					self.DBGV.CheckP_ICAM = 1016
-					# cv2.imshow("frame1",frame1)
-					pr = cv2.bitwise_and(frame1,frame1, mask= copy ) #遮罩覆蓋到影像上
-					# cv2.imshow("pr",pr)
-					frame1 = cv2.morphologyEx(pr,cv2.MORPH_OPEN,self.O)
-					frame1 = cv2.morphologyEx(frame1,cv2.MORPH_CLOSE,self.oo)
-					
-					# cv2.imshow("frame",frame1)
+					frame1 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-					# cv2.waitKey(1)
-					self.rat_XY,wh = cv2.findContours(frame1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 self.rat_XY=所有座標
+					self.TargetPos, self.TargetPos_All, self.White_ContourArea_All, self.rat_XY = getOnyRatBinary(frame1, self.MASK_POS)
+
+					# B2,frame1 = cv2.threshold(frame1, 127,255,cv2.THRESH_BINARY)
+					# self.DBGV.CheckP_ICAM = 1016
+					# # cv2.imshow("frame1",frame1)
+					# pr = cv2.bitwise_and(frame1,frame1, mask= copy ) #遮罩覆蓋到影像上
+					# # cv2.imshow("pr",pr)
+					# frame1 = cv2.morphologyEx(pr,cv2.MORPH_OPEN,self.O)
+					# frame1 = cv2.morphologyEx(frame1,cv2.MORPH_CLOSE,self.oo)
+					
+					# # cv2.imshow("frame",frame1)
+
+					# # cv2.waitKey(1)
+					# self.rat_XY,wh = cv2.findContours(frame1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 self.rat_XY=所有座標
 					
 					self.DBGV.CheckP_ICAM = 1017
-					if len(self.rat_XY) == 0:
+					if self.TargetPos == [-20,-20]:
 						self.DBGV.NO_RAT = True #有無白色物體
-						self.TargetPos = [-20,-20]
 					else:
 						self.DBGV.NO_RAT = False #有無白色物體
-						self.TargetPos_All = []
-						self.White_ContourArea_All = []
 						self.DBGV.CheckP_ICAM = 1018
-						for row in self.rat_XY:
-							self.TargetPos, x, y, area = self.coordinate(row)
-							self.White_ContourArea_All.append(int(area))	#面積寫入
-							self.TargetPos_All.append(self.TargetPos)
-							self.DBGV.CheckP_ICAM = 1019
 						if self.DBGV.White_PosShowFinish == True:
 							self.DBGV.White_CenterPos = self.TargetPos_All  			#將所有白色物體"座標"丟給DebugVideo
 							self.DBGV.White_ContourArea = self.White_ContourArea_All	#將所有白色物體"面積"丟給DebugVideo
 							self.DBGV.White_Contours = self.rat_XY 						#將所有白色物體"邊緣"丟給DebugVideo
 							self.DBGV.CheckP_ICAM = 1020
-						self.TargetPos = self.TargetPos_All[0]
 						self.DBGV.CheckP_ICAM = 1021
 
 					# self.DBGV.CheckP_ICAM = 1017
 					# if len(self.rat_XY) == 0:
 					# 	self.DBGV.NO_RAT = True #有無白色物體
 					# 	self.TargetPos = [-20,-20]
-					# if len(self.rat_XY):
+					# else:
 					# 	self.DBGV.NO_RAT = False #有無白色物體
 					# 	self.TargetPos_All = []
 					# 	self.White_ContourArea_All = []
 					# 	self.DBGV.CheckP_ICAM = 1018
-					# 	for i in range(0,len(self.rat_XY)):
-					# 		self.TargetPos,x,y,area = self.coordinate(self.rat_XY[i])
+					# 	for row in self.rat_XY:
+					# 		self.TargetPos, x, y, area = self.coordinate(row)
 					# 		self.White_ContourArea_All.append(int(area))	#面積寫入
 					# 		self.TargetPos_All.append(self.TargetPos)
 					# 		self.DBGV.CheckP_ICAM = 1019
@@ -502,16 +557,9 @@ class InfraredCAM:
 					# 		self.DBGV.White_ContourArea = self.White_ContourArea_All	#將所有白色物體"面積"丟給DebugVideo
 					# 		self.DBGV.White_Contours = self.rat_XY 						#將所有白色物體"邊緣"丟給DebugVideo
 					# 		self.DBGV.CheckP_ICAM = 1020
-					# 	# print(self.White_ContourArea_All)
-					# 	# print(len(self.TargetPos_All))
-					# 	# print(self.TargetPos_All)
-					# 	self.DBGV.Data_TargetPos = self.TargetPos_All[0]   #將座標丟給DebugVideo
 					# 	self.TargetPos = self.TargetPos_All[0]
-					# 	if self.DBGV.NO_RAT == False:
-					# 		self.Mouse_coordinates.append(self.TargetPos_All[0])
 					# 	self.DBGV.CheckP_ICAM = 1021
-					#
-					# pass
+
 					#把[影像擷取的東西]放這裡	
 					if self.MAZE_IS_RUN: #UI start 後動作
 						shutil.copyfile("IPCAM_INFO.csv", "./ChiMei_{}/IPCAM_INFO.csv".format(datetime.now().strftime("%Y%m%d"))) #複製攝影機資訊
