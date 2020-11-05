@@ -170,7 +170,7 @@ class MazeMouseTrack(object):
 		self.Latency = 0 #總時間長度
 
 		#變數：視窗相關
-		self.WinSize = (1152, 560) #UI介面顯示大小
+		self.WinSize = (1040, 560) #UI介面顯示大小
 		self.BALL_SIZE = 20
 		self.ViewSize = self.TCAM.ViewSize #虛擬視窗顯示大小
 		self.MAZE_IS_RUN = False #當前系統是否在執行
@@ -229,8 +229,8 @@ class MazeMouseTrack(object):
 		DBGV.CheckP_UI = "5"
 
 		self.tkWin = tk.Tk()
-		self.tkWin.title('%d臂迷宮路徑追蹤系統 (Ver %s)' %(self.ARM_UNIT, self.DBGV.SYSTEM_VER)) #窗口名字
-		self.tkWin.geometry('%dx%d+20+20' %(self.WinSize[0],self.WinSize[1])) #窗口大小(寬X高+X偏移量+Y偏移量)
+		self.tkWin.title('Automatic tracking %d-Arms Maze Platform System (Ver %s)' %(self.ARM_UNIT, self.DBGV.SYSTEM_VER)) #窗口名字
+		self.tkWin.geometry('%dx%d+10+10' %(self.WinSize[0],self.WinSize[1])) #窗口大小(寬X高+X偏移量+Y偏移量)
 		self.tkWin.resizable(False, False) #禁止變更視窗大小
 		DBGV.CheckP_UI = "6"
 
@@ -360,7 +360,7 @@ class MazeMouseTrack(object):
 		if self.MAZE_IS_RUN:
 			DBGV.CheckP_UI = "27-1"
 			self.Maze_State.config(text="Maze State: Preparing...", fg="gray35")
-			self.Maze_State.place(x=800, y=200,anchor="nw")
+			self.Maze_State.place(x=750, y=200,anchor="nw")
 			self.BT_Start.config(text="Start", bg="DarkOliveGreen2")
 			self.MAZE_IS_RUN = False
 		else:
@@ -411,7 +411,7 @@ class MazeMouseTrack(object):
 				self.TCAM.DisDays = self.DisDays
 
 				self.Maze_State.config(text="Maze State: Recording...", fg="green4")
-				self.Maze_State.place(x=800, y=200, anchor="nw")
+				self.Maze_State.place(x=750, y=200, anchor="nw")
 				self.BT_Start.config(text="Stop", bg="IndianRed1")
 
 				self.MAZE_IS_RUN = True
@@ -573,7 +573,7 @@ class MazeMouseTrack(object):
 					DBGV.CheckP_UI = "13-3"
 					if newMazeStatus == False:
 						self.Maze_State.config(text="Maze State: Preparing...", fg="gray35")
-						self.Maze_State.place(x=800, y=200,anchor="nw")
+						self.Maze_State.place(x=750, y=200,anchor="nw")
 						self.BT_Start.config(text="Start", bg="DarkOliveGreen2")
 						self.MAZE_IS_RUN = False
 						self.Maze_StartState = False
@@ -590,11 +590,11 @@ class MazeMouseTrack(object):
 					
 				if self.CAM_IS_CONN:
 					self.Cam_State.config(text="Camera State: Connecting...", fg="green4")
-					self.Cam_State.place(x=800, y=170, anchor="nw")
+					self.Cam_State.place(x=750, y=170, anchor="nw")
 					self.BT_Camera.config(state="normal")
 				else:
 					self.Cam_State.config(text="Camera State: Unconnect", fg="gray35")
-					self.Cam_State.place(x=800, y=170, anchor="nw")
+					self.Cam_State.place(x=750, y=170, anchor="nw")
 					self.BT_Camera.config(state="disabled")
 
 				DBGV.CheckP_UI = "15"
@@ -649,10 +649,10 @@ class MazeMouseTrack(object):
 			self.CoodiTimer.cancel()
 
 	def PreparingTesting(self): #測試按鈕(偷懶用，但現在也沒在用，留著)
-		if self.WinSize[0] == 1152:
-			self.WinSize[0] = 1280
+		if self.WinSize[0] == 1040:
+			self.WinSize[0] = 1366
 		else:
-			self.WinSize[0] = 1152
+			self.WinSize[0] = 1040
 		self.tkWin.geometry('%dx%d+20+20' %(self.WinSize[0],self.WinSize[1])) #窗口大小(寬X高+X偏移量+Y偏移量)
 
 	def setArmNumber(self): #設定虛擬視窗上臂的編號
@@ -983,23 +983,23 @@ class MazeMouseTrack(object):
 
 	def drawSetting(self):
 		SettingShowX = self.WinSize[0] + 10
-		tk.Label(self.tkWin, text="Model/Group Configuration", font=('Arial', 14), bg="gray75").place(x=SettingShowX + 180,y=20,anchor="n")
+		tk.Label(self.tkWin, text="Model Configuration", font=('Arial', 14), bg="gray75").place(x=SettingShowX+140, y=20, anchor="n")
 
 		# 選擇訓練中還是行為測試
 		SettingShowY = 60
 		self.TKS_title1_0 = tk.Label(self.tkWin, text="Step1. 請選擇使用目的", font=('微軟正黑體', 12, "bold"), bg="gray75")
-		self.TKS_title1_0.place(x=SettingShowX+180,y=SettingShowY,anchor="n")
+		self.TKS_title1_0.place(x=SettingShowX+140, y=SettingShowY, anchor="n")
 		if self.EXP_DATA_MODE == "TRAINING":
-			self.TKS_Btn0_Mode1 = tk.Button(self.tkWin, text='大鼠訓練', width=14, font=('微軟正黑體', 14, "bold"), bg="DarkOliveGreen2", command=lambda: self.SystemModeSet('TRAINING'))
+			self.TKS_Btn0_Mode1 = tk.Button(self.tkWin, text='大鼠訓練', width=10, font=('微軟正黑體', 14, "bold"), bg="DarkOliveGreen2", command=lambda: self.SystemModeSet('TRAINING'))
 		else:
-			self.TKS_Btn0_Mode1 = tk.Button(self.tkWin, text='大鼠訓練', width=14, font=('微軟正黑體', 14, "bold"), bg="gray90", command=lambda: self.SystemModeSet('TRAINING'))
+			self.TKS_Btn0_Mode1 = tk.Button(self.tkWin, text='大鼠訓練', width=10, font=('微軟正黑體', 14, "bold"), bg="gray90", command=lambda: self.SystemModeSet('TRAINING'))
 		self.TKS_Btn0_Mode1.place(x=SettingShowX + 10, y=SettingShowY + 30, anchor="nw")
 
 		if self.EXP_DATA_MODE == "EXPERIMENT":
-			self.TKS_Btn0_Mode2 = tk.Button(self.tkWin, text='行為測試', width=14, font=('微軟正黑體', 14, "bold"), bg="DarkOliveGreen2", command=lambda: self.SystemModeSet('EXPERIMENT'))
+			self.TKS_Btn0_Mode2 = tk.Button(self.tkWin, text='行為測試', width=10, font=('微軟正黑體', 14, "bold"), bg="DarkOliveGreen2", command=lambda: self.SystemModeSet('EXPERIMENT'))
 		else:
-			self.TKS_Btn0_Mode2 = tk.Button(self.tkWin, text='行為測試', width=14, font=('微軟正黑體', 14, "bold"), bg="gray90", command=lambda: self.SystemModeSet('EXPERIMENT'))
-		self.TKS_Btn0_Mode2.place(x=SettingShowX + 190, y=SettingShowY + 30, anchor="nw")
+			self.TKS_Btn0_Mode2 = tk.Button(self.tkWin, text='行為測試', width=10, font=('微軟正黑體', 14, "bold"), bg="gray90", command=lambda: self.SystemModeSet('EXPERIMENT'))
+		self.TKS_Btn0_Mode2.place(x=SettingShowX + 145, y=SettingShowY + 30, anchor="nw")
 
 		if self.EXP_DATA_MODE != "NONE":
 			self.TKS_Btn0_Mode1.config(state="disabled")
@@ -1008,7 +1008,7 @@ class MazeMouseTrack(object):
 
 		SettingShowY = 150
 		self.TKS_title1_1 = tk.Label(self.tkWin, text="Step2. 請輸入以下資訊", font=('微軟正黑體', 12, "bold"))
-		self.TKS_title1_1.place(x=SettingShowX+180,y=SettingShowY,anchor="n")
+		self.TKS_title1_1.place(x=SettingShowX+140,y=SettingShowY,anchor="n")
 		if self.EXP_DATA_MODE == "NONE":
 			self.TKS_title1_1.config(fg="gray35", bg="gray85")
 		else:
@@ -1017,12 +1017,12 @@ class MazeMouseTrack(object):
 		SettingShowY = 190
 		Rec_UserName_Def = tk.StringVar()
 		tk.Label(self.tkWin,text="User", font=('Arial', 12), bg="gray75").place(x=SettingShowX, y=SettingShowY,anchor="nw")
-		self.TK_User_Name = tk.Entry(self.tkWin, font=('Arial', 12), width=15, textvariable=Rec_UserName_Def)
+		self.TK_User_Name = tk.Entry(self.tkWin, font=('Arial', 12), width=12, textvariable=Rec_UserName_Def)
 		self.TK_User_Name.place(x=SettingShowX+56,y=SettingShowY+1,anchor="nw")
 		if self.Rec_UserName != "":
 			Rec_UserName_Def.set(self.Rec_UserName)
 		self.BT_User_Name = tk.Button(self.tkWin, text='Set User', width=9, font=('Arial', 10), bg="gray90", command=self.SetUserName)
-		self.BT_User_Name.place(x=SettingShowX+200,y=SettingShowY-3,anchor="nw")
+		self.BT_User_Name.place(x=SettingShowX+172,y=SettingShowY-3,anchor="nw")
 		if self.EXP_DATA_MODE == "NONE":
 			self.TK_User_Name.config(state="disabled")
 			self.BT_User_Name.config(state="disabled")
@@ -1032,12 +1032,12 @@ class MazeMouseTrack(object):
 		Disease_Def = tk.StringVar()
 		self.TKS_title3 = tk.Label(self.tkWin, text="Model", font=('Arial', 12), bg="gray75")
 		self.TKS_title3.place(x=SettingShowX,y=SettingShowY,anchor="nw")
-		self.TKS_Disease = tk.Entry(self.tkWin, font=('Arial', 12), width=15, textvariable=Disease_Def)
-		self.TKS_Disease.place(x=SettingShowX+57,y=SettingShowY+1,anchor="nw")
+		self.TKS_Disease = tk.Entry(self.tkWin, font=('Arial', 12), width=12, textvariable=Disease_Def)
+		self.TKS_Disease.place(x=SettingShowX+56,y=SettingShowY+1,anchor="nw")
 		if self.DiseaseType != "":
 			Disease_Def.set(self.DiseaseType)
 		self.TKS_BT_DisConfirm = tk.Button(self.tkWin, text='Confirm', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DiseaseConfirm)
-		self.TKS_BT_DisConfirm.place(x=SettingShowX+205,y=SettingShowY-3,anchor="nw")
+		self.TKS_BT_DisConfirm.place(x=SettingShowX+172,y=SettingShowY-3,anchor="nw")
 		if self.EXP_DATA_MODE == "NONE":
 			self.TKS_Disease.config(state="disabled")
 			self.TKS_BT_DisConfirm.config(state="disabled")
@@ -1047,12 +1047,12 @@ class MazeMouseTrack(object):
 		DisGroup_Def = tk.StringVar()
 		self.TKS_title3 = tk.Label(self.tkWin, text="Group", font=('Arial', 12), bg="gray75")
 		self.TKS_title3.place(x=SettingShowX,y=SettingShowY,anchor="nw")
-		self.TKS_DisGroup = tk.Entry(self.tkWin, font=('Arial', 12), width=15, textvariable=DisGroup_Def)
-		self.TKS_DisGroup.place(x=SettingShowX+57,y=SettingShowY+1,anchor="nw")
+		self.TKS_DisGroup = tk.Entry(self.tkWin, font=('Arial', 12), width=12, textvariable=DisGroup_Def)
+		self.TKS_DisGroup.place(x=SettingShowX+56,y=SettingShowY+1,anchor="nw")
 		if self.DisGroupType != "":
 			DisGroup_Def.set(self.DisGroupType)
 		self.TKS_BT_DisGroupConfirm = tk.Button(self.tkWin, text='Confirm', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DisGroupConfirm)
-		self.TKS_BT_DisGroupConfirm.place(x=SettingShowX+205,y=SettingShowY-3,anchor="nw")
+		self.TKS_BT_DisGroupConfirm.place(x=SettingShowX+172,y=SettingShowY-3,anchor="nw")
 		if (self.EXP_DATA_MODE == "NONE") or (self.EXP_DATA_MODE == "TRAINING"):
 			self.TKS_DisGroup.config(state="disabled")
 			self.TKS_BT_DisGroupConfirm.config(state="disabled")
@@ -1060,17 +1060,17 @@ class MazeMouseTrack(object):
 		# 選擇狀態是手術前後
 		SettingShowY = 310
 		self.TKS_title1 = tk.Label(self.tkWin, text="Operation", font=('Arial', 12), bg="gray75")
-		self.TKS_title1.place(x=SettingShowX,y=SettingShowY,anchor="nw")
+		self.TKS_title1.place(x=SettingShowX,y=SettingShowY+6,anchor="nw")
 		if self.OperaType == 'pre':
-			self.TKS_Btn1_Opera1 = tk.Button(self.tkWin, text='pre-Op (手術前)', width=14, font=('Arial', 10), bg="DarkOliveGreen2", command=lambda: self.tkSetting_BtnOpera('pre-Op'))
+			self.TKS_Btn1_Opera1 = tk.Button(self.tkWin, text='pre-Op\n(手術前)', width=10, font=('Arial', 10), bg="DarkOliveGreen2", command=lambda: self.tkSetting_BtnOpera('pre-Op'))
 		else:
-			self.TKS_Btn1_Opera1 = tk.Button(self.tkWin, text='pre-Op (手術前)', width=14, font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_BtnOpera('pre-Op'))
-		self.TKS_Btn1_Opera1.place(x=SettingShowX + 80, y=SettingShowY - 2, anchor="nw")
+			self.TKS_Btn1_Opera1 = tk.Button(self.tkWin, text='pre-Op\n(手術前)', width=10, font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_BtnOpera('pre-Op'))
+		self.TKS_Btn1_Opera1.place(x=SettingShowX + 80, y=SettingShowY - 5, anchor="nw")
 		if self.OperaType == 'past':
-			self.TKS_Btn1_Opera2 = tk.Button(self.tkWin, text='past-Op (手術後)', width=14, font=('Arial', 10), bg="DarkOliveGreen2", command=lambda: self.tkSetting_BtnOpera('past-Op'))
+			self.TKS_Btn1_Opera2 = tk.Button(self.tkWin, text='past-Op\n(手術後)', width=10, font=('Arial', 10), bg="DarkOliveGreen2", command=lambda: self.tkSetting_BtnOpera('past-Op'))
 		else:
-			self.TKS_Btn1_Opera2 = tk.Button(self.tkWin, text='past-Op (手術後)', width=14, font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_BtnOpera('past-Op'))
-		self.TKS_Btn1_Opera2.place(x=SettingShowX + 205, y=SettingShowY - 2, anchor="nw")
+			self.TKS_Btn1_Opera2 = tk.Button(self.tkWin, text='past-Op\n(手術後)', width=10, font=('Arial', 10), bg="gray90", command=lambda: self.tkSetting_BtnOpera('past-Op'))
+		self.TKS_Btn1_Opera2.place(x=SettingShowX + 175, y=SettingShowY - 5, anchor="nw")
 		if (self.EXP_DATA_MODE == "NONE") or (self.EXP_DATA_MODE == "TRAINING"):
 			self.TKS_Btn1_Opera1.config(state="disabled")
 			self.TKS_Btn1_Opera2.config(state="disabled")
@@ -1080,19 +1080,19 @@ class MazeMouseTrack(object):
 		OpDayM_Def = tk.StringVar()
 		OpDayD_Def = tk.StringVar()
 		self.TKS_title2 = tk.Label(self.tkWin, text="TimePoint", font=('Arial', 12), bg="gray75")
-		self.TKS_title2.place(x=SettingShowX,y=SettingShowY+2,anchor="nw")
-		self.TKS_OpDay_Month = tk.Entry(self.tkWin, font=('Arial', 12), width=5, justify="right", textvariable=OpDayM_Def)
-		self.TKS_OpDay_Month.place(x=SettingShowX+82,y=SettingShowY+3,anchor="nw")
-		tk.Label(self.tkWin, text="Month", font=('Arial', 10)).place(x=SettingShowX+135,y=SettingShowY+3,anchor="nw")
-		self.TKS_OpDay_Day = tk.Entry(self.tkWin, font=('Arial', 12), width=5, justify="right", textvariable=OpDayD_Def)
-		self.TKS_OpDay_Day.place(x=SettingShowX+180,y=SettingShowY+3,anchor="nw")
-		tk.Label(self.tkWin, text="Day", font=('Arial', 10)).place(x=SettingShowX+235,y=SettingShowY+3,anchor="nw")
+		self.TKS_title2.place(x=SettingShowX,y=SettingShowY+16,anchor="nw")
+		self.TKS_OpDay_Month = tk.Entry(self.tkWin, font=('Arial', 12), width=7, justify="right", textvariable=OpDayM_Def)
+		self.TKS_OpDay_Month.place(x=SettingShowX+82,y=SettingShowY+7,anchor="nw")
+		tk.Label(self.tkWin, text="Month", font=('Arial', 10)).place(x=SettingShowX+135,y=SettingShowY+7,anchor="nw")
+		self.TKS_OpDay_Day = tk.Entry(self.tkWin, font=('Arial', 12), width=7, justify="right", textvariable=OpDayD_Def)
+		self.TKS_OpDay_Day.place(x=SettingShowX+82,y=SettingShowY+35,anchor="nw")
+		tk.Label(self.tkWin, text="Day", font=('Arial', 10)).place(x=SettingShowX+135,y=SettingShowY+35,anchor="nw")
 		if self.DisDays[1] != -1:
 			OpDayM_Def.set(self.DisDays[1])
 		if self.DisDays[2] != -1:
 			OpDayD_Def.set(self.DisDays[2])
 		self.TKS_BT_OpDayConfirm = tk.Button(self.tkWin, text='Confirm', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_OperaDays)
-		self.TKS_BT_OpDayConfirm.place(x=SettingShowX+270,y=SettingShowY,anchor="nw")
+		self.TKS_BT_OpDayConfirm.place(x=SettingShowX+180,y=SettingShowY+15,anchor="nw")
 		if (self.EXP_DATA_MODE == "NONE") or (self.EXP_DATA_MODE == "TRAINING"):
 			self.TKS_OpDay_Month.config(state="disabled")
 			self.TKS_OpDay_Day.config(state="disabled")
@@ -1101,24 +1101,24 @@ class MazeMouseTrack(object):
 		# 設定老鼠編號
 		SettingShowY = 390
 		RatID_Def = tk.StringVar()
-		tk.Label(self.tkWin,text="Rat ID", font=('Arial', 12), bg="gray75").place(x=SettingShowX,y=SettingShowY,anchor="nw")
+		tk.Label(self.tkWin,text="Rat ID", font=('Arial', 12), bg="gray75").place(x=SettingShowX,y=SettingShowY+25,anchor="nw")
 		self.TK_Rat_ID = tk.Entry(self.tkWin, font=('Arial', 12), width=10, textvariable=RatID_Def)
-		self.TK_Rat_ID.place(x=SettingShowX+60,y=SettingShowY+1,anchor="nw")
+		self.TK_Rat_ID.place(x=SettingShowX+60,y=SettingShowY+27,anchor="nw")
 		if self.Rat_ID != "":
 			RatID_Def.set(self.Rat_ID)
 		self.BT_Rat_ID = tk.Button(self.tkWin, text='Set ID', width=9, font=('Arial', 10), bg="gray90", command=self.SetRatID)
-		self.BT_Rat_ID.place(x=SettingShowX+160,y=SettingShowY-3,anchor="nw")
+		self.BT_Rat_ID.place(x=SettingShowX+160,y=SettingShowY+22,anchor="nw")
 		if (self.EXP_DATA_MODE == "NONE") or (self.EXP_DATA_MODE == "TRAINING"):
 			self.TK_Rat_ID.config(state="disabled")
 			self.BT_Rat_ID.config(state="disabled")
 
 	def OpenSetting(self):
 		if not self.DBGV.Maze_SetState:
-			self.tkWin.geometry('%dx%d+20+20' %(self.WinSize[0]+400,self.WinSize[1])) #窗口大小(寬X高+X偏移量+Y偏移量)
+			self.tkWin.geometry('%dx%d+10+10' %(self.WinSize[0]+300,self.WinSize[1])) #窗口大小(寬X高+X偏移量+Y偏移量)
 			self.DBGV.Maze_SetState = True
 			self.drawSetting()
 		else:
-			self.tkWin.geometry('%dx%d+20+20' %(self.WinSize[0],self.WinSize[1])) #窗口大小(寬X高+X偏移量+Y偏移量)
+			self.tkWin.geometry('%dx%d+10+10' %(self.WinSize[0],self.WinSize[1])) #窗口大小(寬X高+X偏移量+Y偏移量)
 			self.DBGV.Maze_SetState = False
 
 	def setupUI(self): #主UI視窗主程式
@@ -1134,12 +1134,12 @@ class MazeMouseTrack(object):
 		for i in range(len(IPCAM_Info)):
 			CamInfo.append(IPCAM_Info[i][0])
 		# print(CamInfo)
-		self.InfoCombo = ttk.Combobox(self.tkWin, values=CamInfo, state="readonly")
+		self.InfoCombo = ttk.Combobox(self.tkWin, values=CamInfo, width=17, state="readonly")
 		self.InfoCombo.place(x=20,y=25,anchor="w")
 		self.InfoCombo.current(0)
 
-		self.BT_LoadCAM = tk.Button(self.tkWin, text='Load', width=9, font=('Arial', 10), command=self.setIPCAMInfo)
-		self.BT_LoadCAM.place(x=190,y=25,anchor="w")
+		self.BT_LoadCAM = tk.Button(self.tkWin, text='Load', width=8, font=('Arial', 10), command=self.setIPCAMInfo)
+		self.BT_LoadCAM.place(x=170,y=25,anchor="w")
 
 		#========左側：紀錄變數========
 		recValX = 20
@@ -1160,8 +1160,8 @@ class MazeMouseTrack(object):
 		recFoodTX = 20
 		recFoodTY = 195
 		tk.Label(self.tkWin,text="Food/Term", font=('Arial', 12), bg="gray75").place(x=recFoodTX,y=recFoodTY,anchor="nw")
-		tk.Label(self.tkWin,text="Long Term", font=('Arial', 10)).place(x=recFoodTX + 140,y=recFoodTY + 5,anchor="n")
-		tk.Label(self.tkWin,text="Short Term", font=('Arial', 10)).place(x=recFoodTX + 220,y=recFoodTY + 5,anchor="n")
+		tk.Label(self.tkWin,text="Long\nTerm", font=('Arial', 10)).place(x=recFoodTX + 125,y=recFoodTY - 5,anchor="n")
+		tk.Label(self.tkWin,text="Short\nTerm", font=('Arial', 10)).place(x=recFoodTX + 190,y=recFoodTY - 5,anchor="n")
 		for i in range(1, self.ARM_UNIT+1):
 			self.TK_Food[i-1] = tk.IntVar()
 			self.TK_L_Term[i-1] = tk.StringVar()
@@ -1173,8 +1173,8 @@ class MazeMouseTrack(object):
 			tk.Label(self.tkWin,text="Arm "+str(i), font=('Arial', 12)).place(x=recFoodTX,y=posY,anchor="nw")
 			self.TKC_Food[i-1] = tk.Checkbutton(self.tkWin, variable=self.TK_Food[i-1], onvalue = 1, offvalue = 0, command=self.setFood, state="disabled")
 			self.TKC_Food[i-1].place(x=recFoodTX + 60,y=posY,anchor="nw")
-			tk.Label(self.tkWin,textvariable=self.TK_L_Term[i-1], font=('Arial', 12)).place(x=recFoodTX + 140,y=posY,anchor="n")
-			tk.Label(self.tkWin,textvariable=self.TK_S_Term[i-1], font=('Arial', 12)).place(x=recFoodTX + 220,y=posY,anchor="n")
+			tk.Label(self.tkWin,textvariable=self.TK_L_Term[i-1], font=('Arial', 12)).place(x=recFoodTX + 125,y=posY,anchor="n")
+			tk.Label(self.tkWin,textvariable=self.TK_S_Term[i-1], font=('Arial', 12)).place(x=recFoodTX + 190,y=posY,anchor="n")
 
 		#========中間：虛擬視窗顯示區域========
 		self.mazeCanvas = tk.Canvas(bg="black", width = self.ViewSize[0], height = self.ViewSize[1])
@@ -1184,7 +1184,7 @@ class MazeMouseTrack(object):
 		self.setArmNumber()
 		self.setArmInLine()
 
-		pViewX = 296 #虛擬視窗左上定位點X
+		pViewX = 255 #虛擬視窗左上定位點X
 		pViewY = 40 #虛擬視窗左上定位點Y
 		self.setArmLine()
 		self.mazeCanvas.place(x=pViewX, y=pViewY,anchor="nw")
@@ -1192,18 +1192,20 @@ class MazeMouseTrack(object):
 		self.mazeTitle.place(x=pViewX, y=pViewY-27,anchor="nw")
 
 		#========右側：按鈕======== #, bg="DarkOliveGreen2"
-		self.BT_Camera = tk.Button(self.tkWin, text='Show Camera', width=14, font=('Arial', 14), bg="gray85", command=self.CameraCheck, state="disabled")
-		self.BT_Camera.place(x=self.WinSize[0]-20,y=65,anchor="ne")
+		ButtonCateX = 750
+		ButtonCateY = 20
+		self.BT_Camera = tk.Button(self.tkWin, text='Camera', width=11, font=('Arial', 14), bg="gray85", command=self.CameraCheck, state="disabled")
+		self.BT_Camera.place(x=ButtonCateX+135, y=ButtonCateY+45, anchor="nw")
 		# self.BT_Setting = tk.Button(self.tkWin, text='Setting', width=14, font=('Arial', 14), bg="gray85", command=self.tkSetting_SetupUI, state="disabled")
-		self.BT_Setting = tk.Button(self.tkWin, text='Setting', width=14, font=('Arial', 14), bg="gray85", command=self.OpenSetting, state="disabled")
-		self.BT_Setting.place(x=self.WinSize[0]-190,y=65,anchor="ne")
-		self.BT_Start = tk.Button(self.tkWin, text='Start', width=14, font=('Arial', 14),bg="gray85", command=self.MazeStartCheck, state="disabled")
-		self.BT_Start.place(x=self.WinSize[0]-20,y=20,anchor="ne")
-		self.BT_Connect = tk.Button(self.tkWin, text='Link IPCAM', width=14, font=('Arial', 14),bg="gray85", fg="dark green", command=self.ConnectClick, state="disabled")
-		self.BT_Connect.place(x=self.WinSize[0]-190,y=20,anchor="ne")
+		self.BT_Setting = tk.Button(self.tkWin, text='Setting', width=11, font=('Arial', 14), bg="gray85", command=self.OpenSetting, state="disabled")
+		self.BT_Setting.place(x=ButtonCateX, y=ButtonCateY+45, anchor="nw")
+		self.BT_Start = tk.Button(self.tkWin, text='Start', width=11, font=('Arial', 14),bg="gray85", command=self.MazeStartCheck, state="disabled")
+		self.BT_Start.place(x=ButtonCateX+135, y=ButtonCateY, anchor="nw")
+		self.BT_Connect = tk.Button(self.tkWin, text='Link', width=11, font=('Arial', 14),bg="gray85", fg="dark green", command=self.ConnectClick, state="disabled")
+		self.BT_Connect.place(x=ButtonCateX, y=ButtonCateY, anchor="nw")
 
 		#========右側：狀態顯示========
-		StatusCateX = 800
+		StatusCateX = 750
 		StatusCateY = 140
 		StatusLineRange = 28
 		tk.Label(self.tkWin,text="Status", font=('Arial', 12), bg="gray75").place(x=StatusCateX, y=110,anchor="nw")
@@ -1215,7 +1217,7 @@ class MazeMouseTrack(object):
 		self.Maze_State.place(x=StatusCateX, y=200,anchor="nw")
 
 		# 顯示變數區域
-		SettingShowX = 800
+		SettingShowX = 750
 		SettingShowY = 220
 		SettingLineRange = 28
 		self.TKS_title5 = tk.Label(self.tkWin, text="Setting Status", font=('Arial', 12), bg="gray75")
@@ -1255,7 +1257,7 @@ class MazeMouseTrack(object):
 		self.TKS_Show_OpDay.place(x=SettingShowX,y=SettingShowY + (50 + SettingLineRange*5),anchor="nw")
 
 		#========右側：顯示進出臂路徑========
-		RouteShowX = 800
+		RouteShowX = 750
 		RouteShowY = 440
 		if self.Rat_ID != "":
 			self.TKS_Show_Rat_ID = tk.Label(self.tkWin, text="RatID: %s" %(self.Rat_ID), font=('Arial', 13), fg="black")
@@ -1265,8 +1267,8 @@ class MazeMouseTrack(object):
 
 		tk.Label(self.tkWin,text="Rat Route", font=('Arial', 12), bg="gray75").place(x=RouteShowX,y=RouteShowY,anchor="nw")
 		self.RouteScroll = tk.Scrollbar(self.tkWin)
-		self.RouteScroll.place(x=RouteShowX+317,y=RouteShowY+30,anchor="nw", height=57)
-		self.RouteText = tk.Text(self.tkWin, font=('Arial', 11), width=39, height=3, yscrollcommand=self.RouteScroll.set)
+		self.RouteScroll.place(x=RouteShowX+260,y=RouteShowY+30,anchor="nw", height=57)
+		self.RouteText = tk.Text(self.tkWin, font=('Arial', 11), width=32, height=3, yscrollcommand=self.RouteScroll.set)
 		self.RouteText.place(x=RouteShowX,y=RouteShowY+30,anchor="nw")
 		self.RouteScroll.config(command=self.RouteText.yview)
 
