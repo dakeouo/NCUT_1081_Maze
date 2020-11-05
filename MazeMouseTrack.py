@@ -1081,12 +1081,12 @@ class MazeMouseTrack(object):
 		OpDayD_Def = tk.StringVar()
 		self.TKS_title2 = tk.Label(self.tkWin, text="TimePoint", font=('Arial', 12), bg="gray75")
 		self.TKS_title2.place(x=SettingShowX,y=SettingShowY+16,anchor="nw")
-		self.TKS_OpDay_Month = tk.Entry(self.tkWin, font=('Arial', 12), width=7, justify="right", textvariable=OpDayM_Def)
+		self.TKS_OpDay_Month = tk.Entry(self.tkWin, font=('Arial', 12), width=6, justify="right", textvariable=OpDayM_Def)
 		self.TKS_OpDay_Month.place(x=SettingShowX+82,y=SettingShowY+7,anchor="nw")
-		tk.Label(self.tkWin, text="Month", font=('Arial', 10)).place(x=SettingShowX+135,y=SettingShowY+7,anchor="nw")
-		self.TKS_OpDay_Day = tk.Entry(self.tkWin, font=('Arial', 12), width=7, justify="right", textvariable=OpDayD_Def)
+		tk.Label(self.tkWin, text="Month", font=('Arial', 10)).place(x=SettingShowX+140,y=SettingShowY+7,anchor="nw")
+		self.TKS_OpDay_Day = tk.Entry(self.tkWin, font=('Arial', 12), width=6, justify="right", textvariable=OpDayD_Def)
 		self.TKS_OpDay_Day.place(x=SettingShowX+82,y=SettingShowY+35,anchor="nw")
-		tk.Label(self.tkWin, text="Day", font=('Arial', 10)).place(x=SettingShowX+135,y=SettingShowY+35,anchor="nw")
+		tk.Label(self.tkWin, text="Day", font=('Arial', 10)).place(x=SettingShowX+140,y=SettingShowY+35,anchor="nw")
 		if self.DisDays[1] != -1:
 			OpDayM_Def.set(self.DisDays[1])
 		if self.DisDays[2] != -1:
@@ -1102,12 +1102,12 @@ class MazeMouseTrack(object):
 		SettingShowY = 390
 		RatID_Def = tk.StringVar()
 		tk.Label(self.tkWin,text="Rat ID", font=('Arial', 12), bg="gray75").place(x=SettingShowX,y=SettingShowY+25,anchor="nw")
-		self.TK_Rat_ID = tk.Entry(self.tkWin, font=('Arial', 12), width=10, textvariable=RatID_Def)
+		self.TK_Rat_ID = tk.Entry(self.tkWin, font=('Arial', 12), width=14, textvariable=RatID_Def)
 		self.TK_Rat_ID.place(x=SettingShowX+60,y=SettingShowY+27,anchor="nw")
 		if self.Rat_ID != "":
 			RatID_Def.set(self.Rat_ID)
-		self.BT_Rat_ID = tk.Button(self.tkWin, text='Set ID', width=9, font=('Arial', 10), bg="gray90", command=self.SetRatID)
-		self.BT_Rat_ID.place(x=SettingShowX+160,y=SettingShowY+22,anchor="nw")
+		self.BT_Rat_ID = tk.Button(self.tkWin, text='Set ID', width=7, font=('Arial', 10), bg="gray90", command=self.SetRatID)
+		self.BT_Rat_ID.place(x=SettingShowX+200,y=SettingShowY+22,anchor="nw")
 		if (self.EXP_DATA_MODE == "NONE") or (self.EXP_DATA_MODE == "TRAINING"):
 			self.TK_Rat_ID.config(state="disabled")
 			self.BT_Rat_ID.config(state="disabled")
