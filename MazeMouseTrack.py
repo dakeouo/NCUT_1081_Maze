@@ -14,6 +14,7 @@ import traceback
 import csv
 from PIL import Image, ImageTk
 import tkinter.ttk as ttk
+from _Timer import Timer1
 
 IPCAM_Info_FileName = "./IPCAM_INFO.csv"
 Disease_List_FileName = "./DISEASE_LIST.csv"
@@ -135,19 +136,23 @@ class MazeMouseTrack(object):
 		self.IPCAM = IPCAM
 		self.CAMThread = threading.Thread(target = self.IPCAM.Main) # 執行該子執行緒
 		self.CAMThread.start()  # 執行該子執行緒
-		DBGV.CheckP_UI = "2"
+		DBGV.CheckP_UI = "2-1"
 
 		#熱影像相機執行緒
 		self.TCAM = TCAM()
 		self.thread = threading.Thread(target = self.TCAM.CameraMain) # 執行該子執行緒
 		self.thread.start()  # 執行該子執行緒
-		DBGV.CheckP_UI = "3"
+		DBGV.CheckP_UI = "2-2"
 
 		#狀態顯示&錄影程式執行緒
 		self.DBGV = DBGV
 		self.DBGVThread = threading.Thread(target = self.DBGV.DBGV_Main) # 執行該子執行緒
 		self.DBGVThread.start()  # 執行該子執行緒
-		DBGV.CheckP_UI = "4"
+		DBGV.CheckP_UI = "2-3"
+
+		#取點計時器
+		self.CoodiTimer = Timer1(0.046, self.TCAM.saveCoodinate2Arr)
+		DBGV.CheckP_UI = "2-4"
 
 		#變數：迷宮系統相關
 		self.ARM_UNIT = self.TCAM.ARM_UNIT #迷宮臂數
@@ -170,6 +175,7 @@ class MazeMouseTrack(object):
 		self.ViewSize = self.TCAM.ViewSize #虛擬視窗顯示大小
 		self.MAZE_IS_RUN = False #當前系統是否在執行
 		self.CAM_IS_RUN = False #當前相機程式是否在執行
+		self.CAM_IS_RUN_First = True #相機程式執行的第一次
 		self.CAM_INIT_SUCCESS = False #CAM是否初始化成功
 		self.CAM_IS_CONN = self.TCAM.CAM_IS_CONN #當前鏡頭是否連線
 		self.EXP_DATA_MODE = "NONE" #當前實驗模式
@@ -546,7 +552,13 @@ class MazeMouseTrack(object):
 				if self.CAM_IS_RUN and self.CAM_IS_CONN:
 					self.BT_Start.config(bg="DarkOliveGreen2")
 					self.BT_Start.config(state="normal")
+					if self.CAM_IS_RUN_First:
+						self.CAM_IS_RUN_First = False
+						self.CoodiTimer.start()
 				else:
+					if not self.CAM_IS_RUN_First:
+						self.CAM_IS_RUN_First = True
+						self.CoodiTimer.cancel()
 					self.BT_Start.config(bg="gray85")
 					self.BT_Start.config(state="disabled")
 
@@ -632,6 +644,9 @@ class MazeMouseTrack(object):
 		self.tkWin.destroy()
 		if self.SETTING_OPEN:
 			self.tkSetting.destroy()
+		if not self.CAM_IS_RUN_First:
+			self.CAM_IS_RUN_First = True
+			self.CoodiTimer.cancel()
 
 	def PreparingTesting(self): #測試按鈕(偷懶用，但現在也沒在用，留著)
 		if self.WinSize[0] == 1040:
