@@ -654,7 +654,7 @@ class InfraredCAM:
 								pass
 						elif self.NOW_STATUS == 1: #出臂
 							self.DBGV.CheckP_ICAM = 1040
-							self.NOW_STATUS, self.dangchianbi = self.leave(self.TargetPos_All[0])
+							self.NOW_STATUS, self.dangchianbi = self.leave(self.TargetPos)
 
 						else:
 							self.DBGV.CheckP_ICAM = 1041
