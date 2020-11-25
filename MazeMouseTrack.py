@@ -1030,8 +1030,8 @@ class MazeMouseTrack(object):
 		#疾病模組資訊
 		SettingShowY = 230
 		# Disease_Def = tk.StringVar()
-		ModelList = ['請選擇...', 'TBI', 'Radiation', 'HI', 'Aβ', 'MCAo', 'SCI']
-		ModelListDir = {'TBI':1, 'Radiation':2, 'HI':3, 'Aβ':4, 'MCAo':5, 'SCI':6}
+		ModelList = ['請選擇...', 'TBI', 'Radiation', 'HI', 'Aβ', 'MCAo', 'SCI', 'Others']
+		ModelListDir = {'TBI':1, 'Radiation':2, 'HI':3, 'Aβ':4, 'MCAo':5, 'SCI':6, 'Others':7}
 		self.TKS_title3 = tk.Label(self.tkWin, text="Model", font=('Arial', 12), bg="gray75")
 		self.TKS_title3.place(x=SettingShowX,y=SettingShowY,anchor="nw")
 		self.TKS_Disease = ttk.Combobox(self.tkWin, values=ModelList, font=('Arial', 11), width=10, state="readonly")
