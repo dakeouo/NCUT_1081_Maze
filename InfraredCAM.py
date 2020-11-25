@@ -562,9 +562,9 @@ class InfraredCAM:
 
 					#把[影像擷取的東西]放這裡	
 					if self.MAZE_IS_RUN: #UI start 後動作
-						shutil.copyfile("IPCAM_INFO.csv", "./ChiMei_{}/IPCAM_INFO.csv".format(datetime.now().strftime("%Y%m%d"))) #複製攝影機資訊
-						shutil.copyfile("ARMS_LINE.csv", "./ChiMei_{}/ARMS_LINE.csv".format(datetime.now().strftime("%Y%m%d"))) #複製攝影機資訊
-						shutil.copyfile("MazeLog.log", "./ChiMei_{}/MazeLog.log".format(datetime.now().strftime("%Y%m%d"))) #複製LOG檔資訊
+						shutil.copyfile("IPCAM_INFO.csv", "./ChiMei_{0}/IPCAM_INFO({0}).csv".format(datetime.now().strftime("%Y%m%d"))) #複製攝影機資訊
+						shutil.copyfile("ARMS_LINE.csv", "./ChiMei_{0}/ARMS_LINE({0}).csv".format(datetime.now().strftime("%Y%m%d"))) #複製攝影機資訊
+						shutil.copyfile("MazeLog.log", "./ChiMei_{0}/MazeLog({0}).log".format(datetime.now().strftime("%Y%m%d"))) #複製LOG檔資訊
 						# shutil.copyfile("DISEASE_LIST.csv", "./ChiMei_{}/DISEASE_LIST.txt".format(datetime.now().strftime("%Y%m%d"))) #複製疾病分組資訊
 						# shutil.copyfile("IPCAM_INFO.csv", "IPCAM_INFO1.txt") #複製攝影機資訊
 						# shutil.move("IPCAM_INFO1.txt", "./ChiMei_{}".format(datetime.now().strftime("%Y%m%d")))

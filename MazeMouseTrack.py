@@ -489,7 +489,7 @@ class MazeMouseTrack(object):
 			self.BT_Connect.config(state="normal")
 
 			if self.DBGV.Maze_SetState and self.EXP_DATA_MODE != "NONE":
-				self.TKS_Disease.config(state="normal")
+				self.TKS_Disease.config(state="readonly")
 				self.TKS_BT_DisConfirm.config(state="normal")
 				self.TK_User_Name.config(state="normal")
 				self.BT_User_Name.config(state="normal")
@@ -738,7 +738,7 @@ class MazeMouseTrack(object):
 		newSpace = ""
 		for i in range(15):
 			newSpace = newSpace + " "
-		if self.TKS_Disease.get() != "":
+		if self.TKS_Disease.current() != 0:
 			self.DiseaseType = self.TKS_Disease.get()
 			self.TKS_Show_Disease.config(text="Model: %s%s" %(self.DiseaseType,newSpace), fg="black")
 			self.DBGV.Data_ModelRT_Str = CreateModelRTStr(self.OperaType, self.DisDays[1], self.DisDays[2], self.DiseaseType, self.DisGroupType, self.Rat_ID)
@@ -966,7 +966,7 @@ class MazeMouseTrack(object):
 
 		self.TK_User_Name.config(state="normal")
 		self.BT_User_Name.config(state="normal")
-		self.TKS_Disease.config(state="normal")
+		self.TKS_Disease.config(state="readonly")
 		self.TKS_BT_DisConfirm.config(state="normal")
 
 	def SystemModeSet(self, mode):
@@ -1029,13 +1029,17 @@ class MazeMouseTrack(object):
 
 		#疾病模組資訊
 		SettingShowY = 230
-		Disease_Def = tk.StringVar()
+		# Disease_Def = tk.StringVar()
+		ModelList = ['請選擇...', 'TBI', 'Radiation', 'HI', 'Aβ', 'MCAo', 'SCI']
+		ModelListDir = {'TBI':1, 'Radiation':2, 'HI':3, 'Aβ':4, 'MCAo':5, 'SCI':6}
 		self.TKS_title3 = tk.Label(self.tkWin, text="Model", font=('Arial', 12), bg="gray75")
 		self.TKS_title3.place(x=SettingShowX,y=SettingShowY,anchor="nw")
-		self.TKS_Disease = tk.Entry(self.tkWin, font=('Arial', 12), width=12, textvariable=Disease_Def)
+		self.TKS_Disease = ttk.Combobox(self.tkWin, values=ModelList, font=('Arial', 11), width=10, state="readonly")
 		self.TKS_Disease.place(x=SettingShowX+56,y=SettingShowY+1,anchor="nw")
 		if self.DiseaseType != "":
-			Disease_Def.set(self.DiseaseType)
+			self.TKS_Disease.current(ModelListDir[self.DiseaseType])
+		else:
+			self.TKS_Disease.current(0)
 		self.TKS_BT_DisConfirm = tk.Button(self.tkWin, text='Confirm', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_DiseaseConfirm)
 		self.TKS_BT_DisConfirm.place(x=SettingShowX+172,y=SettingShowY-3,anchor="nw")
 		if self.EXP_DATA_MODE == "NONE":
