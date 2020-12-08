@@ -317,7 +317,7 @@ class MazeMouseTrack(object):
 			self.TK_SHOW_Food.config(text="Food: (not set)", fg="gray35")
 		else:
 			self.TK_SHOW_Food.config(text="Food: {}".format(hadFood), fg="black")
-		# self.TK_SHOW_Food.place(x=800, y=260,anchor="nw")
+		# self.TK_SHOW_Food.place(x=750, y=260,anchor="nw")
 
 	def ConnectClick(self): #"Link"按鈕按下時負責處理的副程式
 		if self.CAM_IS_RUN:
