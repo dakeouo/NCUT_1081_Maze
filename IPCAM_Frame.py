@@ -75,7 +75,10 @@ def Main():
 						IPCAM_Image = []	#影像儲存變數清空
 						frame = []			#frame變數宣告
 						FrameCount = 0		#幀數計數歸零
-						rtsp = "rtsp://{0}:{1}@{2}:554/{3}".format(IPCAM_Username, IPCAM_Password, IPCAM_IP, IPCAM_Bar) #RTSP連結
+						if not IPCAM_Bar == "LOCAL":
+							rtsp = "rtsp://{0}:{1}@{2}:554/{3}".format(IPCAM_Username, IPCAM_Password, IPCAM_IP, IPCAM_Bar) #RTSP連結
+						else:
+							rtsp = int(IPCAM_Username)
 
 						cap = cv2.VideoCapture(rtsp)	#IPCAM視訊串流
 						FIRST_RUN = False
@@ -83,7 +86,7 @@ def Main():
 
 					nowTime = datetime.datetime.now()	#紀錄現在時間
 					DBGV.CheckP_IPCAM = "7"
-					if cap.isOpened():
+					if cap.isOpened() and not FIRST_RUN:
 						DBGV.CheckP_IPCAM = "8-1"
 						ret,frame = cap.read()			#IPCAM視訊截取(ret->True有圖片/False無圖片 frame->影像圖片)
 						DBGV.IPCAM_Name = IPCAM_Name

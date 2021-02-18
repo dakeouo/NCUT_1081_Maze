@@ -448,6 +448,7 @@ class InfraredCAM:
 
 	def CameraMain(self): #這個副程式是"主程式"呦~~~~~
 		global Inlinepoint_long,dangchianjiuli
+
 		try:
 			
 			#遮罩形成
