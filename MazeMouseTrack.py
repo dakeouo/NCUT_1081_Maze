@@ -15,9 +15,10 @@ import csv
 from PIL import Image, ImageTk
 import tkinter.ttk as ttk
 from _Timer import Timer1
+from functools import partial
 
 IPCAM_Info_FileName = "./IPCAM_INFO.csv"
-Disease_List_FileName = "./DISEASE_LIST.csv"
+Disease_List_FileName = "./NEW_MODEL_LIST.csv"
 IPCAM_Info = []
 Disease_List = []
 
@@ -59,20 +60,40 @@ def LoadCamInfo():	#將[攝相機資訊檔案]匯入[攝相機資訊陣列]
 def LoadDiseaseFile(): #將[疾病分組檔案]匯入[疾病分組資訊陣列]
 	global Disease_List, Disease_List_FileName
 	Disease_List = readCSV2List(Disease_List_FileName)
-	# print(Disease_List)
+	newDiseaseData = []
+	for row in Disease_List:
+		if row[0] == "Model":
+			newDiseaseData.append([int(row[1]), row[2], []])
+		elif row[0] == "Groups":
+			for mod in newDiseaseData:
+				if mod[0] == int(row[1]):
+					mod[2].append([int(row[2]), row[3]])
+					mod[2].sort()
+	newDiseaseData.sort()
+	# print(newDiseaseData)
+	return newDiseaseData
 
 def WriteDiseaseFile(data):	#將目前[疾病分組資訊陣列]重新寫入[疾病分組檔案]
 	global Disease_List, Disease_List_FileName
-	writeData2CSV(Disease_List_FileName, "w", data[0])
-	for i in range(1, len(data)):
-		writeData2CSV(Disease_List_FileName, "a", data[i])
+	newModel = []
+	newGroup = []
+	for row in data:
+		newModel.append(["Model", row[0], row[1]])
+		for gp in row[2]:
+			newGroup.append(["Groups", row[0], gp[0], gp[1]])
+	if len(newModel) > 0:
+		writeData2CSV(Disease_List_FileName, "w", newModel[0])
+		for i in range(1, len(newModel)):
+			writeData2CSV(Disease_List_FileName, "a", newModel[i])
+		if len(newGroup) > 0:
+			for i in range(len(newGroup)):
+				writeData2CSV(Disease_List_FileName, "a", newGroup[i])
 
-def findDiseaseArray(arr, Dtype, text): #找尋目前輸入的內容是否在陣列疾病分組資訊陣列內(有:回傳index/無:回傳-1)
-	# print(Dtype, text)
-	for i in range(0,len(arr)):
-		if arr[i][1] == text and arr[i][0] == Dtype:
-			return i
-	return -1
+def findDiseaseArray(disArray, text): #找尋目前輸入的內容是否在陣列疾病分組資訊陣列內(有:回傳index+model編號/無:回傳-1,0)
+	for i in range(len(disArray)):
+		if disArray[i][1] == text:
+			return i+1, disArray[i][0]
+	return 0, -1
 
 def countStr(Str): #算出字串中大小寫字母與數字及其他符號的個數
 	Unit = [0, 0, 0, 0] #大寫字母/小寫字母/數字/其他符號
@@ -230,6 +251,9 @@ class MazeMouseTrack(object):
 
 		self.CSV_DiseaseFile = [] #存放CSV讀進來的內容
 		self.NOW_DiseaseList = [-1, '', '', ''] #目前編輯條目(index, 分類[疾病/分組], 名稱, 敘述)
+		self.MENU_OPEN = False
+		self.MENU_INFO = ["", ""]
+		self.MENU_Modify_Item = ["", "", "", "", "", "", "", "", "", ""]
 		DBGV.CheckP_UI = "5"
 
 		self.tkWin = tk.Tk()
@@ -503,8 +527,13 @@ class MazeMouseTrack(object):
 			if self.MAZE_IS_RUN:
 				self.BT_Connect.config(state="disabled")
 
+			if self.MENU_OPEN:
+				self.BT_Start.config(state="disabled")
+				self.BT_Connect.config(state="disabled")
+
 			if self.DBGV.Maze_SetState and self.EXP_DATA_MODE != "NONE":
 				self.TKS_Disease.config(state="disabled")
+				self.TKS_DisGroup.config(state="disabled")
 				self.TK_User_Name.config(state="disabled")
 				self.BT_User_Name.config(state="disabled")
 				self.TKS_BT_DisConfirm.config(state="disabled")
@@ -528,6 +557,7 @@ class MazeMouseTrack(object):
 			DBGV.CheckP_UI = "31-2"
 			# self.TKE_Dir.config(state="normal")
 			self.BT_Connect.config(state="normal")
+			self.BT_Start.config(state="normal")
 
 			if self.DBGV.Maze_SetState and self.EXP_DATA_MODE != "NONE":
 				self.TKS_Disease.config(state="readonly")
@@ -540,12 +570,13 @@ class MazeMouseTrack(object):
 					self.TKS_Btn1_Opera2.config(state="normal")
 					self.TKS_OpDay_Month.config(state="normal")
 					self.TKS_OpDay_Day.config(state="normal")
-					self.TKS_DisGroup.config(state="normal")
 					self.TKS_BT_OpDayConfirm.config(state="normal")
-					self.TKS_BT_DisGroupConfirm.config(state="normal")
-					self.TKS_BT_DisGroupModify.config(state="normal")
 					self.TK_Rat_ID.config(state="normal")
 					self.BT_Rat_ID.config(state="normal")
+					if self.DiseaseType != "":
+						self.TKS_DisGroup.config(state="readonly")
+						self.TKS_BT_DisGroupConfirm.config(state="normal")
+						self.TKS_BT_DisGroupModify.config(state="normal")
 
 			for i in range(0,self.ARM_UNIT):
 				self.TKC_Food[i].config(state="normal")
@@ -665,6 +696,11 @@ class MazeMouseTrack(object):
 				self.DBGV.Maze_CameraState = self.OPEN_CAMERA_WINDOW
 				DBGV.CheckP_UI = "16"
 
+				if self.MENU_OPEN:
+					self.LockInput(True)
+				else:
+					self.LockInput(False)
+
 			self.tkWin.after(10,self.LoopMain)
 			DBGV.CheckP_UI = "17"
 
@@ -698,12 +734,66 @@ class MazeMouseTrack(object):
 			self.CAM_IS_RUN_First = True
 			self.CoodiTimer.cancel()
 
-	def PreparingTesting(self): #測試按鈕(偷懶用，但現在也沒在用，留著)
-		if self.WinSize[0] == 1040:
-			self.WinSize[0] = 1366
-		else:
-			self.WinSize[0] = 1040
-		self.tkWin.geometry('%dx%d+20+20' %(self.WinSize[0],self.WinSize[1])) #窗口大小(寬X高+X偏移量+Y偏移量)
+	def ClearSettingMenuList(self):
+		for i in range(len(self.MENU_Modify_Item)):
+			self.SettingMenuNo[i].config(bg="gray85", state="disabled")
+			self.SettingMenuList[i].delete(0, "end")
+			self.SettingMenuList[i].insert(0, "")
+			self.SettingMenuList[i].config(state="disabled")
+			self.SettingMenuNew[i].config(bg="gray85", state="disabled")
+			self.SettingMenuDel[i].config(bg="gray85", state="disabled")
+			self.SettingMenuUp[i].config(bg="gray85", state="disabled")
+			self.SettingMenuDown[i].config(bg="gray85", state="disabled")
+
+	def updateSettingMenuList(self):
+		# 清除
+		self.ClearSettingMenuList()
+
+		# 重新
+		for i in range(len(self.MENU_Modify_Item)):
+			if self.MENU_Modify_Item[i] == "":
+				if i == 0:
+					self.SettingMenuNo[0].config(bg="DarkOliveGreen3" ,state="normal")
+					self.SettingMenuList[0].config(state="normal")
+					self.SettingMenuList[0].delete(0, "end")
+					self.SettingMenuList[0].insert(0, "")
+					self.SettingMenuNew[0].config(bg="DarkOliveGreen2", state="normal")
+				break
+			self.SettingMenuNo[i].config(bg="gray65" ,state="normal")
+			self.SettingMenuList[i].config(state="normal")
+			self.SettingMenuList[i].delete(0, "end")
+			self.SettingMenuList[i].insert(0, self.MENU_Modify_Item[i])
+			self.SettingMenuDel[i].config(bg="tomato", state="normal")
+			if i > 0:
+				self.SettingMenuUp[i].config(bg="gray65", state="normal")
+			if (i < len(self.MENU_Modify_Item)-1):
+				if (self.MENU_Modify_Item[i+1] != ""):
+					self.SettingMenuDown[i].config(bg="gray65", state="normal")
+				else:
+					self.SettingMenuNo[i+1].config(bg="DarkOliveGreen3" ,state="normal")
+					self.SettingMenuList[i+1].config(state="normal")
+					self.SettingMenuList[i+1].delete(0, "end")
+					self.SettingMenuList[i+1].insert(0, "")
+					self.SettingMenuNew[i+1].config(bg="DarkOliveGreen2", state="normal")
+
+	def SettingMenuModify(self, type_):
+		self.MENU_OPEN = True
+		self.SettingMenuFinish.config(state="normal")
+		nowItem = 0
+		if type_ == "Model":
+			self.SettingMenuType.config(text="Model")
+			self.MENU_INFO = ["Model", ""]
+			nowItem = len(self.DiseaseCombo)
+			for i in range(1, nowItem):
+				self.MENU_Modify_Item[i-1] = self.DiseaseCombo[i]
+		elif type_ == "Group":
+			self.SettingMenuType.config(text="Group (%s)" %(self.DiseaseType))
+			self.MENU_INFO = ["Group", self.DiseaseType]
+			nowItem = len(self.DisGroupCombo)
+			for i in range(1, nowItem):
+				self.MENU_Modify_Item[i-1] = self.DisGroupCombo[i]
+		self.updateSettingMenuList()
+		
 
 	# ===========================
 	# ===== 設定頁面設定參數 =====
@@ -720,9 +810,9 @@ class MazeMouseTrack(object):
 		DBGV.CheckP_UI = "33-2"
 		WriteDiseaseFile(self.CSV_DiseaseFile)
 		DBGV.CheckP_UI = "33-3"
-		LoadDiseaseFile()
+		self.CSV_DiseaseFile = LoadDiseaseFile()
 		DBGV.CheckP_UI = "33-4"
-		if ListType == "Disease":
+		if ListType == "Model":
 			DiseaseInfo = ['choose Disease...']
 			for i in range(len(self.CSV_DiseaseFile)):
 				if self.CSV_DiseaseFile[i][0] == 'Disease':
@@ -765,10 +855,33 @@ class MazeMouseTrack(object):
 		newSpace = ""
 		for i in range(15):
 			newSpace = newSpace + " "
+
+		self.DisGroupCombo = ['請選擇...']
+		self.TKS_DisGroup.current(0)
+		self.DisGroupType = ""
 		if self.TKS_Disease.current() != 0:
 			self.DiseaseType = self.TKS_Disease.get()
 			self.TKS_Show_Disease.config(text="Model: %s%s" %(self.DiseaseType,newSpace), fg="black")
-			self.DBGV.Data_ModelRT_Str = CreateModelRTStr(self.OperaType, self.DisDays[1], self.DisDays[2], self.DiseaseType, self.DisGroupType, self.Rat_ID)
+			if self.EXP_DATA_MODE == "EXPERIMENT":
+				self.TKS_BT_DisGroupModify.config(state="normal")
+				self.TKS_BT_DisGroupConfirm.config(state="normal")
+				combo_idx, mod_idx = findDiseaseArray(self.CSV_DiseaseFile, self.DiseaseType)
+				if combo_idx > 0:
+					for row in self.CSV_DiseaseFile[combo_idx-1][2]:
+						self.DisGroupCombo.append(row[1])
+				self.TKS_DisGroup.config(state="readonly", values=self.DisGroupCombo)
+		else:
+			if self.EXP_DATA_MODE == "EXPERIMENT":
+				self.TKS_BT_DisGroupModify.config(state="disabled")
+				self.TKS_BT_DisGroupConfirm.config(state="disabled")
+				self.TKS_DisGroup.config(state="disabled", values=self.DisGroupCombo)
+				self.TKS_DisGroup.current(0)
+				self.DisGroupType = ""
+				self.TKS_Show_DisGroup.config(text="Group: (not set)%s" %(newSpace), fg="gray35")
+			self.TKS_Disease.current(0)
+			self.DiseaseType = ""
+			self.TKS_Show_Disease.config(text="Model: (not set)%s" %(newSpace), fg="gray35")
+		self.DBGV.Data_ModelRT_Str = CreateModelRTStr(self.OperaType, self.DisDays[1], self.DisDays[2], self.DiseaseType, self.DisGroupType, self.Rat_ID)
 
 	def tkSetting_DisGroupConfirm(self): #設定UI視窗點擊[確認疾病組別]按鈕後處理副程式
 		DBGV.CheckP_UI = "36"
@@ -776,10 +889,14 @@ class MazeMouseTrack(object):
 		newSpace = ""
 		for i in range(15):
 			newSpace = newSpace + " "
-		if self.TKS_DisGroup.get() != "":
+		if self.TKS_DisGroup.current() != 0:
 			self.DisGroupType = self.TKS_DisGroup.get()
 			self.TKS_Show_DisGroup.config(text="Group: %s%s" %(self.DisGroupType,newSpace), fg="black")
-			self.DBGV.Data_ModelRT_Str = CreateModelRTStr(self.OperaType, self.DisDays[1], self.DisDays[2], self.DiseaseType, self.DisGroupType, self.Rat_ID)
+		else:
+			self.TKS_DisGroup.current(0)
+			self.DisGroupType = ""
+			self.TKS_Show_DisGroup.config(text="Group: (not set)%s" %(newSpace), fg="gray35")
+		self.DBGV.Data_ModelRT_Str = CreateModelRTStr(self.OperaType, self.DisDays[1], self.DisDays[2], self.DiseaseType, self.DisGroupType, self.Rat_ID)
 	
 	def tkSetting_OperaDays(self): #設定UI視窗點擊[確認天數]按鈕後處理副程式
 		DBGV.CheckP_UI = "43"
@@ -800,18 +917,155 @@ class MazeMouseTrack(object):
 		self.SETTING_OPEN = False
 		self.DBGV.Maze_SetState = False
 		self.BT_Setting.config(state="normal")
+
+		# 解除項目編輯鎖定狀態
+		self.MENU_OPEN = False
+		for i in range(len(self.MENU_Modify_Item)):
+			self.MENU_Modify_Item[i] = ""
+		self.ClearSettingMenuList()
+		self.SettingMenuFinish.config(state="disabled")
+
 		self.tkSetting.destroy()
+
+	def tkSetting_Menu_Finish(self): #下拉式選單編輯完成
+		self.MENU_OPEN = False
+		self.SettingMenuFinish.config(state="disabled")
+		self.SettingMenuType.config(text="")
+
+		# print(self.CSV_DiseaseFile)
+		# print(self.MENU_Modify_Item)
+		# print(self.MENU_INFO)
+		if self.MENU_INFO[0] == "Model":
+			# 更換順序以及新增
+			for i in range(len(self.MENU_Modify_Item)):
+				if self.MENU_Modify_Item[i] == "":
+					break
+				self.MENU_Modify_Item[i] = self.SettingMenuList[i].get()
+				combo_idx, mod_idx = findDiseaseArray(self.CSV_DiseaseFile, self.MENU_Modify_Item[i])
+				# print(self.MENU_Modify_Item[i], combo_idx, mod_idx, i)
+				if combo_idx == 0 and  mod_idx == -1:
+					self.CSV_DiseaseFile.append([i+1, self.MENU_Modify_Item[i], []])
+				else:
+					self.CSV_DiseaseFile[combo_idx-1][0] = i+1
+			self.CSV_DiseaseFile.sort()
+			# 檢查不在名單上的項目
+			findArr = []
+			for i in range(len(self.CSV_DiseaseFile)):
+				try:
+					idx = self.MENU_Modify_Item.index(self.CSV_DiseaseFile[i][1])
+				except:
+					idx = -1
+				findArr.append(idx)
+			# 刪除不在名單上的項目
+			for i in range(len(findArr)):
+				if i > len(findArr):
+					break
+				if findArr[i] == -1:
+					self.CSV_DiseaseFile.pop(i)
+					findArr.pop(i)
+					if i == len(findArr)-1:
+						if findArr[i] == -1:
+							self.CSV_DiseaseFile[combo_idx-1][2].pop(i)
+							findArr.pop(i)
+			self.CSV_DiseaseFile.sort()
+
+		elif self.MENU_INFO[0] == "Group":
+			combo_idx, mod_idx = findDiseaseArray(self.CSV_DiseaseFile, self.MENU_INFO[1])
+			# 更換順序以及新增
+			print(self.MENU_Modify_Item)
+			print(self.CSV_DiseaseFile[combo_idx-1][2])
+			for i in range(len(self.MENU_Modify_Item)):
+				if self.MENU_Modify_Item[i] == "":
+					break
+				self.MENU_Modify_Item[i] = self.SettingMenuList[i].get()
+				gp_combo_idx, gp_idx = findDiseaseArray(self.CSV_DiseaseFile[combo_idx-1][2], self.MENU_Modify_Item[i])
+				if gp_combo_idx == 0 and  gp_idx == -1:
+					self.CSV_DiseaseFile[combo_idx-1][2].append([i+1, self.MENU_Modify_Item[i]])
+				else:
+					self.CSV_DiseaseFile[combo_idx-1][2][gp_combo_idx-1][0] = i+1
+			self.CSV_DiseaseFile[combo_idx-1][2].sort()
+			print(self.CSV_DiseaseFile[combo_idx-1][2])
+			# 檢查不在名單上的項目
+			findArr = []
+			for i in range(len(self.CSV_DiseaseFile[combo_idx-1][2])):
+				try:
+					idx = self.MENU_Modify_Item.index(self.CSV_DiseaseFile[combo_idx-1][2][i][1])
+				except:
+					idx = -1
+				findArr.append(idx)
+			# 刪除不在名單上的項目
+			for i in range(len(findArr)):
+				if i > len(findArr):
+					break
+				if findArr[i] == -1:
+					self.CSV_DiseaseFile[combo_idx-1][2].pop(i)
+					findArr.pop(i)
+					if i == len(findArr)-1:
+						if findArr[i] == -1:
+							self.CSV_DiseaseFile[combo_idx-1][2].pop(i)
+							findArr.pop(i)
+			self.CSV_DiseaseFile[combo_idx-1][2].sort()
+		# print(self.CSV_DiseaseFile)
+
+		# 寫入檔案後並重讀陣列
+		WriteDiseaseFile(self.CSV_DiseaseFile)
+		self.CSV_DiseaseFile = LoadDiseaseFile()
+
+		# Model下拉是選單重置
+		self.DiseaseCombo = ['請選擇...']
+		for row in self.CSV_DiseaseFile:
+			self.DiseaseCombo.append(row[1])
+		self.TKS_Disease.config(values=self.DiseaseCombo)
+		self.TKS_Disease.current(0)
+		self.DiseaseType = ""
+		self.TKS_Show_Disease.config(text="Model: (not set)          ", fg="gray35")
+		# Model下拉式選單重置
+		self.DisGroupCombo = ['請選擇...']
+		self.TKS_BT_DisGroupModify.config(state="disabled")
+		self.TKS_BT_DisGroupConfirm.config(state="disabled")
+		self.TKS_DisGroup.config(state="disabled", values=self.DisGroupCombo)
+		self.TKS_DisGroup.current(0)
+		self.DisGroupType = ""
+		self.TKS_Show_DisGroup.config(text="Group: (not set)          ", fg="gray35")
+
+		for i in range(len(self.MENU_Modify_Item)):
+			self.MENU_Modify_Item[i] = ""
+		self.ClearSettingMenuList()
+
+	def tkSetting_Menu_ItemUpDown(self, up_down, mid):
+		buff = self.MENU_Modify_Item[mid]
+		if up_down == "Up":
+			self.MENU_Modify_Item[mid] = self.MENU_Modify_Item[mid-1]
+			self.MENU_Modify_Item[mid-1] = buff
+		elif up_down == "Down":
+			self.MENU_Modify_Item[mid] = self.MENU_Modify_Item[mid+1]
+			self.MENU_Modify_Item[mid+1] = buff
+		self.updateSettingMenuList()
+
+	def tkSetting_Menu_ItemNewDel(self, new_del, mid):
+		if new_del == "New":
+			self.MENU_Modify_Item[mid] = self.SettingMenuList[mid].get()
+		elif new_del == "Delete":
+			flag = mid
+			while flag < len(self.MENU_Modify_Item):
+				if flag == len(self.MENU_Modify_Item)-1:
+					self.MENU_Modify_Item[flag] = ""
+				else:
+					self.MENU_Modify_Item[flag] = self.MENU_Modify_Item[flag+1]
+				flag = flag + 1
+		self.updateSettingMenuList()
 
 	def tkSetting_SetupUI(self): #設定UI視窗主要程式
 		global Disease_List
 		DBGV.CheckP_UI = "18"
 		try:
 			self.DBGV.Maze_SetState = True
-			LoadDiseaseFile()
-			self.CSV_DiseaseFile = Disease_List
+
+			self.CSV_DiseaseFile = LoadDiseaseFile()
+			# WriteDiseaseFile(self.CSV_DiseaseFile)
 
 			self.SETTING_OPEN = True
-			settingSize = (800, 500)
+			settingSize = (800, self.WinSize[1])
 			self.tkSetting = tk.Tk()
 			self.tkSetting.title('%d臂迷宮路徑追蹤系統設定' %(self.ARM_UNIT)) #窗口名字
 			self.tkSetting.geometry('%dx%d+120+120' %(settingSize[0],settingSize[1])) #窗口大小(寬X高+X偏移量+Y偏移量)
@@ -852,12 +1106,12 @@ class MazeMouseTrack(object):
 				self.TKS_title1_1.config(fg="black", bg="gray75")
 			# 設定使用者名稱
 			SettingShowY = 190
-			Rec_UserName_Def = tk.StringVar()
 			tk.Label(self.tkSetting,text="User", font=('Arial', 12), bg="gray75").place(x=SettingShowX, y=SettingShowY,anchor="nw")
-			self.TK_User_Name = tk.Entry(self.tkSetting, font=('Arial', 12), width=12, textvariable=Rec_UserName_Def)
+			self.TK_User_Name = tk.Entry(self.tkSetting, font=('Arial', 12), width=12)
 			self.TK_User_Name.place(x=SettingShowX+56,y=SettingShowY+1,anchor="nw")
 			if self.Rec_UserName != "":
-				Rec_UserName_Def.set(self.Rec_UserName)
+				self.TK_User_Name.delete(0, "end")
+				self.TK_User_Name.insert(0, self.Rec_UserName)
 			self.BT_User_Name = tk.Button(self.tkSetting, text='Set User', width=9, font=('Arial', 10), bg="gray90", command=self.SetUserName)
 			self.BT_User_Name.place(x=SettingShowX+172,y=SettingShowY-3,anchor="nw")
 			if self.EXP_DATA_MODE == "NONE":
@@ -866,21 +1120,22 @@ class MazeMouseTrack(object):
 
 			#疾病模組資訊
 			SettingShowY = 230
-			# Disease_Def = tk.StringVar()
-			ModelList = ['請選擇...', 'TBI', 'Radiation', 'HI', 'Aβ', 'MCAo', 'SCI', 'Others']
-			ModelListDir = {'TBI':1, 'Radiation':2, 'HI':3, 'Aβ':4, 'MCAo':5, 'SCI':6, 'Others':7}
+			self.DiseaseCombo = ['請選擇...']
+			for row in self.CSV_DiseaseFile:
+				self.DiseaseCombo.append(row[1])
 			self.TKS_title3 = tk.Label(self.tkSetting, text="Model", font=('Arial', 12), bg="gray75")
 			self.TKS_title3.place(x=SettingShowX,y=SettingShowY,anchor="nw")
-			self.TKS_Disease = ttk.Combobox(self.tkSetting, values=ModelList, font=('Arial', 11), width=10, state="readonly")
+			self.TKS_Disease = ttk.Combobox(self.tkSetting, values=self.DiseaseCombo, font=('Arial', 11), width=10, state="readonly")
 			self.TKS_Disease.place(x=SettingShowX+56,y=SettingShowY+1,anchor="nw")
 			if self.DiseaseType != "":
-				self.TKS_Disease.current(ModelListDir[self.DiseaseType])
+				combo_idx, mod_idx = findDiseaseArray(self.CSV_DiseaseFile, self.DiseaseType)
+				self.TKS_Disease.current(combo_idx)
 			else:
 				self.TKS_Disease.current(0)
-			self.TKS_BT_DisConfirm = tk.Button(self.tkSetting, text='Set', width=5, font=('Arial', 10), bg="gray90", command=self.tkSetting_DiseaseConfirm)
+			self.TKS_BT_DisConfirm = tk.Button(self.tkSetting, text='Set', width=6, font=('Arial', 10), bg="gray90", command=self.tkSetting_DiseaseConfirm)
 			self.TKS_BT_DisConfirm.place(x=SettingShowX+172,y=SettingShowY-3,anchor="nw")
-			self.TKS_BT_DisModify = tk.Button(self.tkSetting, text='Edit', width=5, font=('Arial', 10), bg="gray90", command=self.tkSetting_DiseaseConfirm)
-			self.TKS_BT_DisModify.place(x=SettingShowX+222,y=SettingShowY-3,anchor="nw")
+			self.TKS_BT_DisModify = tk.Button(self.tkSetting, text='Modify', width=6, font=('Arial', 10), bg="gray90", command=lambda: self.SettingMenuModify('Model'))
+			self.TKS_BT_DisModify.place(x=SettingShowX+232,y=SettingShowY-3,anchor="nw")
 			if self.EXP_DATA_MODE == "NONE":
 				self.TKS_Disease.config(state="disabled")
 				self.TKS_BT_DisConfirm.config(state="disabled")
@@ -888,21 +1143,36 @@ class MazeMouseTrack(object):
 
 			#復健分組資訊
 			SettingShowY = 270
-			DisGroup_Def = tk.StringVar()
+			self.DisGroupCombo = ['請選擇...']
+			combo_idx = 0
+			if self.DiseaseType != "":
+				combo_idx, mod_idx = findDiseaseArray(self.CSV_DiseaseFile, self.DiseaseType)
+				if combo_idx > 0:
+					for row in self.CSV_DiseaseFile[combo_idx-1][2]:
+						self.DisGroupCombo.append(row[1])
+			# print(self.DisGroupCombo)
+
 			self.TKS_title3 = tk.Label(self.tkSetting, text="Group", font=('Arial', 12), bg="gray75")
 			self.TKS_title3.place(x=SettingShowX,y=SettingShowY,anchor="nw")
-			self.TKS_DisGroup = tk.Entry(self.tkSetting, font=('Arial', 12), width=12, textvariable=DisGroup_Def)
+			self.TKS_DisGroup = ttk.Combobox(self.tkSetting, values=self.DisGroupCombo, font=('Arial', 11), width=10, state="disabled")
 			self.TKS_DisGroup.place(x=SettingShowX+56,y=SettingShowY+1,anchor="nw")
 			if self.DisGroupType != "":
-				DisGroup_Def.set(self.DisGroupType)
-			self.TKS_BT_DisGroupConfirm = tk.Button(self.tkSetting, text='Set', width=5, font=('Arial', 10), bg="gray90", command=self.tkSetting_DisGroupConfirm)
+				gp_combo_idx, gp_idx = findDiseaseArray(self.CSV_DiseaseFile[combo_idx-1][2], self.DisGroupType)
+				self.TKS_DisGroup.current(gp_combo_idx)
+			else:
+				self.TKS_DisGroup.current(0)
+			self.TKS_BT_DisGroupConfirm = tk.Button(self.tkSetting, text='Set', width=6, font=('Arial', 10), bg="gray90", command=self.tkSetting_DisGroupConfirm)
 			self.TKS_BT_DisGroupConfirm.place(x=SettingShowX+172,y=SettingShowY-3,anchor="nw")
-			self.TKS_BT_DisGroupModify = tk.Button(self.tkSetting, text='Edit', width=5, font=('Arial', 10), bg="gray90", command=self.tkSetting_DisGroupConfirm)
-			self.TKS_BT_DisGroupModify.place(x=SettingShowX+222,y=SettingShowY-3,anchor="nw")
+			self.TKS_BT_DisGroupModify = tk.Button(self.tkSetting, text='Modify', width=6, font=('Arial', 10), bg="gray90", command=lambda: self.SettingMenuModify('Group'))
+			self.TKS_BT_DisGroupModify.place(x=SettingShowX+232,y=SettingShowY-3,anchor="nw")
 			if (self.EXP_DATA_MODE == "NONE") or (self.EXP_DATA_MODE == "TRAINING"):
 				self.TKS_DisGroup.config(state="disabled")
 				self.TKS_BT_DisGroupConfirm.config(state="disabled")
 				self.TKS_BT_DisGroupModify.config(state="disabled")
+			if (self.EXP_DATA_MODE == "EXPERIMENT") and self.DiseaseType != "":
+				self.TKS_DisGroup.config(state="readonly")
+			else: 
+				self.TKS_DisGroup.config(state="disabled")
 
 			# 選擇狀態是手術前後
 			SettingShowY = 310
@@ -924,20 +1194,20 @@ class MazeMouseTrack(object):
 
 			# 設定天數
 			SettingShowY = 350
-			OpDayM_Def = tk.StringVar()
-			OpDayD_Def = tk.StringVar()
 			self.TKS_title2 = tk.Label(self.tkSetting, text="TimePoint", font=('Arial', 12), bg="gray75")
 			self.TKS_title2.place(x=SettingShowX,y=SettingShowY+16,anchor="nw")
-			self.TKS_OpDay_Month = tk.Entry(self.tkSetting, font=('Arial', 12), width=6, justify="right", textvariable=OpDayM_Def)
+			self.TKS_OpDay_Month = tk.Entry(self.tkSetting, font=('Arial', 12), width=6, justify="right")
 			self.TKS_OpDay_Month.place(x=SettingShowX+82,y=SettingShowY+7,anchor="nw")
 			tk.Label(self.tkSetting, text="Month", font=('Arial', 10)).place(x=SettingShowX+140,y=SettingShowY+7,anchor="nw")
-			self.TKS_OpDay_Day = tk.Entry(self.tkSetting, font=('Arial', 12), width=6, justify="right", textvariable=OpDayD_Def)
+			self.TKS_OpDay_Day = tk.Entry(self.tkSetting, font=('Arial', 12), width=6, justify="right")
 			self.TKS_OpDay_Day.place(x=SettingShowX+82,y=SettingShowY+35,anchor="nw")
 			tk.Label(self.tkSetting, text="Day", font=('Arial', 10)).place(x=SettingShowX+140,y=SettingShowY+35,anchor="nw")
 			if self.DisDays[1] != -1:
-				OpDayM_Def.set(self.DisDays[1])
+				self.TKS_OpDay_Month.delete(0, "end")
+				self.TKS_OpDay_Month.insert(0, self.DisDays[1])
 			if self.DisDays[2] != -1:
-				OpDayD_Def.set(self.DisDays[2])
+				self.TKS_OpDay_Day.delete(0, "end")
+				self.TKS_OpDay_Day.insert(0, self.DisDays[2])
 			self.TKS_BT_OpDayConfirm = tk.Button(self.tkSetting, text='Confirm', width=9, font=('Arial', 10), bg="gray90", command=self.tkSetting_OperaDays)
 			self.TKS_BT_OpDayConfirm.place(x=SettingShowX+180,y=SettingShowY+15,anchor="nw")
 			if (self.EXP_DATA_MODE == "NONE") or (self.EXP_DATA_MODE == "TRAINING"):
@@ -947,23 +1217,77 @@ class MazeMouseTrack(object):
 
 			# 設定老鼠編號
 			SettingShowY = 390
-			RatID_Def = tk.StringVar()
 			tk.Label(self.tkSetting,text="Rat ID", font=('Arial', 12), bg="gray75").place(x=SettingShowX,y=SettingShowY+25,anchor="nw")
-			self.TK_Rat_ID = tk.Entry(self.tkSetting, font=('Arial', 12), width=14, textvariable=RatID_Def)
+			self.TK_Rat_ID = tk.Entry(self.tkSetting, font=('Arial', 12), width=14)
 			self.TK_Rat_ID.place(x=SettingShowX+60,y=SettingShowY+27,anchor="nw")
 			if self.Rat_ID != "":
-				RatID_Def.set(self.Rat_ID)
+				self.TK_Rat_ID.delete(0, "end")
+				self.TK_Rat_ID.insert(0, self.Rat_ID)
 			self.BT_Rat_ID = tk.Button(self.tkSetting, text='Set ID', width=7, font=('Arial', 10), bg="gray90", command=self.SetRatID)
 			self.BT_Rat_ID.place(x=SettingShowX+200,y=SettingShowY+22,anchor="nw")
 			if (self.EXP_DATA_MODE == "NONE") or (self.EXP_DATA_MODE == "TRAINING"):
 				self.TK_Rat_ID.config(state="disabled")
 				self.BT_Rat_ID.config(state="disabled")
 			
+			# 修改下拉式選單處
+			MenuX = 320
+			MenuY = 20
+			MenuItemRange = 35
+			tk.Label(self.tkSetting,text="Modify Drop-down Menu List", font=('Arial', 13), bg="gray75").place(x=MenuX,y=MenuY,anchor="nw")
+			
+			tk.Label(self.tkSetting,text="Type:", font=('Arial', 12)).place(x=MenuX,y=MenuY+30,anchor="nw")
+			self.SettingMenuType = tk.Label(self.tkSetting,text="", font=('Arial', 13, 'bold'))
+			self.SettingMenuType.place(x=MenuX+40,y=MenuY+30,anchor="nw")
+
+			MenuItemY = MenuY + 60
+			self.SettingMenuNo = []
+			self.SettingMenuList = []
+			self.SettingMenuNew = []
+			self.SettingMenuDel = []
+			self.SettingMenuUp = []
+			self.SettingMenuDown = []
+			for i in range(10):
+				self.SettingMenuNo.append("")
+				self.SettingMenuList.append("")
+				self.SettingMenuNew.append("")
+				self.SettingMenuDel.append("")
+				self.SettingMenuUp.append("")
+				self.SettingMenuDown.append("")
+
+				self.SettingMenuNo[i] = tk.Label(self.tkSetting,text="%02d" %(i+1), font=('Arial', 13), bg="gray85", state="disabled")
+				self.SettingMenuNo[i].place(x=MenuX,y=MenuItemY + MenuItemRange*i,anchor="nw")
+				self.SettingMenuList[i] = tk.Entry(self.tkSetting, font=('Arial', 13), width=20, state="disabled")
+				self.SettingMenuList[i].place(x=MenuX+30,y=MenuItemY + MenuItemRange*i,anchor="nw")
+				self.SettingMenuNew[i] = tk.Button(self.tkSetting, text='New', width=5, font=('Arial', 10), command=partial(self.tkSetting_Menu_ItemNewDel, 'New', i), state="disabled", bg="gray85")
+				self.SettingMenuNew[i].place(x=MenuX+220,y=MenuItemY - 2 + MenuItemRange*i,anchor="nw")
+				self.SettingMenuDel[i] = tk.Button(self.tkSetting, text='Delete', width=5, font=('Arial', 10), command=partial(self.tkSetting_Menu_ItemNewDel, 'Delete', i), state="disabled", bg="gray85")
+				self.SettingMenuDel[i].place(x=MenuX+275,y=MenuItemY - 2 + MenuItemRange*i,anchor="nw")
+				self.SettingMenuUp[i] = tk.Button(self.tkSetting, text='▲', font=('Arial', 10), bg="gray85", command=partial(self.tkSetting_Menu_ItemUpDown, 'Up', i), state="disabled")
+				self.SettingMenuUp[i].place(x=MenuX+330,y=MenuItemY - 2 + MenuItemRange*i ,anchor="nw")
+				self.SettingMenuDown[i] = tk.Button(self.tkSetting, text='▼', font=('Arial', 10), bg="gray85", command=partial(self.tkSetting_Menu_ItemUpDown, 'Down', i), state="disabled")
+				self.SettingMenuDown[i].place(x=MenuX+360,y=MenuItemY - 2 + MenuItemRange*i,anchor="nw")
+			self.SettingMenuFinish = tk.Button(self.tkSetting, text='Finish', font=('Arial', 12), bg="gray85", command=self.tkSetting_Menu_Finish, state="disabled")
+			self.SettingMenuFinish.place(x=MenuX,y=MenuItemY - 2 + MenuItemRange*10,anchor="nw")
+
+			# 下拉式選單註解處
+			MenuCommandX = 380
+			MenuCommandY = 430
+			MenuCommandRange = 22
+			CommandLine = [
+			"1.若有修改Model名稱，則該Model下的Group項目將會全數刪除。",
+			"   需重新新增原Model下的Group項目。", 
+			"2.當更動任何Model和Group的下拉式選項時，在按下[Finish]存檔",
+			"   時，需重新選擇Model以及Group項目。"]
+			tk.Label(self.tkSetting,text="●注意事項：", font=('Arial', 11, 'bold')).place(x=MenuCommandX,y=MenuCommandY,anchor="nw")
+			for i in range(len(CommandLine)):
+				tk.Label(self.tkSetting,text=CommandLine[i], font=('Arial', 10)).place(x=MenuCommandX, y=MenuCommandY + (22 + MenuCommandRange*i),anchor="nw")
+
 			DBGV.CheckP_UI = "19"
 			self.BT_Setting.config(state="disabled")
 			self.tkSetting.protocol("WM_DELETE_WINDOW", self.tkSetting_Closing)
 			self.tkSetting.mainloop()
 			DBGV.CheckP_UI = "20"
+
 		except Warning as e:
 			detail = e.args[0] #取得詳細內容
 			cl, exc, tb = sys.exc_info() #取得Call Stack
@@ -992,10 +1316,9 @@ class MazeMouseTrack(object):
 			self.TKS_Btn1_Opera2.config(state="normal")
 			self.TKS_OpDay_Month.config(state="normal")
 			self.TKS_OpDay_Day.config(state="normal")
-			self.TKS_DisGroup.config(state="normal")
 			self.TKS_BT_OpDayConfirm.config(state="normal")
-			self.TKS_BT_DisGroupConfirm.config(state="normal")
-			self.TKS_BT_DisGroupModify.config(state="normal")
+			# self.TKS_BT_DisGroupConfirm.config(state="normal")
+			# self.TKS_BT_DisGroupModify.config(state="normal")
 		elif mode == "TRAINING":
 			self.DisGroupType = "Training"
 			self.DisDays = [self.DisDays[0], 99, 99]
@@ -1010,6 +1333,7 @@ class MazeMouseTrack(object):
 		self.TK_User_Name.config(state="normal")
 		self.BT_User_Name.config(state="normal")
 		self.TKS_Disease.config(state="readonly")
+		# self.TKS_DisGroup.config(state="readonly")
 		self.TKS_BT_DisConfirm.config(state="normal")
 		self.TKS_BT_DisModify.config(state="normal")
 
