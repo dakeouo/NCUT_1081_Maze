@@ -1,10 +1,40 @@
-# 8 Arm Maze System with User Interface (Ver.1)
+# 圖像化自動追蹤紀錄動物軌跡%d臂迷宮系統平台 (Ver.1.16)
 
 國立勤益科大陳啟鈞教授團隊與台南市奇美醫院產學合作，進行【以路徑預測失智症之八臂迷宮系統】計畫，目的是探討使用紀錄被測者行走路徑來判斷出被測者是否有失智症傾向，以協助醫師診斷被測者是否罹患失智症。
 
-![image](https://i.imgur.com/XrAZRnR.png)
+系統開啟後截圖
+![image](https://i.imgur.com/DvyybDW.png)
+
+實驗參數相關設定畫面截圖
+![image](https://i.imgur.com/OmfYF44.png)
 
 ## Steps for System
+### File Requirements (CSV)
+#### ARMS_LINE.csv (八臂座標點)
+1. 該檔案會有8x8二維陣列的數值，格式為[[[臂一X1, 臂一Y1], [臂一X2, 臂一Y2], ...], ..., [[臂八X1, 臂八Y1], [臂八X2, 臂八Y2], ...]]
+2. 面對八臂迷宮，畫面中朝下為第一臂，以順時鐘開始編號。臂尾(外側)面對自己/時，內側右邊為第1點、外側右邊為第2點、外側左邊為第3點、內側左邊為第4點。
+| 第一臂第1個X座標 | 第一臂第1個Y座標 | 第一臂第2個X座標 | 第一臂第2個Y座標 | 第一臂第3個X座標 | 第一臂第3個Y座標 | 第一臂第4個X座標 | 第一臂第4個Y座標 |
+| 第二臂第1個X座標 | 第二臂第1個Y座標 | 第二臂第2個X座標 | 第二臂第2個Y座標 | 第二臂第3個X座標 | 第二臂第3個Y座標 | 第二臂第4個X座標 | 第二臂第4個Y座標 |
+| 第三臂第1個X座標 | 第三臂第1個Y座標 | 第三臂第2個X座標 | 第三臂第2個Y座標 | 第三臂第3個X座標 | 第三臂第3個Y座標 | 第三臂第4個X座標 | 第三臂第4個Y座標 |
+| 第四臂第1個X座標 | 第四臂第1個Y座標 | 第四臂第2個X座標 | 第四臂第2個Y座標 | 第四臂第3個X座標 | 第四臂第3個Y座標 | 第四臂第4個X座標 | 第四臂第4個Y座標 |
+| 第五臂第1個X座標 | 第五臂第1個Y座標 | 第五臂第2個X座標 | 第五臂第2個Y座標 | 第五臂第3個X座標 | 第五臂第3個Y座標 | 第五臂第4個X座標 | 第五臂第4個Y座標 |
+| 第六臂第1個X座標 | 第六臂第1個Y座標 | 第六臂第2個X座標 | 第六臂第2個Y座標 | 第六臂第3個X座標 | 第六臂第3個Y座標 | 第六臂第4個X座標 | 第六臂第4個Y座標 |
+| 第七臂第1個X座標 | 第七臂第1個Y座標 | 第七臂第2個X座標 | 第七臂第2個Y座標 | 第七臂第3個X座標 | 第七臂第3個Y座標 | 第七臂第4個X座標 | 第七臂第4個Y座標 |
+| 第八臂第1個X座標 | 第八臂第1個Y座標 | 第八臂第2個X座標 | 第八臂第2個Y座標 | 第八臂第3個X座標 | 第八臂第3個Y座標 | 第八臂第4個X座標 | 第八臂第4個Y座標 |
+
+#### IPCAM_INFO.csv (攝影機資訊)
+1. 本系統使用RTSP架構，格式為：rtsp://**[攝影機帳號]**:**[攝影機密碼]**@**[攝影機IP]**:554/**[攝影機連線參數]**
+2. 裡面內部以一列為一台攝影機資訊，格式為：
+| 攝影機**名稱** | 攝影機**帳號** | 攝影機**密碼** | 攝影機**IP** | 攝影機**連線參數** | 攝影機**影像左上X座標** | 攝影機**影像左上X座標** |
+
+#### NEW_MODEL_LIST.csv (下拉式選單項目)
+1. 放置本系統下拉式選單之Model與Group選單項目
+2. 以下分別為Model與Group選單項目格式：
+- Model 格式
+| Model | Model項目編號 | Model項目內容 |
+- Group 格式
+| Groups | Model項目編號 | Group項目編號 | Group項目內容 |
+
 ### Python Libarary
 Python需安裝下列套件才可成功執行：
 ```bash
@@ -31,4 +61,4 @@ pip install Pillow #PIL(from PIL impory Image)
 ## Designer
 National Chin-Yi University of Techology Department of Electronic Engineering 
 - Master [Wang, Jian-Yung](https://github.com/s92475mark)
-- Master [Hong, Liang-Jyun](https://github.com/louishong)
+- Master [Hong, Liang-Jyun](https://github.com/dakeouo)
