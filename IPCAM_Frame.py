@@ -1,3 +1,6 @@
+# ========================
+# ==== 攝影機連線程式碼 ====
+# ========================
 import cv2
 import numpy as np
 from PIL import Image

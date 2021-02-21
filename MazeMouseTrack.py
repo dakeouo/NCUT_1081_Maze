@@ -1,13 +1,19 @@
+# ==============================
+# ==== 使用者頁面(UI)處理程式 ====
+# ==============================
 import random
 import datetime
 import tkinter as tk
 import tkinter.messagebox
 from tkinter import filedialog
 import threading
+
+# ==== 要連接的程式檔案 ====
 # from ThermalCAM import ThermalCAM as TCAM
-from InfraredCAM import InfraredCAM as TCAM
-import DebugVideo as DBGV
-import IPCAM_Frame as IPCAM
+from InfraredCAM import InfraredCAM as TCAM # 影像處理程式
+import DebugVideo as DBGV # 影片紀錄程式
+import IPCAM_Frame as IPCAM # 攝像機程式
+
 import logging
 import sys
 import traceback
@@ -112,7 +118,8 @@ def countStr(Str): #算出字串中大小寫字母與數字及其他符號的個
 def Second2Datetime(sec): #秒數轉換成時間
 	return int(sec/3600), int((sec%3600)/60), int((sec%3600)%60) 	
 
-def CreateModelRTStr(OpType, OpM, OpD, Model, Group, RatID):
+def CreateModelRTStr(OpType, OpM, OpD, Model, Group, RatID): #將實驗參數轉換成要傳給DBGV的格式
+	#執行一次副程式就重新整理所有實驗參數
 	if OpType != "":
 		OpTypeStr = "%sOp" %(OpType)
 	else:
@@ -147,20 +154,22 @@ class MazeMouseTrack(object):
 		# self.TKS_* => 用在設定UI視窗的變數
 		# self.*Combo => 下拉式選單變數
 		# self.TKC_* => 主UI視窗的Checkbox(核選方塊)變數
+		# self.BT_* => 他是UI上的按鈕變數
 		# (二) 執行緒
 		# self.*Thread => 執行緒變數
+		# self.CoodiTimer => 他也是執行緒，只是我們教授覺得他是Timer不是執行緒@@
 		# (三) 其它
-		# 剩下的自己看啦，我設的變數都有機可循的，英文不會就請自己翻譯
+		# 要接我程式碼的人，剩下的自己看啦，我設的變數都有機可循的，英文不會就請自己翻譯
 		#============================
 
-		#紅外線攝相機執行緒
+		#攝相機執行緒
 		self.IPCAM = IPCAM
 		self.CAMThread = threading.Thread(target = self.IPCAM.Main) # 執行該子執行緒
 		self.CAMThread.setDaemon(True) #將Thread設定為daemon thread(一種在背景執行的thread，具有和main thread一同終止的特性)
 		self.CAMThread.start()  # 執行該子執行緒
 		DBGV.CheckP_UI = "2-1"
 
-		#熱影像相機執行緒
+		#主要影像處理執行緒
 		self.TCAM = TCAM()
 		self.thread = threading.Thread(target = self.TCAM.CameraMain) # 執行該子執行緒
 		self.thread.setDaemon(True) #將Thread設定為daemon thread(一種在背景執行的thread，具有和main thread一同終止的特性)
@@ -188,8 +197,6 @@ class MazeMouseTrack(object):
 		self.Route = [] #紀錄進臂順序
 		self.S_Term = [] #各臂短期記憶錯誤
 		self.L_Term = [] #各臂長期記憶錯誤
-		self.FilePath = "" #存入的路徑
-		self.FileName = "" #存入的檔案
 		self.TargetPos = self.TCAM.TargetPos #影像處理後取得的座標
 		self.nowPos = self.TargetPos
 		self.Latency = 0 #總時間長度
@@ -219,19 +226,16 @@ class MazeMouseTrack(object):
 
 		#變數：顯示目前設定狀態
 		self.TK_SHOW_Food = []
-		# self.TK_SHOW_FileDir = ""
 		self.TK_SHOW_Rat_ID = ""
 		self.TK_SHOW_SYS_Msg = ""
-		self.TKE_Dir = ""
 		self.TKC_Food = []
 
 		self.InfoCombo = ""
-		self.BT_Choose_Dir = ""
 		self.BT_Rat_ID = ""
-		self.mazeTitle = ""
+		self.mazeTitle = "" # UI顯示目前攝影機名稱與其IP位置
 
 		#實驗設定變數統整
-		self.OperaType = "" #目前使用模式(訓練期/正式實驗期)
+		self.OperaType = "" #目前使用模式(前期訓練/正式測試)
 		self.DiseaseType = "" #老鼠病症組別
 		self.DisGroupType = "" #老鼠病症組別復鍵(含 健康、無復健 等)
 		self.DisDays = [False, -1, -1] #老鼠病症天數(是否手術, 月, 天)
@@ -251,13 +255,13 @@ class MazeMouseTrack(object):
 
 		self.CSV_DiseaseFile = [] #存放CSV讀進來的內容
 		self.NOW_DiseaseList = [-1, '', '', ''] #目前編輯條目(index, 分類[疾病/分組], 名稱, 敘述)
-		self.MENU_OPEN = False
-		self.MENU_INFO = ["", ""]
-		self.MENU_Modify_Item = ["", "", "", "", "", "", "", "", "", ""]
+		self.MENU_OPEN = False #要修改下拉式選單時為TRUE
+		self.MENU_INFO = ["", ""] #紀錄要修改的下拉項目資訊
+		self.MENU_Modify_Item = ["", "", "", "", "", "", "", "", "", ""] #下拉項目的項目
 		DBGV.CheckP_UI = "5"
 
 		self.tkWin = tk.Tk()
-		self.tkWin.title('Automatic tracking %d-Arms Maze Platform System (Ver %s)' %(self.ARM_UNIT, self.DBGV.SYSTEM_VER)) #窗口名字
+		self.tkWin.title('圖像化自動追蹤紀錄動物軌跡%d臂迷宮系統平台 (Ver. %s)' %(self.ARM_UNIT, self.DBGV.SYSTEM_VER)) #窗口名字
 		self.tkWin.geometry('%dx%d+10+10' %(self.WinSize[0],self.WinSize[1])) #窗口大小(寬X高+X偏移量+Y偏移量)
 		self.tkWin.resizable(False, False) #禁止變更視窗大小
 		DBGV.CheckP_UI = "6"
@@ -310,7 +314,7 @@ class MazeMouseTrack(object):
 			# print(arr)
 			self.mazeCanvas.create_line(p1[0], p1[1], p2[0], p2[1], fill="yellow",width=2)
 
-	def setArmInLine(self): #設定進臂線
+	def setArmInLine(self): #設定並繪製進臂線
 		DBGV.CheckP_UI = "45"
 		ARMS_IN_LINE = self.TCAM.ARMS_IN_LINE
 		while len(ARMS_IN_LINE) == 0:
@@ -370,8 +374,9 @@ class MazeMouseTrack(object):
 				ct = ct + 1
 			else:
 				self.Food[i] = 0
-		self.TotalFood = ct
+		self.TotalFood = ct #統計食物臂有幾個
 
+		# 將哪幾臂是食物臂顯示在UI視窗上
 		if ct == 0:
 			self.TK_SHOW_Food.config(text="Food: (not set)", fg="gray35")
 		else:
@@ -382,16 +387,19 @@ class MazeMouseTrack(object):
 
 	def ConnectClick(self): #"Link"按鈕按下時負責處理的副程式
 		if self.CAM_IS_RUN:
+			# 關閉攝影機連線
 			DBGV.CheckP_UI = "26-1"
+			
+			# 將UI回歸到未連線狀態
 			self.BT_Connect.config(text="Link", bg="DarkOliveGreen2", fg="dark green")
 			self.Link_State.config(text="IPCAM Link: Unlinked", fg="gray35")
-			self.CAM_IS_RUN = False
 			# self.CAM_IS_CONN = False
 			self.BT_Start.config(bg="gray85", state="disabled")
 			self.BT_Camera.config(state="disabled")
 			self.BT_Setting.config(state="disabled")
 			for i in range(1, self.ARM_UNIT+1):
 				self.TKC_Food[i-1].config(state="disabled")
+			# 將連線的相關參數回歸到未連線狀態
 			self.TCAM.CAM_IS_RUN = False
 			self.TCAM.CAM_IS_CONN = False
 			self.IPCAM.CAM_IS_RUN = False
@@ -400,12 +408,15 @@ class MazeMouseTrack(object):
 			self.OPEN_CAMERA_WINDOW = False
 			self.TCAM.OPEN_CAMERA_WINDOW = self.OPEN_CAMERA_WINDOW
 			self.makeBall()
+			# 如果設定的視窗有開起來就必須將它關閉
 			if self.SETTING_OPEN:
 				self.SETTING_OPEN = False
 				self.DBGV.Maze_SetState = False
 				self.BT_Setting.config(state="disabled")
 				self.tkSetting.destroy()
+			self.CAM_IS_RUN = False
 		else:
+			# 開啟攝影機連線
 			DBGV.CheckP_UI = "26-2"
 			self.BT_Connect.config(text="Unlink", bg="tomato", fg="brown4")
 			self.Link_State.config(text="IPCAM Link: Linked",fg="green4")
@@ -421,12 +432,14 @@ class MazeMouseTrack(object):
 	def MazeStartCheck(self): #按下"start"，實驗開始執行前檢查
 		HaveError = False
 		if self.MAZE_IS_RUN:
+			# 手動結束實驗
 			DBGV.CheckP_UI = "27-1"
 			self.Maze_State.config(text="Maze State: Preparing...", fg="gray35")
 			self.Maze_State.place(x=750, y=200,anchor="nw")
 			self.BT_Start.config(text="Start", bg="DarkOliveGreen2")
 			self.MAZE_IS_RUN = False
 		else:
+			# 檢查實驗參數是否都有選填
 			DBGV.CheckP_UI = "27-2"
 			ErrMsg = ""
 			if self.OperaType == "":
@@ -440,8 +453,6 @@ class MazeMouseTrack(object):
 					self.DisDays[1] = 0
 				if(self.DisDays[2] == -1):
 					self.DisDays[2] = 0
-
-			DBGV.CheckP_UI = "27-3"
 			if self.DiseaseType == "":
 				ErrMsg = ErrMsg + "You don't set Model Type!!\n"
 				HaveError = True
@@ -459,24 +470,28 @@ class MazeMouseTrack(object):
 				HaveError = True
 			
 			DBGV.CheckP_UI = "27-4"
+			# 是否有任何實驗參數沒選填的
 			if HaveError:
 				tk.messagebox.showwarning(title='Warning!!', message=ErrMsg)
 			else:
+				# 傳送實驗相關設定(放食物的總數/食物臂/老鼠ID/使用者名稱)
 				self.TCAM.TotalFood = self.TotalFood
 				self.TCAM.Food = self.Food
 				self.TCAM.RatID = self.Rat_ID
 				self.TCAM.Rec_UserName = self.Rec_UserName
-				# self.TCAM.filePath = (str(self.FilePath)+str(self.FileName))
 
+				# 傳送實驗相關設定(手術前後/Model/Group/時間點)
 				self.TCAM.OperaType = self.OperaType
 				self.TCAM.DiseaseType = self.DiseaseType
 				self.TCAM.DisGroupType = self.DisGroupType
 				self.TCAM.DisDays = self.DisDays
 
+				# 更新實驗狀態
 				self.Maze_State.config(text="Maze State: Recording...", fg="green4")
 				self.Maze_State.place(x=750, y=200, anchor="nw")
 				self.BT_Start.config(text="Stop", bg="IndianRed1")
 
+				# 如果是前期訓練則記錄一下老鼠ID
 				self.MAZE_IS_RUN = True
 				if self.EXP_DATA_MODE == "TRAINING":
 					self.OldTrain_Rat_ID = self.Rat_ID
@@ -500,7 +515,7 @@ class MazeMouseTrack(object):
 		self.mazeCanvas.move(self.TBall, int(self.TargetPos[0] - self.nowPos[0]), int(self.TargetPos[1] - self.nowPos[1]))
 		self.nowPos = self.TargetPos
 
-	def updateData(self): #更新各項顯示資訊
+	def updateData(self): #更新各項顯示資訊(包含LongTerm ShortTerm Latency 進出臂順序)
 		DBGV.CheckP_UI = "30"
 		self.S_Term = self.TCAM.ShortTerm
 		self.L_Term = self.TCAM.LongTerm
@@ -520,10 +535,9 @@ class MazeMouseTrack(object):
 		self.RouteText.delete('0.0','end')
 		self.RouteText.insert('end',self.Route)
 
-	def LockInput(self, state): #輸入鎖(避免不必要的麻煩)
+	def LockInput(self, state): #輸入鎖(鎖上可以輸入/勾選/點擊實驗相關的控制項，避免不必要的麻煩)
 		if state:
 			DBGV.CheckP_UI = "31-1"
-			# self.TKE_Dir.config(state="disabled")
 			if self.MAZE_IS_RUN:
 				self.BT_Connect.config(state="disabled")
 
@@ -555,7 +569,6 @@ class MazeMouseTrack(object):
 				self.TKC_Food[i].config(state="disabled")
 		else:
 			DBGV.CheckP_UI = "31-2"
-			# self.TKE_Dir.config(state="normal")
 			self.BT_Connect.config(state="normal")
 			self.BT_Start.config(state="normal")
 
@@ -581,11 +594,12 @@ class MazeMouseTrack(object):
 			for i in range(0,self.ARM_UNIT):
 				self.TKC_Food[i].config(state="normal")
 
-	def setIPCAMInfo(self): #設定要匯入IPCAM那隻程式的資訊
+	def setIPCAMInfo(self): #設定要匯入IPCAM那隻程式的資訊(當點下Load按鈕時會執行的副程式)
 		if(self.InfoCombo.current() != 0):
 			DBGV.CheckP_UI = "32-1"
 			IPCAM_ID, IPCAM_Name = self.InfoCombo.current()-1, self.InfoCombo.get()
 
+			# 將取得的資訊分別記錄到參數中
 			IPCAM_Username = IPCAM_Info[IPCAM_ID][1]
 			IPCAM_Password = IPCAM_Info[IPCAM_ID][2]
 			IPCAM_IP = IPCAM_Info[IPCAM_ID][3]
@@ -593,42 +607,47 @@ class MazeMouseTrack(object):
 			IPCAM_NewP1 = [IPCAM_Info[IPCAM_ID][5], IPCAM_Info[IPCAM_ID][6]]
 			self.CAM_INIT_SUCCESS = True
 
+			# 將這些參數傳給IPCAM程式碼參數，使它可以成功連線(RTSP)
 			self.IPCAM.IPCAM_Username = IPCAM_Username
 			self.IPCAM.IPCAM_Password = IPCAM_Password
 			self.IPCAM.IPCAM_IP = IPCAM_IP
 			self.IPCAM.IPCAM_Name = IPCAM_Name
 			self.IPCAM.IPCAM_Bar = IPCAM_Bar
 			self.IPCAM.IPCAM_NewP1 = [IPCAM_NewP1[0], IPCAM_NewP1[1]]
-
 			self.IPCAM.CAM_INIT_SUCCESS = self.CAM_INIT_SUCCESS
 
+			# 更新UI畫面上的狀態
 			DBGV.CheckP_UI = "32-2"
-			self.mazeTitle.config(text="IPCAM: {} ({})".format(IPCAM_Name, IPCAM_IP))
-			# for i in range(1, self.ARM_UNIT+1):
-			# 	self.TKC_Food[i-1].config(state="normal")
+			self.mazeTitle.config(text="IPCAM: {} ({})".format(IPCAM_Name, IPCAM_IP)) #寫上現在連線哪一台裝置
 			self.BT_Connect.config(state="normal", bg="DarkOliveGreen2")
-			# self.BT_Setting.config(state="normal")
-			# self.BT_Choose_Dir.config(state="normal")
-			# self.BT_Rat_ID.config(state="normal")
-			# self.TK_Rat_ID.config(state="normal")
-			# self.TKE_Dir.config(state="normal")
-
 			self.BT_LoadCAM.config(state="disabled")
 			self.InfoCombo.config(state="disabled")
 
-	def LoopMain(self): #UI執行後一直跑的迴圈
+	def LoopMain(self): #主UI執行後一直跑的迴圈
 		try:
 			DBGV.CheckP_UI = "11"
+
+			# 攝影機初始化成功(但只能執行一次)
+			# 換句話說，如果你要切換攝影機，目前就必須關掉重開系統程式
 			if self.CAM_INIT_SUCCESS:
 				DBGV.CheckP_UI = "12"
-				self.makeBall()
-				self.CAM_IS_CONN = self.TCAM.CAM_IS_CONN
+				self.makeBall() #更新中間那個視窗的紅色圓形
+				self.CAM_IS_CONN = self.TCAM.CAM_IS_CONN #更新"目前攝影機是否連線成功"
+				
+				# 如果攝影機現在是 連線狀態 而且是 連線成功 的狀態
 				if self.CAM_IS_RUN and self.CAM_IS_CONN:
+					# 開啟"實驗開始(start)"按鈕
 					self.BT_Start.config(bg="DarkOliveGreen2")
 					self.BT_Start.config(state="normal")
+					
+					# 第一次執行這個區塊的程式
+					# 主要是用來開啟"定時紀錄座標點"的執行緒(我們教授覺得他是Timer就是了)
 					if self.CAM_IS_RUN_First:
 						# print("CoodiTimer Start")
 						self.CAM_IS_RUN_First = False
+						
+						# 檢查是否這個執行緒還活著
+						# 避免重複開啟執行緒
 						if not self.CoodiTimer.is_alive():
 							self.CoodiTimer.start()
 				else:
@@ -636,22 +655,31 @@ class MazeMouseTrack(object):
 						# print("CoodiTimer Cancel")
 						self.CAM_IS_RUN_First = True
 						# 關閉記錄座標點執行緒，並重建該執行緒
+						# 基本上關閉(cancel)該執行緒就不能再重複開啟(start)，必須在新建一次執行緒
 						self.CoodiTimer.cancel()
 						self.CoodiTimer = Timer1(0.046, self.TCAM.saveCoodinate2Arr)
 						self.CoodiTimer.setDaemon(True) #將Thread設定為daemon thread(一種在背景執行的thread，具有和main thread一同終止的特性)
+					# 鎖住"實驗開始(start)"按鈕
 					self.BT_Start.config(bg="gray85")
 					self.BT_Start.config(state="disabled")
 				# print(self.CoodiTimer.is_alive())
 
+				# 判斷是否實驗開始
 				if self.MAZE_IS_RUN:
 					DBGV.CheckP_UI = "13-1"
+
+					# 是不是第一次執行該區域。看起來好像沒用，但好像攸關其他地方的樣子
+					# 如果你後來發現他真的沒用，那就麻煩你幫我把下面這兩行註解調或是刪了吧XD
 					if self.firstMazeRun:
 						self.firstMazeRun = False
-					self.LockInput(True)
+
+					self.LockInput(True) #開啟輸入鎖(避免亂按@@)
 					DBGV.CheckP_UI = "13-2"
-					newMazeStatus = self.TCAM.MAZE_IS_RUN
-					self.updateData()
+					newMazeStatus = self.TCAM.MAZE_IS_RUN #看看實驗是否結束了
+					self.updateData() #更新實驗數據在主UI上
 					DBGV.CheckP_UI = "13-3"
+
+					# 實驗是否結束(老鼠是否把全部時務臂都走過了)
 					if newMazeStatus == False:
 						self.Maze_State.config(text="Maze State: Preparing...", fg="gray35")
 						# self.Maze_State.place(x=750, y=200,anchor="nw")
@@ -659,16 +687,23 @@ class MazeMouseTrack(object):
 						self.MAZE_IS_RUN = False
 						self.Maze_StartState = False
 				else:
+					# 實驗還沒開始
 					DBGV.CheckP_UI = "14"
+					
+					# 實驗還沒開始但攝影機已經連上了
 					if self.CAM_IS_CONN:
 						self.LockInput(False)
+						# 如果是前期訓練而且老鼠ID與舊的相同(前期訓練老鼠ID編號用)
+						# 目的是當前期訓練老鼠實驗正式結束時，會在重新取的新的老鼠ID
 						if (self.EXP_DATA_MODE == "TRAINING") and (self.OldTrain_Rat_ID == self.Rat_ID):
-							self.Rat_ID = datetime.datetime.now().strftime("T%H%M%S")
+							self.Rat_ID = datetime.datetime.now().strftime("T%H%M%S") #老鼠ID是"T開頭+二位數時分秒"的結構
 							self.TKS_Show_Rat_ID.config(text="RatID: %s" %(self.Rat_ID), fg="black")
 					else:
+						# 還沒連上就將輸入相關的控制項鎖住
 						self.LockInput(True)
 					self.firstMazeRun = True
 					
+				# 更新攝影機連線狀態於UI畫面上
 				if self.CAM_IS_CONN:
 					self.Cam_State.config(text="Camera State: Connecting...", fg="green4")
 					# self.Cam_State.place(x=750, y=170, anchor="nw")
@@ -678,12 +713,13 @@ class MazeMouseTrack(object):
 					# self.Cam_State.place(x=750, y=170, anchor="nw")
 					self.BT_Camera.config(state="disabled")
 
+				# 更新系統狀態(這個狀態列主要是顯示攝影機的連線狀態)
 				DBGV.CheckP_UI = "15"
 				IPCAM_MsgColor = self.IPCAM.IPCAM_MsgColor
 				IPCAM_Messenage = self.IPCAM.IPCAM_Messenage
-
 				self.TK_SHOW_SYS_Msg.set("Messenage: {}".format(IPCAM_Messenage))
 				
+				# 將系統狀態文字上色(綠色：成功/ 藍色：警告/ 紅色：錯誤)
 				if(IPCAM_MsgColor == 0):
 					self.TK_SHOW_SYS_Msg_Text.config(fg="green4")
 				elif(IPCAM_MsgColor == 1):
@@ -691,11 +727,13 @@ class MazeMouseTrack(object):
 				elif(IPCAM_MsgColor == 2):
 					self.TK_SHOW_SYS_Msg_Text.config(fg="red2")
 				
+				# 更新三按鈕的狀態到DBGV(錄影畫面的狀態區域)
 				self.DBGV.Maze_StartState = self.MAZE_IS_RUN
 				self.DBGV.Maze_LinkState = self.CAM_IS_RUN
 				self.DBGV.Maze_CameraState = self.OPEN_CAMERA_WINDOW
 				DBGV.CheckP_UI = "16"
 
+				# 開啟"修改下拉式選單模式"時會鎖定輸入
 				if self.MENU_OPEN:
 					self.LockInput(True)
 				else:
@@ -734,7 +772,7 @@ class MazeMouseTrack(object):
 			self.CAM_IS_RUN_First = True
 			self.CoodiTimer.cancel()
 
-	def ClearSettingMenuList(self):
+	def ClearSettingMenuList(self): #清除"修改下拉式選單項目"該區域設定
 		for i in range(len(self.MENU_Modify_Item)):
 			self.SettingMenuNo[i].config(bg="gray85", state="disabled")
 			self.SettingMenuList[i].delete(0, "end")
@@ -745,7 +783,7 @@ class MazeMouseTrack(object):
 			self.SettingMenuUp[i].config(bg="gray85", state="disabled")
 			self.SettingMenuDown[i].config(bg="gray85", state="disabled")
 
-	def updateSettingMenuList(self):
+	def updateSettingMenuList(self): #更新"修改下拉式選單項目"該區域設定
 		# 清除
 		self.ClearSettingMenuList()
 
@@ -776,7 +814,7 @@ class MazeMouseTrack(object):
 					self.SettingMenuList[i+1].insert(0, "")
 					self.SettingMenuNew[i+1].config(bg="DarkOliveGreen2", state="normal")
 
-	def SettingMenuModify(self, type_):
+	def SettingMenuModify(self, type_): #"修改下拉式選單項目"並初始化該區域設定
 		self.MENU_OPEN = True
 		self.SettingMenuFinish.config(state="normal")
 		nowItem = 0
@@ -794,10 +832,9 @@ class MazeMouseTrack(object):
 				self.MENU_Modify_Item[i-1] = self.DisGroupCombo[i]
 		self.updateSettingMenuList()
 		
-
-	# ===========================
-	# ===== 設定頁面設定參數 =====
-	# ===========================
+	# ==============================
+	# ===== 設定視窗頁面設定參數 =====
+	# ==============================
 
 	def tkSetting_UploadDisease(self, ListType, DList): #設定UI視窗更新[疾病分組資訊](疾病/組別, 目前疾病分組陣列)
 		DBGV.CheckP_UI = "33-1"
@@ -935,7 +972,12 @@ class MazeMouseTrack(object):
 		# print(self.CSV_DiseaseFile)
 		# print(self.MENU_Modify_Item)
 		# print(self.MENU_INFO)
+
+		# 修改下拉式選單項目時只會更動"self.MENU_Modify_Item"的陣列
+		# 更新"self.MENU_Modify_Item"的陣列
 		if self.MENU_INFO[0] == "Model":
+			# 要儲存Model項目
+
 			# 更換順序以及新增
 			for i in range(len(self.MENU_Modify_Item)):
 				if self.MENU_Modify_Item[i] == "":
@@ -970,7 +1012,11 @@ class MazeMouseTrack(object):
 			self.CSV_DiseaseFile.sort()
 
 		elif self.MENU_INFO[0] == "Group":
+			# 要儲存Group項目
+
+			# 先找出是哪個Model的Group => 找出在陣列ID(combo_idx)以及該項目編號(mod_idx)
 			combo_idx, mod_idx = findDiseaseArray(self.CSV_DiseaseFile, self.MENU_INFO[1])
+
 			# 更換順序以及新增
 			print(self.MENU_Modify_Item)
 			print(self.CSV_DiseaseFile[combo_idx-1][2])
@@ -1007,7 +1053,7 @@ class MazeMouseTrack(object):
 			self.CSV_DiseaseFile[combo_idx-1][2].sort()
 		# print(self.CSV_DiseaseFile)
 
-		# 寫入檔案後並重讀陣列
+		# 更新完"self.MENU_Modify_Item"的陣列，即可寫入檔案後並重讀陣列(self.CSV_DiseaseFile)
 		WriteDiseaseFile(self.CSV_DiseaseFile)
 		self.CSV_DiseaseFile = LoadDiseaseFile()
 
@@ -1028,11 +1074,12 @@ class MazeMouseTrack(object):
 		self.DisGroupType = ""
 		self.TKS_Show_DisGroup.config(text="Group: (not set)          ", fg="gray35")
 
+		# 清除放置[修改下拉式選單項目]的陣列以及輸入框
 		for i in range(len(self.MENU_Modify_Item)):
 			self.MENU_Modify_Item[i] = ""
 		self.ClearSettingMenuList()
 
-	def tkSetting_Menu_ItemUpDown(self, up_down, mid):
+	def tkSetting_Menu_ItemUpDown(self, up_down, mid): #修改下拉式選單項目按下[向上/向下]後會執行的程式
 		buff = self.MENU_Modify_Item[mid]
 		if up_down == "Up":
 			self.MENU_Modify_Item[mid] = self.MENU_Modify_Item[mid-1]
@@ -1042,7 +1089,7 @@ class MazeMouseTrack(object):
 			self.MENU_Modify_Item[mid+1] = buff
 		self.updateSettingMenuList()
 
-	def tkSetting_Menu_ItemNewDel(self, new_del, mid):
+	def tkSetting_Menu_ItemNewDel(self, new_del, mid): #修改下拉式選單項目按下[新增/刪除]後會執行的程式
 		if new_del == "New":
 			self.MENU_Modify_Item[mid] = self.SettingMenuList[mid].get()
 		elif new_del == "Delete":
@@ -1067,7 +1114,7 @@ class MazeMouseTrack(object):
 			self.SETTING_OPEN = True
 			settingSize = (800, self.WinSize[1])
 			self.tkSetting = tk.Tk()
-			self.tkSetting.title('%d臂迷宮路徑追蹤系統設定' %(self.ARM_UNIT)) #窗口名字
+			self.tkSetting.title('追蹤紀錄軌跡系統平台 - 實驗參數設定') #窗口名字
 			self.tkSetting.geometry('%dx%d+120+120' %(settingSize[0],settingSize[1])) #窗口大小(寬X高+X偏移量+Y偏移量)
 			self.tkSetting.resizable(False, False) #禁止變更視窗大小
 
@@ -1308,7 +1355,7 @@ class MazeMouseTrack(object):
 	
 	# ============================
 
-	def InitExpMode(self, mode):
+	def InitExpMode(self, mode): #初始化實驗模式(前期訓練/後期測試)，訓練(使用者只需填入 使用者名稱 與 Model名稱)
 		if mode == "EXPERIMENT":
 			self.TK_Rat_ID.config(state="normal")
 			self.BT_Rat_ID.config(state="normal")
@@ -1337,7 +1384,7 @@ class MazeMouseTrack(object):
 		self.TKS_BT_DisConfirm.config(state="normal")
 		self.TKS_BT_DisModify.config(state="normal")
 
-	def SystemModeSet(self, mode):
+	def SystemModeSet(self, mode): #設定實驗模式： 前期訓練/後期測試
 		self.EXP_DATA_MODE = mode
 		self.InitExpMode(mode)
 		if mode == "EXPERIMENT":
@@ -1352,9 +1399,7 @@ class MazeMouseTrack(object):
 	def setupUI(self): #主UI視窗主程式
 		global IPCAM_Info
 		DBGV.CheckP_UI = "8"
-		#========測試用========
-		# tk.Button(self.tkWin, text='Testing', width=10, font=('Arial', 8), command=self.PreparingTesting).place(x=300,y=10,anchor="nw")
-
+		
 		#========左側：紀錄變數========
 		LoadCamInfo()
 		#攝影機資訊選擇(下拉選單)
@@ -1510,7 +1555,6 @@ class MazeMouseTrack(object):
 		#========下方：顯示各項資訊========
 		# self.TK_SHOW_FileDir = tk.StringVar()
 		self.TK_SHOW_SYS_Msg = tk.StringVar()
-		# self.TK_SHOW_FileDir.set("# FileDir: {}{}".format(self.FilePath, self.FileName))
 		self.TK_SHOW_SYS_Msg.set("Messenage: " + str(self.SYS_MSG))
 		# tk.Label(self.tkWin,textvariable=self.TK_SHOW_FileDir, font=('Arial', 10)).place(x=20,y=self.WinSize[1]-10,anchor="sw")
 		self.TK_SHOW_SYS_Msg_Text = tk.Label(self.tkWin,textvariable=self.TK_SHOW_SYS_Msg, font=('Arial', 10))
@@ -1518,10 +1562,12 @@ class MazeMouseTrack(object):
 
 		DBGV.CheckP_UI = "9"
 
-		self.tkWin.protocol("WM_DELETE_WINDOW", self.windowsClosing)
-		self.tkWin.after(10,self.LoopMain)
+		self.tkWin.protocol("WM_DELETE_WINDOW", self.windowsClosing) # 關閉視窗=>protocol(關閉視窗參數，按下右上角的"X"關閉視窗會執行的程式)
+		self.tkWin.after(10,self.LoopMain) # after為TKINTER版的sleep(延遲副程式)，為?ms後執行某個程式=>after(延遲?ms, 要執行的副程式)
 		self.tkWin.mainloop()
-		self.thread.join() # 等待子執行緒結束
+		
+		# join()等待子執行緒結束
+		self.thread.join() 
 		self.CAMThread.join()
 		self.DBGVThread.join()
 
