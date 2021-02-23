@@ -435,7 +435,7 @@ class MazeMouseTrack(object):
 			# 手動結束實驗
 			DBGV.CheckP_UI = "27-1"
 			self.Maze_State.config(text="Maze State: Preparing...", fg="gray35")
-			self.Maze_State.place(x=750, y=200,anchor="nw")
+			# self.Maze_State.place(x=750, y=200,anchor="nw")
 			self.BT_Start.config(text="Start", bg="DarkOliveGreen2")
 			self.MAZE_IS_RUN = False
 		else:
@@ -488,7 +488,7 @@ class MazeMouseTrack(object):
 
 				# 更新實驗狀態
 				self.Maze_State.config(text="Maze State: Recording...", fg="green4")
-				self.Maze_State.place(x=750, y=200, anchor="nw")
+				# self.Maze_State.place(x=750, y=200, anchor="nw")
 				self.BT_Start.config(text="Stop", bg="IndianRed1")
 
 				# 如果是前期訓練則記錄一下老鼠ID
@@ -637,7 +637,10 @@ class MazeMouseTrack(object):
 				# 如果攝影機現在是 連線狀態 而且是 連線成功 的狀態
 				if self.CAM_IS_RUN and self.CAM_IS_CONN:
 					# 開啟"實驗開始(start)"按鈕
-					self.BT_Start.config(bg="DarkOliveGreen2")
+					if self.MAZE_IS_RUN:
+						self.BT_Start.config(bg="IndianRed1")
+					else:
+						self.BT_Start.config(bg="DarkOliveGreen2")
 					self.BT_Start.config(state="normal")
 					
 					# 第一次執行這個區塊的程式
@@ -739,6 +742,9 @@ class MazeMouseTrack(object):
 				else:
 					self.LockInput(False)
 
+				if self.SETTING_OPEN:
+					self.tkSetting_CheckFillNull()
+
 			self.tkWin.after(10,self.LoopMain)
 			DBGV.CheckP_UI = "17"
 
@@ -836,6 +842,24 @@ class MazeMouseTrack(object):
 	# ===== 設定視窗頁面設定參數 =====
 	# ==============================
 
+	def tkSetting_CheckFillNull(self):
+		SetFillList = ["User", "Model", "Group", "Operation", "TimePoint", "Rat ID"]
+		SetFillData = [self.Rec_UserName, self.DiseaseType, self.DisGroupType, self.OperaType, [self.DisDays[1], self.DisDays[2]],  self.Rat_ID]
+
+		for i in range(6):
+			isNull = False
+			if SetFillList[i] == "TimePoint":
+				if SetFillData[i][0] == -1 or SetFillData[i][1] == -1:
+					isNull = True
+			else:
+				if SetFillData[i] == "":
+					isNull = True
+			if isNull:
+				self.Show_SetFill[i].config(text="%s 未填寫!" %(SetFillList[i]), fg="red2")
+			else:
+				self.Show_SetFill[i].config(text="%s 已填寫!" %(SetFillList[i]), fg="green4")
+
+
 	def tkSetting_UploadDisease(self, ListType, DList): #設定UI視窗更新[疾病分組資訊](疾病/組別, 目前疾病分組陣列)
 		DBGV.CheckP_UI = "33-1"
 		idx = DList[0]
@@ -893,9 +917,10 @@ class MazeMouseTrack(object):
 		for i in range(15):
 			newSpace = newSpace + " "
 
-		self.DisGroupCombo = ['請選擇...']
-		self.TKS_DisGroup.current(0)
-		self.DisGroupType = ""
+		if self.EXP_DATA_MODE == "EXPERIMENT":
+			self.DisGroupCombo = ['請選擇...']
+			self.TKS_DisGroup.current(0)
+			self.DisGroupType = ""
 		if self.TKS_Disease.current() != 0:
 			self.DiseaseType = self.TKS_Disease.get()
 			self.TKS_Show_Disease.config(text="Model: %s%s" %(self.DiseaseType,newSpace), fg="black")
@@ -1000,7 +1025,7 @@ class MazeMouseTrack(object):
 				findArr.append(idx)
 			# 刪除不在名單上的項目
 			for i in range(len(findArr)):
-				if i > len(findArr):
+				if i >= len(findArr):
 					break
 				if findArr[i] == -1:
 					self.CSV_DiseaseFile.pop(i)
@@ -1018,8 +1043,8 @@ class MazeMouseTrack(object):
 			combo_idx, mod_idx = findDiseaseArray(self.CSV_DiseaseFile, self.MENU_INFO[1])
 
 			# 更換順序以及新增
-			print(self.MENU_Modify_Item)
-			print(self.CSV_DiseaseFile[combo_idx-1][2])
+			# print(self.MENU_Modify_Item)
+			# print(self.CSV_DiseaseFile[combo_idx-1][2])
 			for i in range(len(self.MENU_Modify_Item)):
 				if self.MENU_Modify_Item[i] == "":
 					break
@@ -1030,7 +1055,7 @@ class MazeMouseTrack(object):
 				else:
 					self.CSV_DiseaseFile[combo_idx-1][2][gp_combo_idx-1][0] = i+1
 			self.CSV_DiseaseFile[combo_idx-1][2].sort()
-			print(self.CSV_DiseaseFile[combo_idx-1][2])
+			# print(self.CSV_DiseaseFile[combo_idx-1][2])
 			# 檢查不在名單上的項目
 			findArr = []
 			for i in range(len(self.CSV_DiseaseFile[combo_idx-1][2])):
@@ -1041,7 +1066,7 @@ class MazeMouseTrack(object):
 				findArr.append(idx)
 			# 刪除不在名單上的項目
 			for i in range(len(findArr)):
-				if i > len(findArr):
+				if i >= len(findArr):
 					break
 				if findArr[i] == -1:
 					self.CSV_DiseaseFile[combo_idx-1][2].pop(i)
@@ -1328,6 +1353,17 @@ class MazeMouseTrack(object):
 			tk.Label(self.tkSetting,text="●注意事項：", font=('Arial', 11, 'bold')).place(x=MenuCommandX,y=MenuCommandY,anchor="nw")
 			for i in range(len(CommandLine)):
 				tk.Label(self.tkSetting,text=CommandLine[i], font=('Arial', 10)).place(x=MenuCommandX, y=MenuCommandY + (22 + MenuCommandRange*i),anchor="nw")
+
+			# 設定頁面填寫檢查
+			FillCheck = [10, 450]
+			LabelSet = [150, 22]
+			self.Show_SetFill = ["", "", "", "", "", ""]
+			tk.Label(self.tkSetting, text="●目前設定參數輸入狀態：", font=('Arial', 11)).place(x=FillCheck[0],y=FillCheck[1],anchor="nw")
+			for i in range(6):
+				nowX = FillCheck[0] + LabelSet[0]*int(i/3)
+				nowY = 20 + FillCheck[1] + LabelSet[1]*int(i%3)
+				self.Show_SetFill[i] = tk.Label(self.tkSetting,text="", font=('Arial', 11))
+				self.Show_SetFill[i].place(x=nowX,y=nowY,anchor="nw")
 
 			DBGV.CheckP_UI = "19"
 			self.BT_Setting.config(state="disabled")
