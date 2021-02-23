@@ -704,6 +704,13 @@ class MazeMouseTrack(object):
 					else:
 						# 還沒連上就將輸入相關的控制項鎖住
 						self.LockInput(True)
+
+					# 開啟"修改下拉式選單模式"時會鎖定輸入
+					if self.MENU_OPEN:
+						self.LockInput(True)
+					else:
+						self.LockInput(False)
+						
 					self.firstMazeRun = True
 					
 				# 更新攝影機連線狀態於UI畫面上
@@ -735,12 +742,6 @@ class MazeMouseTrack(object):
 				self.DBGV.Maze_LinkState = self.CAM_IS_RUN
 				self.DBGV.Maze_CameraState = self.OPEN_CAMERA_WINDOW
 				DBGV.CheckP_UI = "16"
-
-				# 開啟"修改下拉式選單模式"時會鎖定輸入
-				if self.MENU_OPEN:
-					self.LockInput(True)
-				else:
-					self.LockInput(False)
 
 				if self.SETTING_OPEN:
 					self.tkSetting_CheckFillNull()
