@@ -623,9 +623,7 @@ class InfraredCAM:
 								self.NOW_STATUS = 0 #進臂or出臂
 								self.Route.append(self.dangchianbi)
 								self.Latency = (self.time_now - self.timestart).seconds 
-								self.TotalShortTerm = 0
-								self.TotalLongTerm = 0
-								self.DBGV.CheckP_ICAM = 1032
+								
 								# print(self.TotalLongTerm)
 								self.DBGV.CheckP_ICAM = 1035
 								self.DataRecord()
@@ -657,6 +655,9 @@ class InfraredCAM:
 							self.DBGV.CheckP_ICAM = 1041
 							pass
 
+						self.TotalShortTerm = 0
+						self.TotalLongTerm = 0
+						self.DBGV.CheckP_ICAM = 1032
 						for i in range(0,len(self.ShortTerm)):
 							self.DBGV.CheckP_ICAM = 1033
 							self.TotalShortTerm = self.TotalShortTerm + self.ShortTerm[i]
