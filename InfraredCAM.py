@@ -626,13 +626,6 @@ class InfraredCAM:
 								self.TotalShortTerm = 0
 								self.TotalLongTerm = 0
 								self.DBGV.CheckP_ICAM = 1032
-								for i in range(0,len(self.ShortTerm)):
-									self.DBGV.CheckP_ICAM = 1033
-									self.TotalShortTerm = self.TotalShortTerm + self.ShortTerm[i]
-								# print(self.TotalShortTerm)
-								for i in range(0,len(self.LongTerm)):
-									self.DBGV.CheckP_ICAM = 1034
-									self.TotalLongTerm = self.TotalLongTerm + self.LongTerm[i]
 								# print(self.TotalLongTerm)
 								self.DBGV.CheckP_ICAM = 1035
 								self.DataRecord()
@@ -663,6 +656,14 @@ class InfraredCAM:
 						else:
 							self.DBGV.CheckP_ICAM = 1041
 							pass
+
+						for i in range(0,len(self.ShortTerm)):
+							self.DBGV.CheckP_ICAM = 1033
+							self.TotalShortTerm = self.TotalShortTerm + self.ShortTerm[i]
+						# print(self.TotalShortTerm)
+						for i in range(0,len(self.LongTerm)):
+							self.DBGV.CheckP_ICAM = 1034
+							self.TotalLongTerm = self.TotalLongTerm + self.LongTerm[i]
 
 						#把[影像擷取過後，開始辨識的東西]放這裡
 					else:
