@@ -111,11 +111,11 @@ def compareFrameItem(item1, item2): #比較只在迷宮內的白色物體
 	return maxArea[0], pointList, areaList, contourList
 
 def morphologyFrame(frame): #統一型態學開/閉運算
-	frame = cv2.morphologyEx(frame, cv2.MORPH_OPEN, np.ones([7,7]))
+	frame = cv2.morphologyEx(frame, cv2.MORPH_OPEN, np.ones([5,5]))
 	frame = cv2.morphologyEx(frame, cv2.MORPH_CLOSE, np.ones([3,3]))
 	return frame
 
-def getOnyRatBinary(grayImg, MASK_POS): #取得只在迷宮內的白色物體
+def getOnyRatBinary(grayImg, MASK_POS, th_level=123): #取得只在迷宮內的白色物體
 	# 產生遮罩至二值化
 	MaskImg = cv2.resize(makeBlackImage(),(480,480),interpolation=cv2.INTER_CUBIC)
 	cv2.fillPoly(MaskImg, [MASK_POS],  (255, 255, 255))  #加上八臂輔助線
@@ -123,11 +123,14 @@ def getOnyRatBinary(grayImg, MASK_POS): #取得只在迷宮內的白色物體
 	B0, MaskImg = cv2.threshold(MaskImg, 127,255,cv2.THRESH_BINARY) #二值化
 
 	# 產生兩張圖(二值化)：蓋遮罩前(frame1)/蓋遮罩後(frame2)
-	B1, frame1 = cv2.threshold(grayImg, 123,255,cv2.THRESH_BINARY)
+	B1, frame1 = cv2.threshold(grayImg, th_level,255,cv2.THRESH_BINARY)
+	# cv2.imshow("frame1", frame1)
 	framePr = cv2.bitwise_and(grayImg, grayImg, mask=MaskImg) #遮罩覆蓋到影像上
-	B2, frame2 = cv2.threshold(framePr, 123,255,cv2.THRESH_BINARY)
+	B2, frame2 = cv2.threshold(framePr, th_level,255,cv2.THRESH_BINARY)
+	# cv2.imshow("frame2", frame2)
 	frame1 = morphologyFrame(frame1)
 	frame2 = morphologyFrame(frame2)
+	# cv2.imshow("frame2-m", frame2)
 
 	white1, wh1 = cv2.findContours(frame1, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 self.rat_XY=所有座標
 	white2, wh2 = cv2.findContours(frame2, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 self.rat_XY=所有座標
@@ -144,8 +147,82 @@ def getOnyRatBinary(grayImg, MASK_POS): #取得只在迷宮內的白色物體
 
 	return targetPos, posList, areaList, contourList
 
-#其他跟迷宮程式沒相關的都可以擺在這裡
+def ComputeCheckPoint(ArmPoint): # 傳入self.ARM_LINE
+	newArmPoint = [] # 新臂線
+	nAP_Len = [] # 新臂線長度
+	# 本臂右側內、本臂右側外、右臂左側內、右臂左側外
+	# print(len(ArmPoint))
+	for i in range(len(ArmPoint)):
+		if i == 0:
+			nP = len(ArmPoint) - 1 
+		else:
+			nP = i - 1
+		newArmPoint.append([ArmPoint[i][0], ArmPoint[i][1], ArmPoint[nP][2], ArmPoint[nP][3]])
+		len1 = math.sqrt(pow(2, (ArmPoint[i][0][0] - ArmPoint[i][1][0])) + pow(2, (ArmPoint[i][0][1] - ArmPoint[i][1][1])))
+		len2 = math.sqrt(pow(2, (ArmPoint[nP][2][0] - ArmPoint[nP][3][0])) + pow(2, (ArmPoint[nP][2][1] - ArmPoint[nP][3][1])))
+		nAP_Len.append([len1, len2])
+	
+	result_cp = [] #檢查點位座標
+	cp_part = 5 #一個空隙有幾個檢查點
+	for i in range(cp_part):
+		for j in range(len(newArmPoint)):
+			p1 = [
+				newArmPoint[j][0][0] + int((newArmPoint[j][1][0] - newArmPoint[j][0][0])*((i+1)/cp_part)), 
+				newArmPoint[j][0][1] + int((newArmPoint[j][1][1] - newArmPoint[j][0][1])*((i+1)/cp_part)),
+			]
+			p2 = [
+				newArmPoint[j][2][0] + int((newArmPoint[j][3][0] - newArmPoint[j][2][0])*((i+1)/cp_part)), 
+				newArmPoint[j][2][1] + int((newArmPoint[j][3][1] - newArmPoint[j][2][1])*((i+1)/cp_part)),
+			]
+			result_cp.append([p1[0] + int((p2[0]-p1[0])/2), p1[1] + int((p2[1]-p1[1])/2)])
 
+	return result_cp
+
+def ImageIsDark(img, camStatus, ch_point):	# 判斷目前是否是暗室狀態
+	pixelList = []
+	for chp in ch_point:
+		pixelList.append(img[chp[0], chp[1]])
+
+	countTwo = 0  # 記錄相差值低於3的有多少個
+	countSub = [] # 監測相差值
+	maxSub = 0 # 記錄最大相差值
+	for i in range(len(pixelList)):
+		# countSub.append([pixelList[i].max(), pixelList[i].min()])
+		if(pixelList[i].max() - pixelList[i].min()) < 3:
+			countTwo = countTwo + 1
+		if (pixelList[i].max() - pixelList[i].min()) > maxSub:
+			maxSub = (pixelList[i].max() - pixelList[i].min())
+
+	# print("countTwo", countTwo, "maxSub", maxSub, "level", int(len(pixelList)*(2/3)))
+	if countTwo > int(len(pixelList)*(2/3)) and camStatus:
+		return True
+	else:
+		return False
+
+def CovertDarkImage(): # 產生暗室遮罩
+	imgSize = (480, 480)
+	gray = makeBlackImage()
+	gray = cv2.resize(gray,imgSize,interpolation=cv2.INTER_CUBIC) #放大成480x480
+	xMap, yMap = 0, 0
+	xCNT, yCNT = int(imgSize[0]/2), int(imgSize[1]/2)
+	for i in range(imgSize[0]):
+		xMap = (abs(i - xCNT)/xCNT)
+		for j in range(imgSize[1]):
+			yMap = (abs(j - yCNT)/yCNT)
+			cMap = 2 - ((pow(2, np.sqrt(np.square(xMap) + np.square(yMap)))))
+			# cMap = (math.log(np.sqrt(np.square(xMap) + np.square(yMap))+1)-1)-1
+			if cMap < 0:
+				gray[j][i] = 128*abs(cMap) + 128
+			else:
+				gray[j][i] = 128*abs(cMap)
+			if np.sqrt(np.square(xMap) + np.square(yMap)) > 1:
+				gray[j][i] = 0.0
+
+	return gray
+
+#其他跟迷宮程式沒相關的都可以擺在這裡
+Dark_MASK = CovertDarkImage()
+Dark_MASK = cv2.cvtColor(Dark_MASK, cv2.COLOR_RGB2GRAY) 
 #========主要類別撰寫區========
 #類別內所有的[變數/副程式INPUT第一個變數/呼叫副程式的時候]都要加"self"，代表要互叫這個類別內的變數
 class InfraredCAM:
@@ -181,7 +258,7 @@ class InfraredCAM:
 		self.TargetPos = [-1, -1] #目標變數
 		self.TargetPos_All = [] #一次抓取到的所有白色物體座標
 		self.ARMS_POS = readCSV2ARME("ARMS_LINE.csv")
-		self.ARMS_LINE = [
+		self.ARMS_LINE = [ # 內外內外
 			[self.ARMS_POS[0],self.ARMS_POS[1],self.ARMS_POS[3],self.ARMS_POS[2]],
 			[self.ARMS_POS[4],self.ARMS_POS[5],self.ARMS_POS[7],self.ARMS_POS[6]],
 			[self.ARMS_POS[8],self.ARMS_POS[9],self.ARMS_POS[11],self.ARMS_POS[10]],
@@ -242,7 +319,15 @@ class InfraredCAM:
 		self.DisDays = [False, -1, -1] #老鼠病症天數(是否手術, 月, 天)
 		self.SingleFileName = "" #固定檔名
 		self.CSVfilePath = '' #CSV路徑
-							
+
+		self.DarkCheckPoint = ComputeCheckPoint(self.ARMS_LINE) #計算檢查點
+		testCheckPoint = makeBlackImage()
+		testCheckPoint = cv2.resize(testCheckPoint, (self.ViewSize[0],self.ViewSize[1]), interpolation=cv2.INTER_CUBIC)
+		cv2.polylines(testCheckPoint, [self.MASK_POS], True, (0, 255, 255), 2)  #加上3臂輔助線
+		cv2.putText(testCheckPoint, "%d Point" %(len(self.DarkCheckPoint)), (10,20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255))
+		for cPoint in self.DarkCheckPoint:
+			cv2.circle(testCheckPoint, convert(cPoint), 3, (0,0,255), -1)
+		# cv2.imshow("testCheckPoint", testCheckPoint)	
 
 	#========其他的副程式========
 	def checkSaveDirPath(self): #檢查儲存路徑
@@ -317,6 +402,7 @@ class InfraredCAM:
 			self.ShortTerm.append(0)
 			self.LongTerm.append(0)
 			self.frequency.append(0)
+	
 	def examination(self,NOW_STATUS,TargetPos): #進臂判斷
 		#八壁32點
 		#mask = [[[x11,y11],[x12,y12]],...]
@@ -377,6 +463,7 @@ class InfraredCAM:
 			# print("dangchianjiuli: {}".format(dangchianjiuli))
 
 		return self.NOW_STATUS,self.dangchianbi
+	
 	def leave(self,TargetPos): #出臂判斷
 		global Inlinepoint_long,dangchianjiuli,maskkk
 		# print("NOW_STATUS{}".format(self.NOW_STATUS))
@@ -421,7 +508,6 @@ class InfraredCAM:
 
 			self.DBGV.CheckP_ICAM = 1067
 		return self.NOW_STATUS,self.dangchianbi	
-
 
 	def sterm(self):  #短期工作記憶錯誤判斷
 		self.DBGV.CheckP_ICAM = 1067
@@ -509,12 +595,26 @@ class InfraredCAM:
 					self.newP1 = [IPCAM.IPCAM_NewP1[0], IPCAM.IPCAM_NewP1[1]]
 					self.newP2 = [self.newP1[0] + self.HEIGHT, self.newP1[1] + self.HEIGHT]
 					self.DBGV.CheckP_ICAM = 1015
+					frame3 = frame.copy()
 					frame = frame[self.newP1[1]:self.newP2[1], self.newP1[0]:self.newP2[0]] #擷取兩個點的範圍
 					# cv2.polylines(frame, [self.MASK_POS], True, (0, 255, 255), 2)  #加上3臂輔助線
 					frame = cv2.resize(frame,(480,480),interpolation=cv2.INTER_CUBIC) #放大成480x480
 					frame1 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-					self.TargetPos, self.TargetPos_All, self.White_ContourArea_All, self.rat_XY = getOnyRatBinary(frame1, self.MASK_POS)
+					# ===== 根據亮暗室做不同的處理 =====
+					if ImageIsDark(frame, self.CAM_IS_RUN, self.DarkCheckPoint):
+						# print("^暗室^")
+						# print("frame1", frame1.shape, "Dark_MASK", Dark_MASK.shape)
+						newGray1 = cv2.subtract(frame1, Dark_MASK)
+						newGray1 = cv2.add(newGray1.copy(), 100)
+						self.TargetPos, self.TargetPos_All, self.White_ContourArea_All, self.rat_XY = getOnyRatBinary(
+							grayImg = newGray1, MASK_POS = self.MASK_POS, th_level = 180
+						)
+					else:
+						# print("=亮室=")
+						self.TargetPos, self.TargetPos_All, self.White_ContourArea_All, self.rat_XY = getOnyRatBinary(
+							grayImg = frame1, MASK_POS = self.MASK_POS, th_level = 123
+						)
 
 					# B2,frame1 = cv2.threshold(frame1, 127,255,cv2.THRESH_BINARY)
 					# self.DBGV.CheckP_ICAM = 1016
@@ -574,7 +674,6 @@ class InfraredCAM:
 						# shutil.move("IPCAM_INFO1.txt", "./ChiMei_{}".format(datetime.now().strftime("%Y%m%d")))
 						# shutil.copyfile("ARMS_LINE.csv", "ARMS_LINE1.txt")	#複製八臂32點
 						# shutil.move("ARMS_LINE1.txt", "./ChiMei_{}".format(datetime.now().strftime("%Y%m%d")))
-
 
 						self.DBGV.CheckP_ICAM = 1022
 						self.sterm()
