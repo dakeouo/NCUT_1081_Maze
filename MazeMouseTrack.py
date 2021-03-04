@@ -493,8 +493,8 @@ class MazeMouseTrack(object):
 
 				# 如果是前期訓練則記錄一下老鼠ID
 				self.MAZE_IS_RUN = True
-				if self.EXP_DATA_MODE == "TRAINING":
-					self.OldTrain_Rat_ID = self.Rat_ID
+				# if self.EXP_DATA_MODE == "TRAINING":
+				# 	self.OldTrain_Rat_ID = self.Rat_ID
 		self.TCAM.MAZE_IS_RUN = self.MAZE_IS_RUN
 
 	def CameraCheck(self): #實體影像檢查
@@ -546,6 +546,8 @@ class MazeMouseTrack(object):
 				self.BT_Connect.config(state="disabled")
 
 			if self.DBGV.Maze_SetState and self.EXP_DATA_MODE != "NONE":
+				self.TKS_Btn0_Mode1.config(state="disabled")
+				self.TKS_Btn0_Mode2.config(state="disabled")
 				self.TKS_Disease.config(state="disabled")
 				self.TKS_DisGroup.config(state="disabled")
 				self.TK_User_Name.config(state="disabled")
@@ -573,6 +575,8 @@ class MazeMouseTrack(object):
 			self.BT_Start.config(state="normal")
 
 			if self.DBGV.Maze_SetState and self.EXP_DATA_MODE != "NONE":
+				self.TKS_Btn0_Mode1.config(state="normal")
+				self.TKS_Btn0_Mode2.config(state="normal")
 				self.TKS_Disease.config(state="readonly")
 				self.TKS_BT_DisConfirm.config(state="normal")
 				self.TKS_BT_DisModify.config(state="normal")
@@ -698,9 +702,9 @@ class MazeMouseTrack(object):
 						self.LockInput(False)
 						# 如果是前期訓練而且老鼠ID與舊的相同(前期訓練老鼠ID編號用)
 						# 目的是當前期訓練老鼠實驗正式結束時，會在重新取的新的老鼠ID
-						if (self.EXP_DATA_MODE == "TRAINING") and (self.OldTrain_Rat_ID == self.Rat_ID):
-							self.Rat_ID = datetime.datetime.now().strftime("T%H%M%S") #老鼠ID是"T開頭+二位數時分秒"的結構
-							self.TKS_Show_Rat_ID.config(text="RatID: %s" %(self.Rat_ID), fg="black")
+						# if (self.EXP_DATA_MODE == "TRAINING") and (self.OldTrain_Rat_ID == self.Rat_ID):
+						# 	self.Rat_ID = datetime.datetime.now().strftime("T%H%M%S") #老鼠ID是"T開頭+二位數時分秒"的結構
+						# 	self.TKS_Show_Rat_ID.config(text="RatID: %s" %(self.Rat_ID), fg="black")
 					else:
 						# 還沒連上就將輸入相關的控制項鎖住
 						self.LockInput(True)
@@ -1091,14 +1095,18 @@ class MazeMouseTrack(object):
 		self.TKS_Disease.current(0)
 		self.DiseaseType = ""
 		self.TKS_Show_Disease.config(text="Model: (not set)          ", fg="gray35")
-		# Model下拉式選單重置
+		# Group下拉式選單重置
 		self.DisGroupCombo = ['請選擇...']
 		self.TKS_BT_DisGroupModify.config(state="disabled")
 		self.TKS_BT_DisGroupConfirm.config(state="disabled")
 		self.TKS_DisGroup.config(state="disabled", values=self.DisGroupCombo)
 		self.TKS_DisGroup.current(0)
-		self.DisGroupType = ""
-		self.TKS_Show_DisGroup.config(text="Group: (not set)          ", fg="gray35")
+		if self.EXP_DATA_MODE == "EXPERIMENT":
+			self.DisGroupType = ""
+			self.TKS_Show_DisGroup.config(text="Group: (not set)          ", fg="gray35")
+		elif self.EXP_DATA_MODE == "TRAINING":
+			self.DisGroupType = "Training"
+			self.TKS_Show_DisGroup.config(text="Group: Training          ", fg="black")
 
 		# 清除放置[修改下拉式選單項目]的陣列以及輸入框
 		for i in range(len(self.MENU_Modify_Item)):
@@ -1392,7 +1400,40 @@ class MazeMouseTrack(object):
 	
 	# ============================
 
+	def CleanExpSettingData(self):
+		self.Rec_UserName = ""
+		self.DisGroupType = ""
+		self.DiseaseType = ""
+		self.DisDays = [False, -1, -1]
+		self.OperaType = ""
+		self.Rat_ID = ""
+
+		self.TK_User_Name.delete(0, "end")
+		self.TK_User_Name.insert(0, self.Rec_UserName)
+		self.TKS_Disease.current(0)
+		self.DisGroupCombo = ['請選擇...']
+		self.TKS_DisGroup.config(state="disabled", values=self.DisGroupCombo)
+		self.TKS_DisGroup.current(0)
+		self.TKS_Btn1_Opera1.config(bg="gray90")
+		self.TKS_Btn1_Opera2.config(bg="gray90")
+		self.TKS_OpDay_Month.delete(0, "end")
+		self.TKS_OpDay_Month.insert(0, "")
+		self.TKS_OpDay_Day.delete(0, "end")
+		self.TKS_OpDay_Day.insert(0, "")
+		self.TK_Rat_ID.delete(0, "end")
+		self.TK_Rat_ID.insert(0, self.Rat_ID)
+
+		self.TKS_Show_UserName.config(text="Users: (not set)", fg="gray35")
+		self.TKS_Show_Disease.config(text="Model: (not set)", fg="gray35")
+		self.TKS_Show_DisGroup.config(text="Group: (not set)", fg="gray35")
+		self.TKS_Show_OpDay.config(text="TimePoint: (not set)", fg="gray35")
+		self.TKS_Show_Opera.config(text="Operation Type: (not set)", fg="gray35")
+		self.TKS_Show_Rat_ID.config(text="RatID: (not set)", fg="gray35")
+
+
 	def InitExpMode(self, mode): #初始化實驗模式(前期訓練/後期測試)，訓練(使用者只需填入 使用者名稱 與 Model名稱)
+		self.CleanExpSettingData()
+
 		if mode == "EXPERIMENT":
 			self.TK_Rat_ID.config(state="normal")
 			self.BT_Rat_ID.config(state="normal")
@@ -1404,15 +1445,23 @@ class MazeMouseTrack(object):
 			# self.TKS_BT_DisGroupConfirm.config(state="normal")
 			# self.TKS_BT_DisGroupModify.config(state="normal")
 		elif mode == "TRAINING":
+			# self.TK_Rat_ID.config(state="disabled")
+			# self.BT_Rat_ID.config(state="disabled")
+			self.TKS_Btn1_Opera1.config(state="disabled")
+			self.TKS_Btn1_Opera2.config(state="disabled")
+			self.TKS_OpDay_Month.config(state="disabled")
+			self.TKS_OpDay_Day.config(state="disabled")
+			self.TKS_BT_OpDayConfirm.config(state="disabled")
+
 			self.DisGroupType = "Training"
 			self.DisDays = [self.DisDays[0], 99, 99]
 			self.OperaType = "Training"
-			self.Rat_ID = datetime.datetime.now().strftime("T%H%M%S")
+			# self.Rat_ID = datetime.datetime.now().strftime("T%H%M%S")
 
 			self.TKS_Show_DisGroup.config(text="Group: %s" %(self.DisGroupType), fg="black")
 			self.TKS_Show_OpDay.config(text="TimePoint: %2d Month %2d Day" %(self.DisDays[1], self.DisDays[2]), fg="black")
 			self.TKS_Show_Opera.config(text="Operation Type: %s" %(self.OperaType), fg="black")
-			self.TKS_Show_Rat_ID.config(text="RatID: %s" %(self.Rat_ID), fg="black")
+			# self.TKS_Show_Rat_ID.config(text="RatID: %s" %(self.Rat_ID), fg="black")
 
 		self.TK_User_Name.config(state="normal")
 		self.BT_User_Name.config(state="normal")
@@ -1426,10 +1475,12 @@ class MazeMouseTrack(object):
 		self.InitExpMode(mode)
 		if mode == "EXPERIMENT":
 			self.TKS_Btn0_Mode2.config(bg="DarkOliveGreen2")
+			self.TKS_Btn0_Mode1.config(bg="gray85")
 		elif mode == "TRAINING":
 			self.TKS_Btn0_Mode1.config(bg="DarkOliveGreen2")
-		self.TKS_Btn0_Mode1.config(state="disabled")
-		self.TKS_Btn0_Mode2.config(state="disabled")
+			self.TKS_Btn0_Mode2.config(bg="gray85")
+		# self.TKS_Btn0_Mode1.config(state="disabled")
+		# self.TKS_Btn0_Mode2.config(state="disabled")
 		self.TKS_title1_0.config(fg="gray35", bg="gray85")
 		self.TKS_title1_1.config(fg="black", bg="gray75")
 
