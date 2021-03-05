@@ -593,7 +593,7 @@ class InfraredCAM:
 					# print(rtsp)
 					self.DBGV.CheckP_ICAM = 1014
 					self.newP1 = [IPCAM.IPCAM_NewP1[0], IPCAM.IPCAM_NewP1[1]]
-					self.newP2 = [self.newP1[0] + self.HEIGHT, self.newP1[1] + self.HEIGHT]
+					self.newP2 = [self.newP1[0] + IPCAM.IPCAM_RecSize, self.newP1[1] + IPCAM.IPCAM_RecSize]
 					self.DBGV.CheckP_ICAM = 1015
 					frame3 = frame.copy()
 					frame = frame[self.newP1[1]:self.newP2[1], self.newP1[0]:self.newP2[0]] #擷取兩個點的範圍

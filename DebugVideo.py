@@ -12,7 +12,7 @@ import traceback
 import random as rand
 import DebugVideo as DBGV
 
-SYSTEM_VER = "1.16.1" #版本號
+SYSTEM_VER = "1.16.2" #版本號
 WINDOWS_IS_ACTIVE = True	#UI是否在執行中
 SAVE_PAST_DATA = True #儲存上次記錄
 SET_VIDEO_PATH = False #是否已設定影片路徑
