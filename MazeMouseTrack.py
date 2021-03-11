@@ -1441,8 +1441,6 @@ class MazeMouseTrack(object):
 		self.CleanExpSettingData()
 
 		if mode == "EXPERIMENT":
-			self.TK_Rat_ID.config(state="normal")
-			self.BT_Rat_ID.config(state="normal")
 			self.TKS_Btn1_Opera1.config(state="normal")
 			self.TKS_Btn1_Opera2.config(state="normal")
 			self.TKS_OpDay_Month.config(state="normal")
@@ -1469,6 +1467,8 @@ class MazeMouseTrack(object):
 			self.TKS_Show_Opera.config(text="Operation Type: %s" %(self.OperaType), fg="black")
 			# self.TKS_Show_Rat_ID.config(text="RatID: %s" %(self.Rat_ID), fg="black")
 
+		self.TK_Rat_ID.config(state="normal")
+		self.BT_Rat_ID.config(state="normal")
 		self.TK_User_Name.config(state="normal")
 		self.BT_User_Name.config(state="normal")
 		self.TKS_Disease.config(state="readonly")
