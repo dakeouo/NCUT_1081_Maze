@@ -12,7 +12,7 @@ import traceback
 import random as rand
 import DebugVideo as DBGV
 
-SYSTEM_VER = "1.16.2" #版本號
+SYSTEM_VER = "1.16.3" #版本號
 WINDOWS_IS_ACTIVE = True	#UI是否在執行中
 SAVE_PAST_DATA = True #儲存上次記錄
 SET_VIDEO_PATH = False #是否已設定影片路徑
@@ -22,11 +22,20 @@ VideoDir = 'Video_{}/'.format(datetime.datetime.now().strftime("%Y%m%d"))
 Rec_UserName = "" #操作系統的使用者名稱
 
 # IPCAM Information
+IPCAM_Image = []		#攝相機影像
+IPCAM_ROI_DIRTY = [] #ROI 全彩圖髒髒
+IPCAM_ROI_RGB = [] #ROI 全彩圖
+IPCAM_ROI_xGRAY = [] #ROI 灰階圖(沒蓋照)
+IPCAM_ROI_GRAY = [] #ROI 灰階圖
+IPCAM_ROI_nTH = [] #ROI 未蓋遮罩二值圖
+IPCAM_ROI_mTH = [] #ROI 蓋遮罩二值圖
+IPCAM_ROI_nMF = [] #ROI 未蓋遮罩型態學圖
+IPCAM_ROI_mMF = [] #ROI 蓋遮罩型態學圖
+
 IPCAM_Name = ""			#攝相機名稱
 IPCAM_IP = ""			#攝相機IP
 IPCAM_FrameCount = 0	#測試每秒禎數
 IPCAM_NewP1 = [0, 0]	#矩形框左上座標點
-IPCAM_Image = []		#攝相機影像
 IPCAM_FrameSize = [0, 0]#攝相機影像大小
 IPCAM_Status = False	#攝相機連上狀態
 IPCAM_NowTime = datetime.datetime.now()	#IPCAM時間
@@ -426,13 +435,49 @@ def makeDashBoard():
 
 	return result
 
+def ROI_Moniter(wid_Size):
+	global IPCAM_ROI_RGB, IPCAM_ROI_GRAY, IPCAM_ROI_xGRAY, IPCAM_ROI_nTH, IPCAM_ROI_mTH, IPCAM_ROI_nMF, IPCAM_ROI_mMF, IPCAM_ROI_DIRTY
+
+	ShowROI_List = [
+		IPCAM_ROI_RGB, IPCAM_ROI_xGRAY, IPCAM_ROI_GRAY, IPCAM_ROI_nTH, IPCAM_ROI_nMF
+	]
+	newWei = int((wid_Size/len(ShowROI_List)))
+	weiLoss = wid_Size%len(ShowROI_List)
+
+	# 先檢查影像是否為空，並調整大小
+	for i in range(len(ShowROI_List)):
+		if len(ShowROI_List[i]) == 0:
+			FrameSize = [720, 720]
+			frame = makeSingaleColorImage((100, 100, 100))
+			frame = cv2.resize(frame, (FrameSize[0], FrameSize[1]), interpolation=cv2.INTER_CUBIC)
+			cv2.putText(frame, "NO IMAGE", (147, 360), cv2.FONT_HERSHEY_DUPLEX, 2.5, (255,255,255), 2, cv2.LINE_AA)
+			frame = cv2.resize(frame, (newWei, newWei), interpolation=cv2.INTER_CUBIC)
+			ShowROI_List[i] = frame.copy()
+		elif len(ShowROI_List[i].shape) == 2:
+			ShowROI_List[i] = cv2.cvtColor(ShowROI_List[i], cv2.COLOR_GRAY2BGR)
+		ShowROI_List[i] = cv2.resize(ShowROI_List[i], (newWei, newWei), interpolation=cv2.INTER_CUBIC)
+
+	ROIMonBoard = ShowROI_List[0].copy()
+	for i in range(1,len(ShowROI_List)):
+		# ShowROI_List[i] = cv2.resize(ShowROI_List[i], (newWei, newWei), interpolation=cv2.INTER_CUBIC)
+		ROIMonBoard = np.hstack([ROIMonBoard, ShowROI_List[i]])
+	
+	# 補償未整除部分
+	if weiLoss > 0:
+		lossImg = makeSingaleColorImage((0, 0, 0))
+		lossImg = cv2.resize(lossImg, (weiLoss, newWei), interpolation=cv2.INTER_CUBIC)
+		ROIMonBoard = np.hstack([ROIMonBoard, lossImg])
+
+	return ROIMonBoard
+
 def DBGV_Main(): #DBGV主程式
 	global WINDOWS_IS_ACTIVE, Maze_DateTime, Maze_FrameLoadTime, SAVE_PAST_DATA, SET_VIDEO_PATH
 	global IPCAM_Image, IPCAM_Status, IPCAM_FrameSize, IPCAM_IP, IPCAM_FrameCount, IPCAM_NewP1, IPCAM_Name
 	global Maze_StartState, Maze_LinkState, Maze_SetState, Maze_CameraState, Maze_FrameLoadTime
 	global Data_TotalTerm, Exp_StartTime, Exp_RatID
 	global PastData_RatID, PastData_TotalTerm, PastData_StartTime, PastData_Latency
-	global VideoDir, nowDatePath, DBGV ,FrameView
+	global VideoDir, nowDatePath, DBGV, FrameView
+	global IPCAM_ROI_DIRTY, IPCAM_ROI_RGB, IPCAM_ROI_GRAY, IPCAM_ROI_nTH, IPCAM_ROI_mTH, IPCAM_ROI_nMF, IPCAM_ROI_mMF
 
 	try:
 		videoTime = datetime.datetime.now()
@@ -440,9 +485,12 @@ def DBGV_Main(): #DBGV主程式
 			Maze_DateTime = datetime.datetime.now()
 			Maze_FrameLoadTime = (Maze_DateTime - IPCAM_NowTime).microseconds
 
-			IPCAM_Status, IPCAM_FrameSize, FrameView = makeFrameView(IPCAM_Image)
+			IPCAM_Status, IPCAM_FrameSize, IPCAM_ROI_DIRTY = makeFrameView(IPCAM_Image)
 			DashBoard = makeDashBoard()
-			TotalBoard = np.hstack([DashBoard, FrameView])
+			TotalBoard = np.hstack([DashBoard, IPCAM_ROI_DIRTY])
+			ROIMonBoard = ROI_Moniter(TotalBoard.shape[1])
+			# cv2.imshow("ROIMonBoard",ROIMonBoard)
+			TotalBoard = np.vstack([TotalBoard, ROIMonBoard])
 
 			if not IPCAM_Status:
 				IPCAM_Name = ""			#攝相機名稱
@@ -477,8 +525,6 @@ def DBGV_Main(): #DBGV主程式
 			# if Maze_StartState:
 			# 	print(Data_ArmInOutPosLine)
 			# print(Data_ArmInOutPosLine)
-
-
 
 			# cv2.imshow("DashBoard Video", TotalBoard)
 			cv2.waitKey(1)

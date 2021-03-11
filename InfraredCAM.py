@@ -124,12 +124,16 @@ def getOnyRatBinary(grayImg, MASK_POS, th_level=123): #取得只在迷宮內的�
 
 	# 產生兩張圖(二值化)：蓋遮罩前(frame1)/蓋遮罩後(frame2)
 	B1, frame1 = cv2.threshold(grayImg, th_level,255,cv2.THRESH_BINARY)
+	th_frame1 = frame1.copy()
 	# cv2.imshow("frame1", frame1)
 	framePr = cv2.bitwise_and(grayImg, grayImg, mask=MaskImg) #遮罩覆蓋到影像上
 	B2, frame2 = cv2.threshold(framePr, th_level,255,cv2.THRESH_BINARY)
+	th_frame2 = frame2.copy()
 	# cv2.imshow("frame2", frame2)
 	frame1 = morphologyFrame(frame1)
 	frame2 = morphologyFrame(frame2)
+	mp_frame1 = frame1.copy()
+	mp_frame2 = frame2.copy()
 	# cv2.imshow("frame2-m", frame2)
 
 	white1, wh1 = cv2.findContours(frame1, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 self.rat_XY=所有座標
@@ -145,7 +149,7 @@ def getOnyRatBinary(grayImg, MASK_POS, th_level=123): #取得只在迷宮內的�
 	# 比較兩個圖片中留在迷宮內白色物體
 	targetPos, posList, areaList, contourList = compareFrameItem(frame1Item, frame2Item)
 
-	return targetPos, posList, areaList, contourList
+	return targetPos, posList, areaList, contourList, [th_frame1, th_frame2, mp_frame1, mp_frame2]
 
 def ComputeCheckPoint(ArmPoint): # 傳入self.ARM_LINE
 	newArmPoint = [] # 新臂線
@@ -199,30 +203,28 @@ def ImageIsDark(img, camStatus, ch_point):	# 判斷目前是否是暗室狀態
 	else:
 		return False
 
-def CovertDarkImage(): # 產生暗室遮罩
+def CovertDarkImage(DarkCircleP): # 產生暗室遮罩
 	imgSize = (480, 480)
 	gray = makeBlackImage()
 	gray = cv2.resize(gray,imgSize,interpolation=cv2.INTER_CUBIC) #放大成480x480
 	xMap, yMap = 0, 0
-	xCNT, yCNT = int(imgSize[0]/2), int(imgSize[1]/2)
+	xCNT, yCNT = DarkCircleP[0], DarkCircleP[1]
+	xFNT, yFNT = 120, 120
 	for i in range(imgSize[0]):
-		xMap = (abs(i - xCNT)/xCNT)
+		xMap = (abs(i - xCNT)/xFNT)
 		for j in range(imgSize[1]):
-			yMap = (abs(j - yCNT)/yCNT)
-			cMap = 2 - ((pow(2, np.sqrt(np.square(xMap) + np.square(yMap)))))
-			# cMap = (math.log(np.sqrt(np.square(xMap) + np.square(yMap))+1)-1)-1
-			if cMap < 0:
-				gray[j][i] = 128*abs(cMap) + 128
+			yMap = (abs(j - yCNT)/xFNT)
+			cMap = np.sqrt(np.square(xMap) + np.square(yMap))
+			# resMap = 2 - (pow(2,cMap))
+			if cMap > 1:
+				gray[j][i] = 0
 			else:
-				gray[j][i] = 128*abs(cMap)
-			if np.sqrt(np.square(xMap) + np.square(yMap)) > 1:
-				gray[j][i] = 0.0
+				gray[j][i] = (1-cMap)*100
 
 	return gray
 
 #其他跟迷宮程式沒相關的都可以擺在這裡
-Dark_MASK = CovertDarkImage()
-Dark_MASK = cv2.cvtColor(Dark_MASK, cv2.COLOR_RGB2GRAY) 
+ 
 #========主要類別撰寫區========
 #類別內所有的[變數/副程式INPUT第一個變數/呼叫副程式的時候]都要加"self"，代表要互叫這個類別內的變數
 class InfraredCAM:
@@ -537,7 +539,9 @@ class InfraredCAM:
 
 	def CameraMain(self): #這個副程式是"主程式"呦~~~~~
 		global Inlinepoint_long,dangchianjiuli
-
+		DARK_CIRCLE_POS = [240, 240]
+		DARK_MASK = []
+		DARK_MASK_IS_MAKE = False
 		try:
 			
 			#遮罩形成
@@ -587,6 +591,18 @@ class InfraredCAM:
 							self.IPCAM.setMessenage(0, "[GOOD] CAMERA is connecting!")
 							self.DBGV.CheckP_ICAM = 1013
 						self.CAM_IS_CONN = True
+						if not DARK_MASK_IS_MAKE:
+							print("SIZE",self.WIDTH,self.HEIGHT)
+							DARK_CIRCLE_POS = [
+								int(((frame.shape[1]/2) - IPCAM.IPCAM_NewP1[0])*(480/IPCAM.IPCAM_RecSize)),
+								int(((frame.shape[0]/2) - IPCAM.IPCAM_NewP1[1])*(480/IPCAM.IPCAM_RecSize))-20
+							]
+							print("DARK_CIRCLE_POS",DARK_CIRCLE_POS)
+							DARK_MASK = CovertDarkImage(DARK_CIRCLE_POS)
+							DARK_MASK = cv2.cvtColor(DARK_MASK, cv2.COLOR_RGB2GRAY)
+							DARK_MASK_IS_MAKE = True
+							# cv2.imshow("DARK_MASK",DARK_MASK)
+							# cv2.waitKey(0)
 						# cv2.imshow ("copy",copy)
 					# cv2.rectangle(frame, convert(self.newP1), convert(self.newP2), (0,255,0), 1) #繪製矩形
 					# cv2.imshow("frame",frame)
@@ -597,25 +613,29 @@ class InfraredCAM:
 					self.DBGV.CheckP_ICAM = 1015
 					frame3 = frame.copy()
 					frame = frame[self.newP1[1]:self.newP2[1], self.newP1[0]:self.newP2[0]] #擷取兩個點的範圍
+					self.DBGV.IPCAM_ROI_RGB = frame.copy()
 					# cv2.polylines(frame, [self.MASK_POS], True, (0, 255, 255), 2)  #加上3臂輔助線
 					frame = cv2.resize(frame,(480,480),interpolation=cv2.INTER_CUBIC) #放大成480x480
 					frame1 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
 					# ===== 根據亮暗室做不同的處理 =====
-					if ImageIsDark(frame, self.CAM_IS_RUN, self.DarkCheckPoint):
+					if ImageIsDark(frame, self.CAM_IS_CONN, self.DarkCheckPoint):
 						# print("^暗室^")
 						# print("frame1", frame1.shape, "Dark_MASK", Dark_MASK.shape)
-						newGray1 = cv2.subtract(frame1, Dark_MASK)
-						newGray1 = cv2.add(newGray1.copy(), 100)
-						self.TargetPos, self.TargetPos_All, self.White_ContourArea_All, self.rat_XY = getOnyRatBinary(
-							grayImg = newGray1, MASK_POS = self.MASK_POS, th_level = 180
-						)
+						self.DBGV.IPCAM_ROI_xGRAY = frame1.copy()
+						frame1 = cv2.subtract(frame1, DARK_MASK)
+						self.DBGV.IPCAM_ROI_GRAY = frame1.copy()
 					else:
 						# print("=亮室=")
-						self.TargetPos, self.TargetPos_All, self.White_ContourArea_All, self.rat_XY = getOnyRatBinary(
-							grayImg = frame1, MASK_POS = self.MASK_POS, th_level = 123
-						)
-
+						self.DBGV.IPCAM_ROI_xGRAY = frame1.copy()
+						self.DBGV.IPCAM_ROI_GRAY = frame1.copy()
+						
+					# cv2.imshow("now gray", frame1)
+					self.TargetPos, self.TargetPos_All, self.White_ContourArea_All, self.rat_XY,[
+						self.DBGV.IPCAM_ROI_nTH, self.DBGV.IPCAM_ROI_mTH, self.DBGV.IPCAM_ROI_nMF, self.DBGV.IPCAM_ROI_mMF
+					] = getOnyRatBinary(
+						grayImg = frame1, MASK_POS = self.MASK_POS, th_level = 123
+					)
 					# B2,frame1 = cv2.threshold(frame1, 127,255,cv2.THRESH_BINARY)
 					# self.DBGV.CheckP_ICAM = 1016
 					# # cv2.imshow("frame1",frame1)
@@ -623,10 +643,7 @@ class InfraredCAM:
 					# # cv2.imshow("pr",pr)
 					# frame1 = cv2.morphologyEx(pr,cv2.MORPH_OPEN,self.O)
 					# frame1 = cv2.morphologyEx(frame1,cv2.MORPH_CLOSE,self.oo)
-					
-					# # cv2.imshow("frame",frame1)
 
-					# # cv2.waitKey(1)
 					# self.rat_XY,wh = cv2.findContours(frame1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #圈出白色物體 self.rat_XY=所有座標
 					
 					self.DBGV.CheckP_ICAM = 1017
