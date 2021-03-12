@@ -537,6 +537,49 @@ class InfraredCAM:
 			writeData2CSV(self.CSVfilePath, "w", csvTitle)
 		writeData2CSV(self.CSVfilePath, "a", MazeData)
 
+	def getINOUTGray(self, gray): #取得進出臂線中心點顏色
+		# 進臂檢查點
+		IN_color = []
+		# testView = makeBlackImage()
+		# testView = cv2.resize(testView,(480,480),interpolation=cv2.INTER_CUBIC) #放大成480x480
+		for inLine in self.ARMS_IN_LINE:
+			newPos = [int((inLine[0][0]+inLine[1][0])/2), int((inLine[0][1]+inLine[1][1])/2)]
+			IN_color.append(gray[newPos[0], newPos[1]])
+			# cv2.circle(testView, (newPos[0], newPos[1]), 3, (0, 0, 255), -1)
+
+		# 出臂檢查點
+		OUT_color = []
+		i1 = [0,4,8,12,16,20,24,28]
+		i2 = [3,7,11,15,19,23,27,31]
+		newOutPos = []
+		for i in range(len(i1)):
+			newPos = [
+				int((self.ARMS_POS[i1[i]][0]+self.ARMS_POS[i2[i]][0])/2), 
+				int((self.ARMS_POS[i1[i]][1]+self.ARMS_POS[i2[i]][1])/2)
+			]
+			newOutPos.append([newPos[0], newPos[1]])
+			OUT_color.append(gray[newPos[0], newPos[1]])
+			# cv2.circle(testView, (newPos[0], newPos[1]), 3, (0, 255, 0), -1)
+
+		# 中心區域檢查點
+		Mid_color = []
+		outList = [[4,6],[3,7],[2,8]]
+		testColor = [(255,0,0), (255,128,0), (255,255,128)]
+		i = 0
+		for arr in outList:
+			newPos = [
+				int((newOutPos[arr[0]-1][0]+newOutPos[arr[1]-1][0])/2), 
+				int((newOutPos[arr[0]-1][1]+newOutPos[arr[1]-1][1])/2)
+			]
+			Mid_color.append(gray[newPos[0], newPos[1]])
+			# cv2.circle(testView, (newPos[0], newPos[1]), 3, testColor[i], -1)
+			i+=1
+
+		# cv2.polylines(testView, [self.MASK_POS], True, (0, 255, 255), 1)
+		# cv2.imshow("testView", testView)
+		# cv2.waitKey(1)
+		return IN_color, OUT_color, Mid_color
+
 	def CameraMain(self): #這個副程式是"主程式"呦~~~~~
 		global Inlinepoint_long,dangchianjiuli
 		DARK_CIRCLE_POS = [240, 240]
@@ -582,7 +625,7 @@ class InfraredCAM:
 					else:
 						self.WIDTH,self.HEIGHT = (frame.shape[1], frame.shape[0])
 						frame = cv2.resize(frame,(self.WIDTH,self.HEIGHT),interpolation=cv2.INTER_CUBIC) #調整大小1024*576
-
+						self.DBGV.IPCAM_OriSize = [self.WIDTH,self.HEIGHT]
 						if IPCAM_LoadTime > 3:
 							self.IPCAM.setMessenage(1, "[WAIT] CAMERA is TIMEOUT!")
 							self.DBGV.CheckP_ICAM = 1012
@@ -594,8 +637,8 @@ class InfraredCAM:
 						if not DARK_MASK_IS_MAKE:
 							print("SIZE",self.WIDTH,self.HEIGHT)
 							DARK_CIRCLE_POS = [
-								int(((frame.shape[1]/2) - IPCAM.IPCAM_NewP1[0])*(480/IPCAM.IPCAM_RecSize)),
-								int(((frame.shape[0]/2) - IPCAM.IPCAM_NewP1[1])*(480/IPCAM.IPCAM_RecSize))-20
+								int(((frame.shape[1]/2) - IPCAM.IPCAM_NewP1[0])*(480/IPCAM.IPCAM_RecSize))-30,
+								int(((frame.shape[0]/2) - IPCAM.IPCAM_NewP1[1])*(480/IPCAM.IPCAM_RecSize))-40
 							]
 							print("DARK_CIRCLE_POS",DARK_CIRCLE_POS)
 							DARK_MASK = CovertDarkImage(DARK_CIRCLE_POS)
@@ -620,15 +663,19 @@ class InfraredCAM:
 
 					# ===== 根據亮暗室做不同的處理 =====
 					if ImageIsDark(frame, self.CAM_IS_CONN, self.DarkCheckPoint):
-						# print("^暗室^")
+						self.DBGV.ROI_Dark_Mode = True
 						# print("frame1", frame1.shape, "Dark_MASK", Dark_MASK.shape)
 						self.DBGV.IPCAM_ROI_xGRAY = frame1.copy()
+						self.DBGV.ROI_xGRAY_INLINE_COLOR, self.DBGV.ROI_xGRAY_OUTLINE_COLOR, self.DBGV.ROI_xGRAY_MIDDLE_COLOR = self.getINOUTGray(self.DBGV.IPCAM_ROI_xGRAY)
 						frame1 = cv2.subtract(frame1, DARK_MASK)
 						self.DBGV.IPCAM_ROI_GRAY = frame1.copy()
+						self.DBGV.ROI_GRAY_INLINE_COLOR, self.DBGV.ROI_GRAY_OUTLINE_COLOR, self.DBGV.ROI_GRAY_MIDDLE_COLOR = self.getINOUTGray(self.DBGV.IPCAM_ROI_GRAY)
 					else:
-						# print("=亮室=")
+						self.DBGV.ROI_Dark_Mode = False
 						self.DBGV.IPCAM_ROI_xGRAY = frame1.copy()
+						self.DBGV.ROI_xGRAY_INLINE_COLOR, self.DBGV.ROI_xGRAY_OUTLINE_COLOR, self.DBGV.ROI_xGRAY_MIDDLE_COLOR = self.getINOUTGray(self.DBGV.IPCAM_ROI_xGRAY)
 						self.DBGV.IPCAM_ROI_GRAY = frame1.copy()
+						self.DBGV.ROI_GRAY_INLINE_COLOR, self.DBGV.ROI_GRAY_OUTLINE_COLOR, self.DBGV.ROI_GRAY_MIDDLE_COLOR = self.getINOUTGray(self.DBGV.IPCAM_ROI_GRAY)
 						
 					# cv2.imshow("now gray", frame1)
 					self.TargetPos, self.TargetPos_All, self.White_ContourArea_All, self.rat_XY,[

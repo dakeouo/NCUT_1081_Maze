@@ -12,7 +12,7 @@ import traceback
 import random as rand
 import DebugVideo as DBGV
 
-SYSTEM_VER = "1.16.3" #版本號
+SYSTEM_VER = "1.16.4" #版本號
 WINDOWS_IS_ACTIVE = True	#UI是否在執行中
 SAVE_PAST_DATA = True #儲存上次記錄
 SET_VIDEO_PATH = False #是否已設定影片路徑
@@ -20,6 +20,15 @@ nowDatePath = './ChiMei_{}/'.format(datetime.datetime.now().strftime("%Y%m%d"))
 VideoDir = 'Video_{}/'.format(datetime.datetime.now().strftime("%Y%m%d"))
 
 Rec_UserName = "" #操作系統的使用者名稱
+
+# ROI Check Information
+ROI_Dark_Mode = False
+ROI_xGRAY_INLINE_COLOR = [0,0,0,0,0,0,0,0] #未蓋光圈之進臂顏色處灰階值
+ROI_GRAY_INLINE_COLOR = [0,0,0,0,0,0,0,0] #已蓋光圈之進臂顏色處灰階值
+ROI_xGRAY_OUTLINE_COLOR = [0,0,0,0,0,0,0,0] #未蓋光圈之出臂顏色處灰階值
+ROI_GRAY_OUTLINE_COLOR = [0,0,0,0,0,0,0,0] #已蓋光圈之出臂顏色處灰階值
+ROI_xGRAY_MIDDLE_COLOR = [0,0,0] #未蓋光圈之中心位置顏色處灰階值[上中下]
+ROI_GRAY_MIDDLE_COLOR = [0,0,0] #未蓋光圈之中心位置顏色處灰階值[上中下]
 
 # IPCAM Information
 IPCAM_Image = []		#攝相機影像
@@ -36,7 +45,9 @@ IPCAM_Name = ""			#攝相機名稱
 IPCAM_IP = ""			#攝相機IP
 IPCAM_FrameCount = 0	#測試每秒禎數
 IPCAM_NewP1 = [0, 0]	#矩形框左上座標點
-IPCAM_FrameSize = [0, 0]#攝相機影像大小
+IPCAM_Recsize = 0		#矩形框大小
+IPCAM_OriSize = []		#攝相機影像大小
+IPCAM_FrameSize = [0, 0]#攝相機ROI大小
 IPCAM_Status = False	#攝相機連上狀態
 IPCAM_NowTime = datetime.datetime.now()	#IPCAM時間
 Maze_DateTime = datetime.datetime.now() #現在時間
@@ -182,6 +193,20 @@ def randWhiteData(unit):
 		White_ContourArea.append(rand.randint(10,400))
 		White_CenterPos.append([rand.randint(0,480),rand.randint(0,480)])
 
+def setBig_ROI_View():
+	global IPCAM_ROI_RGB
+	newFrameSize = (680, 680)
+	if len(IPCAM_ROI_RGB) == 0:
+		FrameSize = [720, 720]
+		frame = makeSingaleColorImage((0, 0, 128))
+		frame = cv2.resize(frame, (FrameSize[0], FrameSize[1]), interpolation=cv2.INTER_CUBIC)
+		cv2.putText(frame, "NO SIGNAL", (147, 360), cv2.FONT_HERSHEY_DUPLEX, 2.5, (255,255,255), 2, cv2.LINE_AA)
+	else:
+		frame = IPCAM_ROI_RGB.copy()
+	frame = cv2.resize(frame, newFrameSize, interpolation=cv2.INTER_CUBIC)
+	# print("RGB", frame.shape)
+	return frame
+
 def makeFrameView(frame):
 	global IPCAM_NewP1, SAVE_PAST_DATA
 	global White_CenterPos, WOI_Color, White_PosShowFinish, White_Contours, White_TotalItem
@@ -192,14 +217,14 @@ def makeFrameView(frame):
 
 	if len(frame) == 0:
 		FrameSize = [720, 720]
-		frame = makeSingaleColorImage((0, 0, 128))
+		frame = makeSingaleColorImage((100, 100, 100))
 		frame = cv2.resize(frame, (FrameSize[0], FrameSize[1]), interpolation=cv2.INTER_CUBIC)
-		cv2.putText(frame, "NO SIGNAL", (147, 360), cv2.FONT_HERSHEY_DUPLEX, 2.5, (255,255,255), 2, cv2.LINE_AA)
+		cv2.putText(frame, "NO IMAGE", (147, 360), cv2.FONT_HERSHEY_DUPLEX, 2.5, (255,255,255), 2, cv2.LINE_AA)
 		FrameStatus = False
 		newFrameSize = (680, 680)
 	else:
 		FrameStatus = True
-		FrameSize = [frame.shape[1], frame.shape[0]]
+		FrameSize = [IPCAM_Recsize, IPCAM_Recsize]
 		newP1 = IPCAM_NewP1
 		newP2 = [newP1[0] + FrameSize[1], newP1[1] + FrameSize[1]]
 		frame = frame[newP1[1]:newP2[1], newP1[0]:newP2[0]]
@@ -244,6 +269,7 @@ def makeFrameView(frame):
 			cv2.line(frame, convert(NEW_Data_ArmInOutPosLine[i][0]), convert(NEW_Data_ArmInOutPosLine[i][1]), (0, 0, 255), 3)
 
 	frame = cv2.resize(frame, newFrameSize, interpolation=cv2.INTER_CUBIC)
+	# print("DIRTY", frame.shape)
 
 	return FrameStatus, FrameSize, frame
 
@@ -256,17 +282,19 @@ def makeDashBoard():
 	global PastData_RatID, PastData_TotalTerm, PastData_StartTime, PastData_Latency
 	global White_Contours, White_ContourArea, White_CenterPos, WOI_Count, White_PosShowFinish, White_TotalItem
 	global CheckP_UI, CheckP_ICAM, CheckP_IPCAM, Rec_UserName, Data_ModelRT_Str, SYSTEM_VER
+	global ROI_Dark_Mode, ROI_GRAY_INLINE_COLOR, ROI_xGRAY_INLINE_COLOR, ROI_GRAY_OUTLINE_COLOR, ROI_xGRAY_OUTLINE_COLOR, ROI_xGRAY_MIDDLE_COLOR, ROI_GRAY_MIDDLE_COLOR
 
 	#欄位初始點
 	BasicPos1 = 10 	#第一欄
 	BasicPos2 = 250	#第二欄
 	BasicPos3 = 490	#第三欄
+	BasicPos4 = 680	#第四欄
 
 	#字體顏色
 	unSetFontColor = (128, 128, 128)
 
 	result = makeSingaleColorImage((0,0,0))
-	result = cv2.resize(result, (720, 680), interpolation=cv2.INTER_CUBIC)
+	result = cv2.resize(result, (900, 680), interpolation=cv2.INTER_CUBIC)
 	cv2.putText(result, "DateTime: {}".format(Maze_DateTime.strftime("%Y%m%d %H:%M:%S")), (BasicPos1, 20), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	cv2.putText(result, IPCAM_Name, (BasicPos1, 40), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	cv2.putText(result, "-Users: {}".format(Rec_UserName), (BasicPos2+30, 20), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
@@ -274,9 +302,9 @@ def makeDashBoard():
 	cv2.putText(result, "-Ver: {}".format(SYSTEM_VER), (BasicPos3, 20), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	
 	# IPCAM Information
-	cv2.putText(result, "=IPCAM Info=", (BasicPos1, 60), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
+	cv2.putText(result, "=IPCAM Info= (R:%d)" %(IPCAM_FrameSize[0]), (BasicPos1, 60), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
 	cv2.putText(result, "-IP: {}".format(IPCAM_IP), (BasicPos1, 80), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
-	cv2.putText(result, "-FrameSize: {}".format(IPCAM_FrameSize), (BasicPos1, 100), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+	cv2.putText(result, "-OriSize: {}".format(IPCAM_OriSize), (BasicPos1, 100), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	cv2.putText(result, "-FrameCount: {}".format(IPCAM_FrameCount), (BasicPos1, 120), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	cv2.putText(result, "-newP1: {}".format(IPCAM_NewP1), (BasicPos1, 140), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 	cv2.putText(result, "-Status:", (BasicPos1, 160), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
@@ -433,13 +461,59 @@ def makeDashBoard():
 
 	cv2.putText(result, "Click(TP-M-G): %0d-%0d-%0d" %(Data_SettingClick[0],Data_SettingClick[1],Data_SettingClick[2]), (BasicPos3 - 30, checkBasicPos + 100), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 
+	# ROI Dark Color Checkpoint
+	ROID_Pos = 20
+	cv2.putText(result, "=Dark Check=", (BasicPos4, ROID_Pos), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
+	cv2.putText(result, "Mode:", (BasicPos4, ROID_Pos + 20), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+	if ROI_Dark_Mode:
+		cv2.putText(result, "Dark", (BasicPos4+50, ROID_Pos + 20), cv2.FONT_HERSHEY_DUPLEX, 0.5, (192,192,192), 0, cv2.LINE_AA)
+	else:
+		cv2.putText(result, "Light", (BasicPos4+50, ROID_Pos + 20), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,128,255), 0, cv2.LINE_AA)
+	hei = 67
+	for i in range(8):
+		# defVal = 255
+		xGray_IN_Color = int(ROI_xGRAY_INLINE_COLOR[i])
+		Gray_IN_Color = int(ROI_GRAY_INLINE_COLOR[i])
+		xGray_OUT_Color = int(ROI_xGRAY_OUTLINE_COLOR[i])
+		Gray_OUT_Color = int(ROI_GRAY_OUTLINE_COLOR[i])
+		cv2.putText(result, "[Arm%d]" %(i+1), (BasicPos4, ROID_Pos + 45 + hei*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+		cv2.putText(result, "X", (BasicPos4, ROID_Pos + 67 + hei*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, (128,128,255), 0, cv2.LINE_AA)
+		cv2.putText(result, "IN:", (BasicPos4+17, ROID_Pos + 67 + hei*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
+		cv2.circle(result, (BasicPos4+52, ROID_Pos + 62 + hei*i), 6, (xGray_IN_Color, xGray_IN_Color, xGray_IN_Color), -1)
+		cv2.putText(result, str(xGray_IN_Color), (BasicPos4+64, ROID_Pos + 67 + hei*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+		cv2.putText(result, "OUT:", (BasicPos4+105, ROID_Pos + 67 + hei*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
+		cv2.circle(result, (BasicPos4+155, ROID_Pos + 62 + hei*i), 6, (xGray_OUT_Color, xGray_OUT_Color, xGray_OUT_Color), -1)
+		cv2.putText(result, str(xGray_OUT_Color), (BasicPos4+167, ROID_Pos + 67 + hei*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+
+		cv2.putText(result, "O", (BasicPos4, ROID_Pos + 89 + hei*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, (128,255,128), 0, cv2.LINE_AA)
+		cv2.putText(result, "IN:", (BasicPos4+17, ROID_Pos + 89 + hei*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
+		cv2.circle(result, (BasicPos4+52, ROID_Pos + 84 + hei*i), 6, (Gray_IN_Color, Gray_IN_Color, Gray_IN_Color), -1)
+		cv2.putText(result, str(Gray_IN_Color), (BasicPos4+64, ROID_Pos + 89 + hei*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+		cv2.putText(result, "OUT:", (BasicPos4+105, ROID_Pos + 89 + hei*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
+		cv2.circle(result, (BasicPos4+155, ROID_Pos + 84 + hei*i), 6, (Gray_OUT_Color, Gray_OUT_Color, Gray_OUT_Color), -1)
+		cv2.putText(result, str(Gray_OUT_Color), (BasicPos4+167, ROID_Pos + 89 + hei*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+
+	ROID_Mid_Pos = ROID_Pos + 581
+	pWord = ['Top','Middle','Bottom']
+	cv2.putText(result, "[Middle]", (BasicPos4, ROID_Mid_Pos), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+	for i in range(len(pWord)):
+		xGray_MID_Color = int(ROI_xGRAY_MIDDLE_COLOR[i])
+		Gray_MID_Color = int(ROI_GRAY_MIDDLE_COLOR[i])
+		cv2.putText(result, pWord[i], (BasicPos4, ROID_Mid_Pos + 22 + 22*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)
+		cv2.putText(result, "X", (BasicPos4+69, ROID_Mid_Pos + 22 + 22*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, (128,128,255), 0, cv2.LINE_AA)
+		cv2.circle(result, (BasicPos4+89, ROID_Mid_Pos + 17 + 22*i), 6, (xGray_MID_Color, xGray_MID_Color, xGray_MID_Color), -1)
+		cv2.putText(result, str(xGray_MID_Color), (BasicPos4+100, ROID_Mid_Pos + 22 + 22*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+		cv2.putText(result, "O", (BasicPos4+143, ROID_Mid_Pos + 22 + 22*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, (128,255,128), 0, cv2.LINE_AA)
+		cv2.circle(result, (BasicPos4+164, ROID_Mid_Pos + 17 + 22*i), 6, (Gray_MID_Color, Gray_MID_Color, Gray_MID_Color), -1)
+		cv2.putText(result, str(Gray_MID_Color), (BasicPos4+175, ROID_Mid_Pos + 22 + 22*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
+		
 	return result
 
 def ROI_Moniter(wid_Size):
 	global IPCAM_ROI_RGB, IPCAM_ROI_GRAY, IPCAM_ROI_xGRAY, IPCAM_ROI_nTH, IPCAM_ROI_mTH, IPCAM_ROI_nMF, IPCAM_ROI_mMF, IPCAM_ROI_DIRTY
 
 	ShowROI_List = [
-		IPCAM_ROI_RGB, IPCAM_ROI_xGRAY, IPCAM_ROI_GRAY, IPCAM_ROI_nTH, IPCAM_ROI_nMF
+		IPCAM_ROI_DIRTY, IPCAM_ROI_xGRAY, IPCAM_ROI_GRAY, IPCAM_ROI_nTH, IPCAM_ROI_nMF
 	]
 	newWei = int((wid_Size/len(ShowROI_List)))
 	weiLoss = wid_Size%len(ShowROI_List)
@@ -477,7 +551,7 @@ def DBGV_Main(): #DBGV主程式
 	global Data_TotalTerm, Exp_StartTime, Exp_RatID
 	global PastData_RatID, PastData_TotalTerm, PastData_StartTime, PastData_Latency
 	global VideoDir, nowDatePath, DBGV, FrameView
-	global IPCAM_ROI_DIRTY, IPCAM_ROI_RGB, IPCAM_ROI_GRAY, IPCAM_ROI_nTH, IPCAM_ROI_mTH, IPCAM_ROI_nMF, IPCAM_ROI_mMF
+	global IPCAM_ROI_DIRTY, IPCAM_ROI_GRAY, IPCAM_ROI_nTH, IPCAM_ROI_mTH, IPCAM_ROI_nMF, IPCAM_ROI_mMF
 
 	try:
 		videoTime = datetime.datetime.now()
@@ -487,7 +561,8 @@ def DBGV_Main(): #DBGV主程式
 
 			IPCAM_Status, IPCAM_FrameSize, IPCAM_ROI_DIRTY = makeFrameView(IPCAM_Image)
 			DashBoard = makeDashBoard()
-			TotalBoard = np.hstack([DashBoard, IPCAM_ROI_DIRTY])
+			newIPCAM_ROI_RGB = setBig_ROI_View()
+			TotalBoard = np.hstack([DashBoard, newIPCAM_ROI_RGB])
 			ROIMonBoard = ROI_Moniter(TotalBoard.shape[1])
 			# cv2.imshow("ROIMonBoard",ROIMonBoard)
 			TotalBoard = np.vstack([TotalBoard, ROIMonBoard])

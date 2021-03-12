@@ -97,6 +97,7 @@ def Main():
 						DBGV.IPCAM_Name = IPCAM_Name
 						DBGV.IPCAM_IP = IPCAM_IP
 						DBGV.IPCAM_NewP1 = IPCAM_NewP1
+						DBGV.IPCAM_Recsize = IPCAM_RecSize
 						DBGV.CheckP_IPCAM = "8-2"
 					else:
 						DBGV.CheckP_IPCAM = "9-1"
