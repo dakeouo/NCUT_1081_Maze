@@ -472,10 +472,13 @@ def makeDashBoard():
 	hei = 67
 	for i in range(8):
 		# defVal = 255
-		xGray_IN_Color = int(ROI_xGRAY_INLINE_COLOR[i])
-		Gray_IN_Color = int(ROI_GRAY_INLINE_COLOR[i])
-		xGray_OUT_Color = int(ROI_xGRAY_OUTLINE_COLOR[i])
-		Gray_OUT_Color = int(ROI_GRAY_OUTLINE_COLOR[i])
+		showID = i + 2
+		if showID > 7:
+			showID -= 8
+		xGray_IN_Color = int(ROI_xGRAY_INLINE_COLOR[showID])
+		Gray_IN_Color = int(ROI_GRAY_INLINE_COLOR[showID])
+		xGray_OUT_Color = int(ROI_xGRAY_OUTLINE_COLOR[showID])
+		Gray_OUT_Color = int(ROI_GRAY_OUTLINE_COLOR[showID])
 		cv2.putText(result, "[Arm%d]" %(i+1), (BasicPos4, ROID_Pos + 45 + hei*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255,255,255), 0, cv2.LINE_AA)
 		cv2.putText(result, "X", (BasicPos4, ROID_Pos + 67 + hei*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, (128,128,255), 0, cv2.LINE_AA)
 		cv2.putText(result, "IN:", (BasicPos4+17, ROID_Pos + 67 + hei*i), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0,255,255), 0, cv2.LINE_AA)

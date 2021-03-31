@@ -538,6 +538,8 @@ class InfraredCAM:
 		writeData2CSV(self.CSVfilePath, "a", MazeData)
 
 	def getINOUTGray(self, gray): #取得進出臂線中心點顏色
+		gray = cv2.resize(gray,(480,480),interpolation=cv2.INTER_CUBIC)
+
 		# 進臂檢查點
 		IN_color = []
 		# testView = makeBlackImage()
@@ -667,13 +669,16 @@ class InfraredCAM:
 						# print("frame1", frame1.shape, "Dark_MASK", Dark_MASK.shape)
 						self.DBGV.IPCAM_ROI_xGRAY = frame1.copy()
 						self.DBGV.ROI_xGRAY_INLINE_COLOR, self.DBGV.ROI_xGRAY_OUTLINE_COLOR, self.DBGV.ROI_xGRAY_MIDDLE_COLOR = self.getINOUTGray(self.DBGV.IPCAM_ROI_xGRAY)
-						frame1 = cv2.subtract(frame1, DARK_MASK)
+						if DARK_MASK_IS_MAKE:
+							frame1 = cv2.subtract(frame1, DARK_MASK)
 						self.DBGV.IPCAM_ROI_GRAY = frame1.copy()
 						self.DBGV.ROI_GRAY_INLINE_COLOR, self.DBGV.ROI_GRAY_OUTLINE_COLOR, self.DBGV.ROI_GRAY_MIDDLE_COLOR = self.getINOUTGray(self.DBGV.IPCAM_ROI_GRAY)
 					else:
 						self.DBGV.ROI_Dark_Mode = False
 						self.DBGV.IPCAM_ROI_xGRAY = frame1.copy()
 						self.DBGV.ROI_xGRAY_INLINE_COLOR, self.DBGV.ROI_xGRAY_OUTLINE_COLOR, self.DBGV.ROI_xGRAY_MIDDLE_COLOR = self.getINOUTGray(self.DBGV.IPCAM_ROI_xGRAY)
+						if DARK_MASK_IS_MAKE:
+							frame1 = cv2.subtract(frame1, DARK_MASK)
 						self.DBGV.IPCAM_ROI_GRAY = frame1.copy()
 						self.DBGV.ROI_GRAY_INLINE_COLOR, self.DBGV.ROI_GRAY_OUTLINE_COLOR, self.DBGV.ROI_GRAY_MIDDLE_COLOR = self.getINOUTGray(self.DBGV.IPCAM_ROI_GRAY)
 						
