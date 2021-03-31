@@ -556,6 +556,8 @@ class MazeMouseTrack(object):
 				self.BT_User_Name.config(state="disabled")
 				self.TKS_BT_DisConfirm.config(state="disabled")
 				self.TKS_BT_DisModify.config(state="disabled")
+				self.TK_Rat_ID.config(state="disabled")
+				self.BT_Rat_ID.config(state="disabled")
 				if self.EXP_DATA_MODE == "EXPERIMENT":
 					self.TKS_Btn1_Opera1.config(state="disabled")
 					self.TKS_Btn1_Opera2.config(state="disabled")
@@ -565,8 +567,7 @@ class MazeMouseTrack(object):
 					self.TKS_BT_OpDayConfirm.config(state="disabled")
 					self.TKS_BT_DisGroupConfirm.config(state="disabled")
 					self.TKS_BT_DisGroupModify.config(state="disabled")
-					self.TK_Rat_ID.config(state="disabled")
-					self.BT_Rat_ID.config(state="disabled")
+					
 				
 				
 			for i in range(0,self.ARM_UNIT):
@@ -584,14 +585,14 @@ class MazeMouseTrack(object):
 				self.TKS_BT_DisModify.config(state="normal")
 				self.TK_User_Name.config(state="normal")
 				self.BT_User_Name.config(state="normal")
+				self.TK_Rat_ID.config(state="normal")
+				self.BT_Rat_ID.config(state="normal")
 				if self.EXP_DATA_MODE == "EXPERIMENT":
 					self.TKS_Btn1_Opera1.config(state="normal")
 					self.TKS_Btn1_Opera2.config(state="normal")
 					self.TKS_OpDay_Month.config(state="normal")
 					self.TKS_OpDay_Day.config(state="normal")
 					self.TKS_BT_OpDayConfirm.config(state="normal")
-					self.TK_Rat_ID.config(state="normal")
-					self.BT_Rat_ID.config(state="normal")
 					if self.DiseaseType != "":
 						self.TKS_DisGroup.config(state="readonly")
 						self.TKS_BT_DisGroupConfirm.config(state="normal")
@@ -1312,7 +1313,7 @@ class MazeMouseTrack(object):
 				self.TK_Rat_ID.insert(0, self.Rat_ID)
 			self.BT_Rat_ID = tk.Button(self.tkSetting, text='Set ID', width=7, font=('Arial', 10), bg="gray90", command=self.SetRatID)
 			self.BT_Rat_ID.place(x=SettingShowX+200,y=SettingShowY+22,anchor="nw")
-			if (self.EXP_DATA_MODE == "NONE") or (self.EXP_DATA_MODE == "TRAINING"):
+			if (self.EXP_DATA_MODE == "NONE"):
 				self.TK_Rat_ID.config(state="disabled")
 				self.BT_Rat_ID.config(state="disabled")
 			
