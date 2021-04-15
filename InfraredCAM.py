@@ -665,20 +665,20 @@ class InfraredCAM:
 
 					# ===== 根據亮暗室做不同的處理 =====
 					if ImageIsDark(frame, self.CAM_IS_CONN, self.DarkCheckPoint):
-						self.DBGV.ROI_Dark_Mode = True
+						self.DBGV.ROI_Dark_Mode = True # [暗室區]
 						# print("frame1", frame1.shape, "Dark_MASK", Dark_MASK.shape)
 						self.DBGV.IPCAM_ROI_xGRAY = frame1.copy()
 						self.DBGV.ROI_xGRAY_INLINE_COLOR, self.DBGV.ROI_xGRAY_OUTLINE_COLOR, self.DBGV.ROI_xGRAY_MIDDLE_COLOR = self.getINOUTGray(self.DBGV.IPCAM_ROI_xGRAY)
-						if DARK_MASK_IS_MAKE:
-							frame1 = cv2.subtract(frame1, DARK_MASK)
+						# if DARK_MASK_IS_MAKE:
+						# 	frame1 = cv2.subtract(frame1, DARK_MASK)
 						self.DBGV.IPCAM_ROI_GRAY = frame1.copy()
 						self.DBGV.ROI_GRAY_INLINE_COLOR, self.DBGV.ROI_GRAY_OUTLINE_COLOR, self.DBGV.ROI_GRAY_MIDDLE_COLOR = self.getINOUTGray(self.DBGV.IPCAM_ROI_GRAY)
 					else:
-						self.DBGV.ROI_Dark_Mode = False
+						self.DBGV.ROI_Dark_Mode = False# [亮室區]
 						self.DBGV.IPCAM_ROI_xGRAY = frame1.copy()
 						self.DBGV.ROI_xGRAY_INLINE_COLOR, self.DBGV.ROI_xGRAY_OUTLINE_COLOR, self.DBGV.ROI_xGRAY_MIDDLE_COLOR = self.getINOUTGray(self.DBGV.IPCAM_ROI_xGRAY)
-						if DARK_MASK_IS_MAKE:
-							frame1 = cv2.subtract(frame1, DARK_MASK)
+						# if DARK_MASK_IS_MAKE:
+						# 	frame1 = cv2.subtract(frame1, DARK_MASK)
 						self.DBGV.IPCAM_ROI_GRAY = frame1.copy()
 						self.DBGV.ROI_GRAY_INLINE_COLOR, self.DBGV.ROI_GRAY_OUTLINE_COLOR, self.DBGV.ROI_GRAY_MIDDLE_COLOR = self.getINOUTGray(self.DBGV.IPCAM_ROI_GRAY)
 						
