@@ -80,10 +80,12 @@ def Main():
 						IPCAM_Image = []	#影像儲存變數清空
 						frame = []			#frame變數宣告
 						FrameCount = 0		#幀數計數歸零
-						if not IPCAM_Bar == "LOCAL":
-							rtsp = "rtsp://{0}:{1}@{2}:{4}/{3}".format(IPCAM_Username, IPCAM_Password, IPCAM_IP, IPCAM_Bar, IPCAM_Port) #RTSP連結
-						else:
+						if IPCAM_Bar == "LocalCAM":
 							rtsp = int(IPCAM_Username)
+						elif IPCAM_Bar == "LocalVIDEO":
+							rtsp = str(IPCAM_Username)
+						else:
+							rtsp = "rtsp://{0}:{1}@{2}:{4}/{3}".format(IPCAM_Username, IPCAM_Password, IPCAM_IP, IPCAM_Bar, IPCAM_Port) #RTSP連結
 
 						cap = cv2.VideoCapture(rtsp)	#IPCAM視訊串流
 						FIRST_RUN = False

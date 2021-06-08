@@ -67,8 +67,12 @@ def listAllSame(list1, list2): #檢查兩陣列是否完全一樣
 
 def Second2Datetime(sec): #秒數轉換成時間
 	return int(sec/3600), int((sec%3600)/60), int((sec%3600)%60)
+
 def convert(list):
     return tuple(list)
+
+def lineSlope(p1, p2): #計算直線斜率
+	return (p2[1]-p1[1])/(p2[0]-p1[0])
 
 def makeBlackImage(): #製造出全黑圖片(10x10) <= 這個贈品很好用，送你XD
 	pixels = []
@@ -223,7 +227,110 @@ def CovertDarkImage(DarkCircleP): # 產生暗室遮罩
 
 	return gray
 
-#其他跟迷宮程式沒相關的都可以擺在這裡
+
+# ===== 新房間遮罩產生 =====
+ArmMaze_Scale = []
+ArmMaze_Inter = []
+def determineInArm(armNum, pos):
+	global ArmMaze_Scale, ArmMaze_Inter
+	posUD = []
+	posLR = []
+	for i in range(4):
+		scale = ArmMaze_Scale[armNum][i]
+		inter = ArmMaze_Inter[armNum][i]
+		pos_inter = pos[1] - pos[0]*scale
+		if scale < 0: # 左下-\右上+
+			if (pos_inter - inter) < 0:
+				posLR.append('l')
+				posUD.append('d')
+			else:
+				posLR.append('r')
+				posUD.append('u')
+		else: # 左上+/右下-
+			if (pos_inter - inter) > 0:
+				posLR.append('l')
+				posUD.append('u')
+			else:
+				posLR.append('r')
+				posUD.append('d')
+	# print(posLR, posUD)
+	if armNum == 0 or armNum == 1 or armNum == 7: # 下上左右
+		if posUD[0] == 'u' and posUD[1] == 'd' and posLR[2] == 'l' and posLR[3] == 'r':
+			return True
+		else:
+			return False
+	elif armNum == 3 or armNum == 4 or armNum == 5: # 上下右左
+		if posUD[0] == 'd' and posUD[1] == 'u' and posLR[2] == 'r' and posLR[3] == 'l':
+			return True
+		else:
+			return False
+	elif armNum == 2: # 左右上下
+		if posLR[0] == 'l' and posLR[1] == 'r' and posUD[2] == 'd' and posUD[3] == 'u':
+			return True
+		else:
+			return False
+	elif armNum == 6: # 右左下上
+		if posLR[0] == 'r' and posLR[1] == 'l' and posUD[2] == 'u' and posUD[3] == 'd':
+			return True
+		else:
+			return False
+
+def makeNewRoomMask(ArmCradius, ArmCirclePos, ARMS_LINE):
+	fix_dark_lv1 = 85
+	fix_dark_lv2 = 20
+	grayMask = cv2.resize(makeBlackImage(),(480,480),interpolation=cv2.INTER_CUBIC)
+	for i in range(480):
+		for j in range(480):
+			if determineInArm(0, (i,j)) or determineInArm(2, (i,j)) or determineInArm(4, (i,j)) or determineInArm(6, (i,j)):
+				grayMask[j][i] = fix_dark_lv1
+			elif determineInArm(3, (i,j)) or determineInArm(5, (i,j)) or determineInArm(7, (i,j)):
+				grayMask[j][i] = fix_dark_lv2
+			else:
+				grayMask[j][i] = 0
+	# cv2.cvtColor(grayMask, cv2.COLOR_GRAY2RGB)
+
+	cv2.circle(grayMask, convert(ArmCirclePos), int(ArmCradius), (fix_dark_lv2, fix_dark_lv2, fix_dark_lv2), -1)
+	for i in [0,2,4,6]:
+		centerPos = [
+			int(ARMS_LINE[i][0][0] + (ARMS_LINE[i][2][0] - ARMS_LINE[i][0][0])/2),
+			int(ARMS_LINE[i][0][1] + (ARMS_LINE[i][2][1] - ARMS_LINE[i][0][1])/2)
+		]
+		centerCrd = int(TwoPointDistance(ARMS_LINE[i][0], ARMS_LINE[i][2])/2)
+		cv2.circle(grayMask, convert(centerPos), int(centerCrd), (fix_dark_lv1, fix_dark_lv1, fix_dark_lv1), -1)
+	return cv2.cvtColor(grayMask, cv2.COLOR_RGB2GRAY)
+
+def fixGrayBright(ori_gray, val): # 集體加減陣列的值
+	ori_size = (len(ori_gray[0]), len(ori_gray))
+
+	fixArr = cv2.resize(makeBlackImage(),ori_size,interpolation=cv2.INTER_CUBIC)
+	for i in range(ori_size[0]):
+		for j in range(ori_size[1]):
+			fixArr[j][i] = val
+	fixArr = cv2.cvtColor(fixArr, cv2.COLOR_RGB2GRAY)	
+	return cv2.subtract(ori_gray, fixArr)
+
+def TwoPointDistance(P1, P2):
+	return math.sqrt(pow(P1[0] - P2[0],2) + pow(P1[1] - P2[1],2))
+
+def makeLinearFunc(pA, pB): #使用座編點建立方程式參數(y= ax+b)
+	fA = float(pA[1] - pB[1])/float(pA[0] - pB[0])
+	fB = pA[1] - fA*pA[0]
+
+	return [round(fA,2), round(fB,2)]
+
+def CalcCircle(PA1, PA2, PB1, PB2): # 八臂圓心計算
+	line1A, line1B = makeLinearFunc(PA1, PA2)
+	line2A, line2B = makeLinearFunc(PB1, PB2)
+	# print("circle func para:", line1A, line1B, line2A, line2B)
+	resultX = round((line2B - line1B) / (line1A - line2A))
+	resultY = round(line1A * resultX + line1B)
+
+	lineA = TwoPointDistance(PA1, PA2)
+	lineB = TwoPointDistance(PB1, PB2)
+	resultZ = round((lineA + lineA)/4)
+
+	return [resultX, resultY], resultZ
+# =========================
  
 #========主要類別撰寫區========
 #類別內所有的[變數/副程式INPUT第一個變數/呼叫副程式的時候]都要加"self"，代表要互叫這個類別內的變數
@@ -583,12 +690,34 @@ class InfraredCAM:
 		return IN_color, OUT_color, Mid_color
 
 	def CameraMain(self): #這個副程式是"主程式"呦~~~~~
-		global Inlinepoint_long,dangchianjiuli
+		global Inlinepoint_long, dangchianjiuli
+		global ArmMaze_Scale, ArmMaze_Inter
+
 		DARK_CIRCLE_POS = [240, 240]
 		DARK_MASK = []
 		DARK_MASK_IS_MAKE = False
+
+		# 計算斜率&截距
+		for i in range(8):
+			ArmMaze_Scale.append([ # 上下左右斜率
+				lineSlope(self.ARMS_LINE[i][0], self.ARMS_LINE[i][2]),
+				lineSlope(self.ARMS_LINE[i][1], self.ARMS_LINE[i][3]),
+				lineSlope(self.ARMS_LINE[i][1], self.ARMS_LINE[i][0]),
+				lineSlope(self.ARMS_LINE[i][3], self.ARMS_LINE[i][2])
+			])
+			ArmMaze_Inter.append([ # 上下左右截距
+				self.ARMS_LINE[i][2][1] - (self.ARMS_LINE[i][2][0]*ArmMaze_Scale[i][0]),
+				self.ARMS_LINE[i][3][1] - (self.ARMS_LINE[i][3][0]*ArmMaze_Scale[i][1]),
+				self.ARMS_LINE[i][0][1] - (self.ARMS_LINE[i][0][0]*ArmMaze_Scale[i][2]),
+				self.ARMS_LINE[i][2][1] - (self.ARMS_LINE[i][2][0]*ArmMaze_Scale[i][3]),
+			])
+		# 計算圓心
+		ArmCirclePos, ArmCradius = CalcCircle(
+			self.ARMS_LINE[0][0], self.ARMS_LINE[4][0],
+			self.ARMS_LINE[2][0], self.ARMS_LINE[6][0],
+		)
+
 		try:
-			
 			#遮罩形成
 			copy = makeBlackImage() #產生黑色的圖
 			copy = cv2.resize(copy,(480,480),interpolation=cv2.INTER_CUBIC) #放大成480x480
@@ -638,13 +767,18 @@ class InfraredCAM:
 						self.CAM_IS_CONN = True
 						if not DARK_MASK_IS_MAKE:
 							print("SIZE",self.WIDTH,self.HEIGHT)
-							DARK_CIRCLE_POS = [
-								int(((frame.shape[1]/2) - IPCAM.IPCAM_NewP1[0])*(480/IPCAM.IPCAM_RecSize))-30,
-								int(((frame.shape[0]/2) - IPCAM.IPCAM_NewP1[1])*(480/IPCAM.IPCAM_RecSize))-40
-							]
-							print("DARK_CIRCLE_POS",DARK_CIRCLE_POS)
-							DARK_MASK = CovertDarkImage(DARK_CIRCLE_POS)
-							DARK_MASK = cv2.cvtColor(DARK_MASK, cv2.COLOR_RGB2GRAY)
+
+							# DARK_CIRCLE_POS = [
+							# 	int(((frame.shape[1]/2) - IPCAM.IPCAM_NewP1[0])*(480/IPCAM.IPCAM_RecSize))-30,
+							# 	int(((frame.shape[0]/2) - IPCAM.IPCAM_NewP1[1])*(480/IPCAM.IPCAM_RecSize))-40
+							# ]
+							# print("DARK_CIRCLE_POS",DARK_CIRCLE_POS)
+							# DARK_MASK = CovertDarkImage(DARK_CIRCLE_POS)
+							# DARK_MASK = cv2.cvtColor(DARK_MASK, cv2.COLOR_RGB2GRAY)
+							DARK_MASK = makeNewRoomMask(
+								ArmCirclePos = ArmCirclePos, ArmCradius = ArmCradius, ARMS_LINE = self.ARMS_LINE
+							)
+
 							DARK_MASK_IS_MAKE = True
 							# cv2.imshow("DARK_MASK",DARK_MASK)
 							# cv2.waitKey(0)
@@ -677,8 +811,9 @@ class InfraredCAM:
 						self.DBGV.ROI_Dark_Mode = False# [亮室區]
 						self.DBGV.IPCAM_ROI_xGRAY = frame1.copy()
 						self.DBGV.ROI_xGRAY_INLINE_COLOR, self.DBGV.ROI_xGRAY_OUTLINE_COLOR, self.DBGV.ROI_xGRAY_MIDDLE_COLOR = self.getINOUTGray(self.DBGV.IPCAM_ROI_xGRAY)
-						# if DARK_MASK_IS_MAKE:
-						# 	frame1 = cv2.subtract(frame1, DARK_MASK)
+						if DARK_MASK_IS_MAKE:
+							# frame1 = cv2.subtract(frame1, DARK_MASK)
+							frame1 = cv2.add(frame1, DARK_MASK)
 						self.DBGV.IPCAM_ROI_GRAY = frame1.copy()
 						self.DBGV.ROI_GRAY_INLINE_COLOR, self.DBGV.ROI_GRAY_OUTLINE_COLOR, self.DBGV.ROI_GRAY_MIDDLE_COLOR = self.getINOUTGray(self.DBGV.IPCAM_ROI_GRAY)
 						
