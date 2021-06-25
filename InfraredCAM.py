@@ -72,7 +72,10 @@ def convert(list):
     return tuple(list)
 
 def lineSlope(p1, p2): #計算直線斜率
-	return (p2[1]-p1[1])/(p2[0]-p1[0])
+	if (p2[1] == p1[1]) or (p2[0] == p1[0]):
+		return 0
+	else:
+		return (p2[1]-p1[1])/(p2[0]-p1[0])
 
 def makeBlackImage(): #製造出全黑圖片(10x10) <= 這個贈品很好用，送你XD
 	pixels = []
