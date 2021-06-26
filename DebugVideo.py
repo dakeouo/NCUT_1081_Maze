@@ -12,7 +12,7 @@ import traceback
 import random as rand
 import DebugVideo as DBGV
 
-SYSTEM_VER = "1.16.6" #版本號
+SYSTEM_VER = "1.16.6-1" #版本號
 WINDOWS_IS_ACTIVE = True	#UI是否在執行中
 SAVE_PAST_DATA = True #儲存上次記錄
 SET_VIDEO_PATH = False #是否已設定影片路徑
@@ -180,7 +180,7 @@ def exchangeContours(Contours, size):
 			if len(Contours[i][0]) != 2:
 				print(len(Contours[i][0]))
 			# new_Contours.append([Contours[i][0][0], Contours[i][0][1]])
-			new_Contours.append([int((Contours[i][0][0]/480)*size), int((Contours[i][0][1]/480)*size)])
+			new_Contours.append([int(Contours[i][0][0]*(size/480)), int(Contours[i][0][1]*(size/480))])
 
 	return new_Contours
 
@@ -230,6 +230,7 @@ def makeFrameView(frame):
 		frame = frame[newP1[1]:newP2[1], newP1[0]:newP2[0]]
 
 		newFrameSize = (int(FrameSize[1] * (680/FrameSize[1])), int(FrameSize[1] * (680/FrameSize[1])))
+		frame = cv2.resize(frame, newFrameSize, interpolation=cv2.INTER_CUBIC)
 
 		Data_InLineChange, Data_OutLineChange, Data_Old_ArmInOutPosLine = checkInOutLine(Data_ArmInOutPosLine, Data_Old_ArmInOutPosLine)
 		if Data_InLineChange:
@@ -237,16 +238,16 @@ def makeFrameView(frame):
 		if Data_OutLineChange:
 			NEW_Data_ArmInOutPosLine = exchangeArmsLine(True, NEW_Data_ArmInOutPosLine, Data_ArmInOutPosLine, FrameSize[1])
 
-		newPos = (int(Data_TargetPos[0] * (FrameSize[1]/480)), int(Data_TargetPos[1] * (FrameSize[1]/480)))
+		# newPos = (int(Data_TargetPos[0] * (FrameSize[1]/480)), int(Data_TargetPos[1] * (FrameSize[1]/480)))
+		newPos = (int(Data_TargetPos[0] * (newFrameSize[1]/480)), int(Data_TargetPos[1] * (newFrameSize[1]/480)))
 
 		White_PosShowFinish = False
 		NEW_White_Contours = []
 		NEW_newPos = []
 		White_TotalItem = len(White_CenterPos)
 		for i in range(White_TotalItem):
-			# White_Contours[i] = exchangeContours(White_Contours[i], FrameSize[1])
-			NEW_White_Contours.append(exchangeContours(White_Contours[i], FrameSize[1])) #計算邊緣座標點
-			NEW_newPos.append((int(White_CenterPos[i][0] * (FrameSize[1]/480)), int(White_CenterPos[i][1] * (FrameSize[1]/480))))
+			NEW_White_Contours.append(exchangeContours(White_Contours[i], newFrameSize[1])) #計算邊緣座標點
+			NEW_newPos.append((round(White_CenterPos[i][0] * (newFrameSize[1]/480)), round(White_CenterPos[i][1] * (newFrameSize[1]/480))))
 
 
 		if not NO_RAT:
@@ -266,9 +267,17 @@ def makeFrameView(frame):
 		White_PosShowFinish = True
 
 		for i in range(len(NEW_Data_ArmInOutPosLine)):
-			cv2.line(frame, convert(NEW_Data_ArmInOutPosLine[i][0]), convert(NEW_Data_ArmInOutPosLine[i][1]), (0, 0, 255), 3)
+			InOutLine1 = (
+				round(NEW_Data_ArmInOutPosLine[i][0][0]*(newFrameSize[1]/FrameSize[1])),
+				round(NEW_Data_ArmInOutPosLine[i][0][1]*(newFrameSize[1]/FrameSize[1]))
+			)
+			InOutLine2 = (
+				round(NEW_Data_ArmInOutPosLine[i][1][0]*(newFrameSize[1]/FrameSize[1])),
+				round(NEW_Data_ArmInOutPosLine[i][1][1]*(newFrameSize[1]/FrameSize[1]))
+			)
+			cv2.line(frame, InOutLine1, InOutLine2, (0, 0, 255), 3)
 
-	frame = cv2.resize(frame, newFrameSize, interpolation=cv2.INTER_CUBIC)
+	# frame = cv2.resize(frame, newFrameSize, interpolation=cv2.INTER_CUBIC)
 	# print("DIRTY", frame.shape)
 
 	return FrameStatus, FrameSize, frame
