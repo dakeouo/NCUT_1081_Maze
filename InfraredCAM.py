@@ -299,7 +299,7 @@ def makeNewRoomMask(ArmCradius, ArmCirclePos, ARMS_LINE):
 			int(ARMS_LINE[i][0][1] + (ARMS_LINE[i][2][1] - ARMS_LINE[i][0][1])/2)
 		]
 		centerCrd = int(TwoPointDistance(ARMS_LINE[i][0], ARMS_LINE[i][2])/2)
-		cv2.circle(grayMask, convert(centerPos), int(centerCrd), (fix_dark_lv1, fix_dark_lv1, fix_dark_lv1), -1)
+		# cv2.circle(grayMask, convert(centerPos), int(centerCrd), (fix_dark_lv1, fix_dark_lv1, fix_dark_lv1), -1)
 	return cv2.cvtColor(grayMask, cv2.COLOR_RGB2GRAY)
 
 def fixGrayBright(ori_gray, val): # 集體加減陣列的值
