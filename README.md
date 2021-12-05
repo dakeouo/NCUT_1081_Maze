@@ -51,7 +51,9 @@
 ### Python Libarary
 Python需安裝下列套件才可成功執行：
 ```bash
+sudo apt install python3-tk #tkinter, 要裝在系統層(此為ubuntu命令)(import tkinter)
 pip install opencv-python #OpenCV(import cv2)
+pip install winsound #winsound(import winsound)
 pip install Pillow #PIL(from PIL impory Image)
 ```
 
